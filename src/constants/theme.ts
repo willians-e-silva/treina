@@ -33,6 +33,16 @@ export const Brand = {
   danger: "#E5484D",
 } as const;
 
+/** Colors for the nutrition dashboard, readable on both light and dark surfaces. */
+export const Nutrition = {
+  calories: Brand.primary,
+  carbs: "#12A594",
+  protein: "#F76B15",
+  fat: "#8E4EC6",
+  steps: "#3E63DD",
+  exercise: "#E5484D",
+} as const;
+
 export const Fonts = Platform.select({
   ios: {
     /** iOS `UIFontDescriptorSystemDesignDefault` */
