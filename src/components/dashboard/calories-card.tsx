@@ -1,20 +1,20 @@
-import type { LucideIcon } from 'lucide-react-native';
-import Flag from 'lucide-react-native/icons/flag';
-import Flame from 'lucide-react-native/icons/flame';
-import Utensils from 'lucide-react-native/icons/utensils';
-import { StyleSheet, View } from 'react-native';
+import type { LucideIcon } from "lucide-react-native";
+import Flag from "lucide-react-native/icons/flag";
+import Flame from "lucide-react-native/icons/flame";
+import Utensils from "lucide-react-native/icons/utensils";
+import { StyleSheet, View } from "react-native";
 
-import { formatInt } from './format';
-import { ProgressRing } from './progress-ring';
+import { formatInt } from "./format";
+import { ProgressRing } from "./progress-ring";
 
-import { ThemedText } from '@/components/themed-text';
-import { Surface } from '@/components/ui/surface';
-import { Brand, Nutrition, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
-import type { DashboardData } from '@/lib/dashboard-data';
+import { ThemedText } from "@/components/themed-text";
+import { Surface } from "@/components/ui/surface";
+import { Brand, Nutrition, Spacing } from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
+import type { DashboardData } from "@/lib/dashboard-data";
 
 type CaloriesCardProps = {
-  calories: DashboardData['calories'];
+  calories: DashboardData["calories"];
 };
 
 /** Remaining calories = goal − food + exercise, shown as a ring. */
@@ -27,10 +27,7 @@ export function CaloriesCard({ calories }: CaloriesCardProps) {
   return (
     <Surface style={styles.container}>
       <View>
-        <ThemedText type="smallBold">Calorias</ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
-          Restantes = Meta − Alimentos + Exercício
-        </ThemedText>
+        <ThemedText type="smallBold">Meta diaria</ThemedText>
       </View>
 
       <View style={styles.content}>
@@ -38,21 +35,28 @@ export function CaloriesCard({ calories }: CaloriesCardProps) {
           progress={budget > 0 ? food / budget : 0}
           color={over ? Brand.danger : Nutrition.calories}
           size={136}
-          strokeWidth={12}>
+          strokeWidth={12}
+        >
           <ThemedText
             style={[styles.remaining, over && { color: Brand.danger }]}
-            accessibilityLabel={`${formatInt(Math.abs(remaining))} calorias ${over ? 'acima da meta' : 'restantes'}`}>
+            accessibilityLabel={`${formatInt(Math.abs(remaining))} calorias ${over ? "acima da meta" : "restantes"}`}
+          >
             {formatInt(Math.abs(remaining))}
           </ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
-            {over ? 'Acima' : 'Restantes'}
+            {over ? "Acima" : "Restantes"}
           </ThemedText>
         </ProgressRing>
 
         <View style={styles.legend}>
           <LegendRow icon={Flag} label="Meta base" value={goal} />
           <LegendRow icon={Utensils} label="Alimentos" value={food} />
-          <LegendRow icon={Flame} label="Exercício" value={exercise} color={Nutrition.exercise} />
+          <LegendRow
+            icon={Flame}
+            label="Exercício"
+            value={exercise}
+            color={Nutrition.exercise}
+          />
         </View>
       </View>
     </Surface>
@@ -88,9 +92,9 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.four,
   },
   content: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-around",
     gap: Spacing.three,
   },
   remaining: {
@@ -102,8 +106,8 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
   },
   legendRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: Spacing.two,
   },
 });

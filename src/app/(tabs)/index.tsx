@@ -8,13 +8,15 @@ import { WeightCard } from "@/components/dashboard/weight-card";
 import { TabScreen } from "@/components/tab-screen";
 import { ThemedText } from "@/components/themed-text";
 import { Spacing } from "@/constants/theme";
-import { useSession } from "@/context/session";
+import { useExerciseDay } from "@/context/exercise-log";
 import { MOCK_DASHBOARD } from "@/lib/dashboard-data";
+import { toDateKey } from "@/lib/exercises";
 
 export default function HomeScreen() {
-  const { session } = useSession();
-  // TODO: load from the real diary / activity source.
+  // TODO: load food and weight from the real diary source.
   const data = MOCK_DASHBOARD;
+  const exerciseDay = useExerciseDay(toDateKey(new Date()));
+  const exercise = { calories: exerciseDay.calories, minutes: exerciseDay.minutes };
 
   return (
     <TabScreen header={<AppLogo />}>
@@ -22,16 +24,11 @@ export default function HomeScreen() {
         <ThemedText type="subtitle" accessibilityRole="header">
           Hoje
         </ThemedText>
-        {session && (
-          <ThemedText themeColor="textSecondary" numberOfLines={1}>
-            {session}
-          </ThemedText>
-        )}
       </View>
 
-      <CaloriesCard calories={data.calories} />
+      <CaloriesCard calories={{ ...data.calories, exercise: exercise.calories }} />
       <MacrosCard macros={data.macros} />
-      <ActivityCards steps={data.steps} exercise={data.exercise} />
+      <ActivityCards steps={data.steps} exercise={exercise} />
       <WeightCard weight={data.weight} />
     </TabScreen>
   );
