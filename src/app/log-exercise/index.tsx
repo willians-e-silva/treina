@@ -1,5 +1,6 @@
 import { Image } from 'expo-image';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
+import ChevronLeft from 'lucide-react-native/icons/chevron-left';
 import ChevronRight from 'lucide-react-native/icons/chevron-right';
 import Dumbbell from 'lucide-react-native/icons/dumbbell';
 import Plus from 'lucide-react-native/icons/plus';
@@ -126,8 +127,13 @@ export default function SearchExerciseScreen() {
         options={{
           title: CATEGORY_LABELS[category],
           headerLeft: () => (
-            <Pressable onPress={() => router.back()} accessibilityRole="button" hitSlop={Spacing.two}>
-              <ThemedText style={styles.headerButton}>Cancelar</ThemedText>
+            <Pressable
+              onPress={() => router.back()}
+              accessibilityRole="button"
+              accessibilityLabel="Voltar"
+              hitSlop={Spacing.two}
+              style={({ pressed }) => pressed && styles.pressed}>
+              <ChevronLeft color={Brand.primary} size={24} />
             </Pressable>
           ),
         }}
@@ -324,10 +330,6 @@ const styles = StyleSheet.create({
   header: {
     gap: Spacing.three,
     paddingBottom: Spacing.two,
-  },
-  headerButton: {
-    color: Brand.primary,
-    fontWeight: 600,
   },
   search: {
     flexDirection: 'row',

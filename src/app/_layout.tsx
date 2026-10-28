@@ -6,6 +6,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { ExerciseLogProvider } from '@/context/exercise-log';
 import { SessionProvider, useSession } from '@/context/session';
+import { TasksProvider } from '@/context/tasks';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -17,8 +18,10 @@ export default function RootLayout() {
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <SessionProvider>
           <ExerciseLogProvider>
-            <AnimatedSplashOverlay />
-            <RootNavigator />
+            <TasksProvider>
+              <AnimatedSplashOverlay />
+              <RootNavigator />
+            </TasksProvider>
           </ExerciseLogProvider>
         </SessionProvider>
       </ThemeProvider>
@@ -34,6 +37,7 @@ function RootNavigator() {
       <Stack.Protected guard={!!session}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="log-exercise" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="add-task" options={{ presentation: 'modal' }} />
       </Stack.Protected>
 
       <Stack.Protected guard={!session}>
