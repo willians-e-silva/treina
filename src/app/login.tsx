@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import { useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -224,6 +225,22 @@ export default function LoginScreen() {
                   </Pressable>
                 </>
               )}
+
+              <View style={styles.signupRow}>
+                <ThemedText type="small" themeColor="textSecondary">
+                  Não tem conta?
+                </ThemedText>
+                <Pressable
+                  onPress={() => router.push("/signup")}
+                  disabled={isBusy}
+                  accessibilityRole="link"
+                  hitSlop={Spacing.two}
+                >
+                  <ThemedText type="smallBold" style={styles.signupLink}>
+                    Criar conta
+                  </ThemedText>
+                </Pressable>
+              </View>
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -319,5 +336,14 @@ const styles = StyleSheet.create({
   googleButtonText: {
     color: "#1F1F1F",
     fontWeight: 600,
+  },
+  signupRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: Spacing.one,
+    marginTop: Spacing.two,
+  },
+  signupLink: {
+    color: Brand.primary,
   },
 });

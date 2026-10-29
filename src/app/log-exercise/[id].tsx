@@ -10,7 +10,8 @@ import { Surface } from '@/components/ui/surface';
 import { Brand, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useExerciseLog } from '@/context/exercise-log';
 import { useTheme } from '@/hooks/use-theme';
-import { MOCK_DASHBOARD } from '@/lib/dashboard-data';
+import { useSession } from '@/context/session';
+import { MOCK_PROFILE } from '@/lib/profile';
 import {
   CATEGORY_LABELS,
   estimateCalories,
@@ -19,8 +20,6 @@ import {
   type ExerciseCategory,
 } from '@/lib/exercises';
 
-// TODO: use the user's real latest weigh-in.
-const BODY_WEIGHT_KG = MOCK_DASHBOARD.weight[MOCK_DASHBOARD.weight.length - 1].kg;
 
 /** Parses user input like "12", "12,5" or "12.5"; `NaN` when invalid. */
 function parseNumber(text: string) {
@@ -32,6 +31,7 @@ export default function ExerciseDetailsScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const { addEntry } = useExerciseLog();
+  const bodyWeightKg = useSession().profile?.weightKg ?? MOCK_PROFILE.weightKg;
   const params = useLocalSearchParams<{
     id: string;
     date?: string;
@@ -57,7 +57,7 @@ export default function ExerciseDetailsScreen() {
 
   const minutesValue = parseNumber(minutes);
   const estimated =
-    exercise?.met && minutesValue > 0 ? estimateCalories(exercise.met, BODY_WEIGHT_KG, minutesValue) : 0;
+    exercise?.met && minutesValue > 0 ? estimateCalories(exercise.met, bodyWeightKg, minutesValue) : 0;
   const calories = caloriesOverride ?? String(estimated);
   const caloriesValue = parseNumber(calories);
   const setsValue = parseNumber(sets);
@@ -118,7 +118,7 @@ export default function ExerciseDetailsScreen() {
               onChangeText={setCaloriesOverride}
               hint={
                 exercise?.met && caloriesOverride === null
-                  ? `Estimativa para ${formatDecimal(BODY_WEIGHT_KG)} kg`
+                  ? `Estimativa para ${formatDecimal(bodyWeightKg)} kg`
                   : undefined
               }
             />

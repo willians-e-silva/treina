@@ -13,15 +13,15 @@ import { getMainTab } from '@/constants/tabs';
 import { Brand, Nutrition, Spacing } from '@/constants/theme';
 import { useSession } from '@/context/session';
 import { useTheme } from '@/hooks/use-theme';
-import { formatHeight, getAge, getInitials, MOCK_PROFILE } from '@/lib/profile';
+import { formatHeight, getInitials, MOCK_PROFILE, SEX_LABELS } from '@/lib/profile';
 
 const tab = getMainTab('profile');
 
 export default function ProfileScreen() {
   const theme = useTheme();
-  const { session, signOut } = useSession();
-  const profile = MOCK_PROFILE;
-  const age = getAge(profile.birthDate);
+  const { profile: signedInProfile, signOut } = useSession();
+  // The tabs only mount with a session, which always comes with a profile.
+  const profile = signedInProfile ?? { ...MOCK_PROFILE, email: '' };
 
   return (
     <TabScreen header={<ScreenTitle>{tab.label}</ScreenTitle>}>
@@ -32,15 +32,20 @@ export default function ProfileScreen() {
         <ThemedText style={styles.name} accessibilityRole="header">
           {profile.name}
         </ThemedText>
-        {session && (
+        {!!profile.email && (
           <ThemedText type="small" themeColor="textSecondary">
-            {session}
+            {profile.email}
+          </ThemedText>
+        )}
+        {profile.sex !== 'unspecified' && (
+          <ThemedText type="small" themeColor="textSecondary">
+            {SEX_LABELS[profile.sex]}
           </ThemedText>
         )}
       </Surface>
 
       <View style={styles.stats}>
-        <Stat icon={Cake} color={Nutrition.fat} label="Idade" value={`${formatInt(age)} anos`} />
+        <Stat icon={Cake} color={Nutrition.fat} label="Idade" value={`${formatInt(profile.age)} anos`} />
         <Stat
           icon={Scale}
           color={Nutrition.carbs}
