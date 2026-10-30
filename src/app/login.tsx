@@ -7,7 +7,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  TextInput,
   type TextInputInstance,
   View,
 } from "react-native";
@@ -15,15 +14,19 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { Brand, Spacing } from "@/constants/theme";
+import { Button } from "@/components/ui/button";
+import { FormField } from "@/components/ui/form-field";
+import { StateLayer } from "@/components/ui/state-layer";
+import { Spacing } from "@/constants/theme";
 import { IS_AUTH_MOCKED, useSession } from "@/context/session";
-import { useTheme } from "@/hooks/use-theme";
 import { GoogleSignInError, isGoogleSignInAvailable } from "@/lib/google-auth";
+import { BrandColors, ComponentShape, Disabled, useAppTheme } from "@/theme";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function LoginScreen() {
-  const theme = useTheme();
+  const { dark, colors } = useAppTheme();
+  const google = BrandColors.google[dark ? "dark" : "light"];
   const { signIn, signInWithGoogle } = useSession();
   const passwordRef = useRef<TextInputInstance>(null);
 
@@ -78,11 +81,6 @@ export default function LoginScreen() {
     }
   }
 
-  const inputStyle = [
-    styles.input,
-    { backgroundColor: theme.backgroundElement, color: theme.text },
-  ];
-
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
@@ -102,84 +100,68 @@ export default function LoginScreen() {
             </View>
 
             <View style={styles.form}>
-              <View style={styles.field}>
-                <ThemedText type="titleSmall">Email</ThemedText>
-                <TextInput
-                  style={inputStyle}
-                  value={email}
-                  onChangeText={setEmail}
-                  placeholder="you@example.com"
-                  placeholderTextColor={theme.textSecondary}
+              <FormField
+                label="Email"
+                value={email}
+                onChangeText={setEmail}
+                placeholder="you@example.com"
+                autoCapitalize="none"
+                autoComplete="email"
+                autoCorrect={false}
+                keyboardType="email-address"
+                textContentType="emailAddress"
+                returnKeyType="next"
+                onSubmitEditing={() => passwordRef.current?.focus()}
+                editable={!isBusy}
+              />
+
+              <View>
+                <FormField
+                  ref={passwordRef}
+                  label="Senha"
+                  style={styles.passwordInput}
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="Your password"
+                  secureTextEntry={!showPassword}
                   autoCapitalize="none"
-                  autoComplete="email"
-                  autoCorrect={false}
-                  keyboardType="email-address"
-                  textContentType="emailAddress"
-                  returnKeyType="next"
-                  onSubmitEditing={() => passwordRef.current?.focus()}
+                  autoComplete="current-password"
+                  textContentType="password"
+                  returnKeyType="go"
+                  onSubmitEditing={handleSubmit}
                   editable={!isBusy}
                 />
-              </View>
-
-              <View style={styles.field}>
-                <ThemedText type="titleSmall">Senha</ThemedText>
-                <View>
-                  <TextInput
-                    ref={passwordRef}
-                    style={[inputStyle, styles.passwordInput]}
-                    value={password}
-                    onChangeText={setPassword}
-                    placeholder="Your password"
-                    placeholderTextColor={theme.textSecondary}
-                    secureTextEntry={!showPassword}
-                    autoCapitalize="none"
-                    autoComplete="current-password"
-                    textContentType="password"
-                    returnKeyType="go"
-                    onSubmitEditing={handleSubmit}
-                    editable={!isBusy}
-                  />
-                  <Pressable
-                    style={styles.togglePassword}
-                    onPress={() => setShowPassword((value) => !value)}
-                    accessibilityRole="button"
-                    accessibilityLabel={
-                      showPassword ? "Hide password" : "Show password"
-                    }
-                    hitSlop={8}
-                  >
-                    <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
-                      {showPassword ? "Hide" : "Show"}
-                    </ThemedText>
-                  </Pressable>
-                </View>
+                <Button
+                  label={showPassword ? "Hide" : "Show"}
+                  variant="text"
+                  tone="secondary"
+                  onPress={() => setShowPassword((value) => !value)}
+                  accessibilityLabel={
+                    showPassword ? "Hide password" : "Show password"
+                  }
+                  style={styles.togglePassword}
+                />
               </View>
 
               {error && (
                 <ThemedText
                   type="bodyMedium"
-                  style={styles.error}
+                  themeColor="error"
                   accessibilityRole="alert"
                 >
                   {error}
                 </ThemedText>
               )}
 
-              <Pressable
+              <Button
+                label="Sign in"
+                size="medium"
+                fullWidth
+                loading={isSubmitting}
+                disabled={isGoogleSubmitting}
                 onPress={handleSubmit}
-                disabled={isBusy}
-                accessibilityRole="button"
-                style={({ pressed }) => [
-                  styles.button,
-                  (pressed || isSubmitting) && styles.buttonPressed,
-                ]}
-              >
-                {isSubmitting ? (
-                  <ActivityIndicator color="#ffffff" />
-                ) : (
-                  <ThemedText style={styles.buttonText}>Sign in</ThemedText>
-                )}
-              </Pressable>
+                style={styles.submit}
+              />
 
               {isGoogleSignInAvailable && (
                 <>
@@ -187,7 +169,7 @@ export default function LoginScreen() {
                     <View
                       style={[
                         styles.dividerLine,
-                        { backgroundColor: theme.backgroundSelected },
+                        { backgroundColor: colors.outlineVariant },
                       ]}
                     />
                     <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
@@ -196,31 +178,48 @@ export default function LoginScreen() {
                     <View
                       style={[
                         styles.dividerLine,
-                        { backgroundColor: theme.backgroundSelected },
+                        { backgroundColor: colors.outlineVariant },
                       ]}
                     />
                   </View>
 
+                  {/* Google sign-in button: colors follow Google's branding, not the app theme. */}
                   <Pressable
                     onPress={handleGoogleSignIn}
                     disabled={isBusy}
                     accessibilityRole="button"
                     accessibilityLabel="Continuar com Google"
-                    style={({ pressed }) => [
-                      styles.button,
+                    style={[
                       styles.googleButton,
-                      { borderColor: theme.backgroundSelected },
-                      (pressed || isGoogleSubmitting) && styles.buttonPressed,
+                      {
+                        backgroundColor: google.container,
+                        borderColor: google.outline,
+                      },
+                      isBusy && !isGoogleSubmitting && styles.disabled,
                     ]}
                   >
-                    {isGoogleSubmitting ? (
-                      <ActivityIndicator color="#1F1F1F" />
-                    ) : (
+                    {({ pressed }) => (
                       <>
-                        <ThemedText style={styles.googleLogo}>G</ThemedText>
-                        <ThemedText style={styles.googleButtonText}>
-                          Continuar com Google
-                        </ThemedText>
+                        <StateLayer color={google.content} pressed={pressed} />
+                        {isGoogleSubmitting ? (
+                          <ActivityIndicator color={google.content} />
+                        ) : (
+                          <>
+                            <ThemedText
+                              type="titleLarge"
+                              emphasized
+                              style={{ color: BrandColors.google.mark }}
+                            >
+                              G
+                            </ThemedText>
+                            <ThemedText
+                              type="titleMedium"
+                              style={{ color: google.content }}
+                            >
+                              Continuar com Google
+                            </ThemedText>
+                          </>
+                        )}
                       </>
                     )}
                   </Pressable>
@@ -231,16 +230,14 @@ export default function LoginScreen() {
                 <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
                   Não tem conta?
                 </ThemedText>
-                <Pressable
+                <Button
+                  label="Criar conta"
+                  variant="text"
+                  tone="secondary"
                   onPress={() => router.push("/signup")}
                   disabled={isBusy}
                   accessibilityRole="link"
-                  hitSlop={Spacing.two}
-                >
-                  <ThemedText type="titleSmall" style={styles.signupLink}>
-                    Criar conta
-                  </ThemedText>
-                </Pressable>
+                />
               </View>
             </View>
           </ScrollView>
@@ -266,7 +263,7 @@ const styles = StyleSheet.create({
     width: "100%",
     maxWidth: 440,
     alignSelf: "center",
-    paddingHorizontal: Spacing.four,
+    paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.five,
     gap: Spacing.five,
   },
@@ -276,42 +273,16 @@ const styles = StyleSheet.create({
   form: {
     gap: Spacing.three,
   },
-  field: {
-    gap: Spacing.two,
-  },
-  input: {
-    height: 52,
-    borderRadius: Spacing.three,
-    paddingHorizontal: Spacing.three,
-    fontSize: 16,
-  },
   passwordInput: {
-    paddingRight: 64,
+    paddingRight: Spacing.six + Spacing.three,
   },
   togglePassword: {
     position: "absolute",
-    right: Spacing.three,
-    top: 0,
-    bottom: 0,
-    justifyContent: "center",
+    right: Spacing.one,
+    bottom: Spacing.two,
   },
-  error: {
-    color: "#E5484D",
-  },
-  button: {
-    height: 52,
-    borderRadius: Spacing.three,
-    backgroundColor: Brand.primary,
-    alignItems: "center",
-    justifyContent: "center",
+  submit: {
     marginTop: Spacing.two,
-  },
-  buttonPressed: {
-    opacity: 0.8,
-  },
-  buttonText: {
-    color: "#ffffff",
-    fontWeight: 600,
   },
   divider: {
     flexDirection: "row",
@@ -323,28 +294,23 @@ const styles = StyleSheet.create({
     height: StyleSheet.hairlineWidth,
   },
   googleButton: {
+    height: 56,
     flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: Spacing.two,
-    marginTop: 0,
-    backgroundColor: "#ffffff",
+    borderRadius: ComponentShape.button,
     borderWidth: 1,
+    overflow: "hidden",
   },
-  googleLogo: {
-    color: "#4285F4",
-    fontSize: 20,
-    fontWeight: 700,
-  },
-  googleButtonText: {
-    color: "#1F1F1F",
-    fontWeight: 600,
+  disabled: {
+    opacity: Disabled.content,
   },
   signupRow: {
     flexDirection: "row",
     justifyContent: "center",
+    alignItems: "center",
     gap: Spacing.one,
     marginTop: Spacing.two,
-  },
-  signupLink: {
-    color: Brand.primary,
   },
 });

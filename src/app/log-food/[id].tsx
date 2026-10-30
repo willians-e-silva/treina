@@ -1,19 +1,19 @@
 import { useLocalSearchParams, useNavigation } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { formatDecimal, formatInt } from '@/components/dashboard/format';
 import { ThemedText } from '@/components/themed-text';
+import { Button } from '@/components/ui/button';
+import { Chip } from '@/components/ui/chip';
 import { Surface } from '@/components/ui/surface';
-import { Brand, MaxContentWidth, Nutrition, Spacing } from '@/constants/theme';
+import { ThemedTextInput } from '@/components/ui/text-input';
+import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useFoodLog } from '@/context/food-log';
-import { useTheme } from '@/hooks/use-theme';
 import { toDateKey } from '@/lib/exercises';
-import {
-  getFood,
-  scaleNutrients,
-} from '@/lib/foods';
+import { getFood, scaleNutrients } from '@/lib/foods';
+import { Shape, useAppTheme } from '@/theme';
 
 /** Parses user input like "12", "12,5" or "12.5"; `NaN` when invalid. */
 function parseNumber(text: string) {
@@ -21,7 +21,7 @@ function parseNumber(text: string) {
 }
 
 export default function FoodDetailsScreen() {
-  const theme = useTheme();
+  const { custom } = useAppTheme();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const { addEntry, meals } = useFoodLog();
@@ -36,7 +36,7 @@ export default function FoodDetailsScreen() {
   if (!food) {
     // Products found online are only kept in memory, e.g. lost after a reload.
     return (
-      <View style={[styles.missing, { backgroundColor: theme.background }]}>
+      <View style={styles.missing}>
         <ThemedText themeColor="onSurfaceVariant">Alimento não encontrado. Busque novamente.</ThemedText>
       </View>
     );
@@ -69,11 +69,11 @@ export default function FoodDetailsScreen() {
 
   return (
     <ScrollView
-      style={{ backgroundColor: theme.background }}
+      style={styles.scroll}
       contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.four }]}
       keyboardShouldPersistTaps="handled">
       <View>
-        <ThemedText style={styles.name} accessibilityRole="header">
+        <ThemedText type="headlineSmall" emphasized accessibilityRole="header">
           {food.name}
         </ThemedText>
         {food.detail && (
@@ -86,13 +86,14 @@ export default function FoodDetailsScreen() {
       <Surface style={styles.form}>
         <View style={styles.fieldRow}>
           <ThemedText style={styles.fieldLabel}>Quantidade (g)</ThemedText>
-          <TextInput
+          <ThemedTextInput
+            size="compact"
             value={grams}
             onChangeText={setGrams}
             keyboardType="decimal-pad"
             selectTextOnFocus
             accessibilityLabel="Quantidade em gramas"
-            style={[styles.input, { color: theme.text, backgroundColor: theme.backgroundSelected }]}
+            style={styles.input}
           />
         </View>
         <View style={styles.chips}>
@@ -107,7 +108,9 @@ export default function FoodDetailsScreen() {
         </View>
 
         <View style={styles.field}>
-          <ThemedText>Refeição</ThemedText>
+          <ThemedText type="labelLarge" themeColor="onSurfaceVariant">
+            Refeição
+          </ThemedText>
           <View style={styles.chips}>
             {meals.map((option) => (
               <Chip
@@ -122,50 +125,17 @@ export default function FoodDetailsScreen() {
       </Surface>
 
       <Surface style={styles.nutrients}>
-        <Nutrient label="Calorias" value={`${formatInt(nutrients.kcal)} kcal`} color={Nutrition.calories} />
-        <Nutrient label="Carboidratos" value={`${formatDecimal(nutrients.carbs)} g`} color={Nutrition.carbs} />
-        <Nutrient label="Proteínas" value={`${formatDecimal(nutrients.protein)} g`} color={Nutrition.protein} />
-        <Nutrient label="Gorduras" value={`${formatDecimal(nutrients.fat)} g`} color={Nutrition.fat} />
+        <Nutrient label="Calorias" value={`${formatInt(nutrients.kcal)} kcal`} color={custom.diet.color} />
+        <Nutrient label="Carboidratos" value={`${formatDecimal(nutrients.carbs)} g`} color={custom.carbs.color} />
+        <Nutrient label="Proteínas" value={`${formatDecimal(nutrients.protein)} g`} color={custom.protein.color} />
+        <Nutrient label="Gorduras" value={`${formatDecimal(nutrients.fat)} g`} color={custom.fat.color} />
         {nutrients.fiber !== undefined && (
           <Nutrient label="Fibras" value={`${formatDecimal(nutrients.fiber)} g`} />
         )}
       </Surface>
 
-      <Pressable
-        onPress={save}
-        disabled={!valid}
-        accessibilityRole="button"
-        accessibilityState={{ disabled: !valid }}
-        style={({ pressed }) => [styles.save, (!valid || pressed) && styles.pressed]}>
-        <ThemedText style={styles.saveText}>Adicionar</ThemedText>
-      </Pressable>
+      <Button label="Adicionar" size="medium" fullWidth onPress={save} disabled={!valid} />
     </ScrollView>
-  );
-}
-
-type ChipProps = {
-  label: string;
-  selected: boolean;
-  onPress: () => void;
-};
-
-function Chip({ label, selected, onPress }: ChipProps) {
-  const theme = useTheme();
-
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityState={{ selected }}
-      style={({ pressed }) => [
-        styles.chip,
-        { backgroundColor: selected ? Brand.primary : theme.backgroundSelected },
-        pressed && styles.pressed,
-      ]}>
-      <ThemedText type="titleSmall" style={selected ? styles.chipTextSelected : undefined}>
-        {label}
-      </ThemedText>
-    </Pressable>
   );
 }
 
@@ -176,17 +146,20 @@ function Nutrient({ label, value, color }: { label: string; value: string; color
         {color && <View style={[styles.dot, { backgroundColor: color }]} />}
         <ThemedText>{label}</ThemedText>
       </View>
-      <ThemedText type="titleSmall">{value}</ThemedText>
+      <ThemedText type="titleMedium">{value}</ThemedText>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  scroll: {
+    flex: 1,
+  },
   content: {
     width: '100%',
     maxWidth: MaxContentWidth,
     alignSelf: 'center',
-    padding: Spacing.four,
+    padding: Spacing.three,
     gap: Spacing.four,
   },
   missing: {
@@ -194,11 +167,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: Spacing.four,
-  },
-  name: {
-    fontSize: 22,
-    lineHeight: 30,
-    fontWeight: 700,
   },
   form: {
     gap: Spacing.three,
@@ -217,24 +185,12 @@ const styles = StyleSheet.create({
   },
   input: {
     width: 120,
-    height: 44,
-    borderRadius: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    fontSize: 16,
     textAlign: 'right',
   },
   chips: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.two,
-  },
-  chip: {
-    borderRadius: Spacing.four,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-  },
-  chipTextSelected: {
-    color: Brand.onPrimary,
   },
   nutrients: {
     gap: Spacing.two + Spacing.one,
@@ -251,22 +207,8 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-  save: {
-    height: 52,
-    borderRadius: Spacing.three,
-    backgroundColor: Brand.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  saveText: {
-    color: Brand.onPrimary,
-    fontWeight: 700,
-  },
-  pressed: {
-    opacity: 0.5,
+    width: 12,
+    height: 12,
+    borderRadius: Shape.full,
   },
 });

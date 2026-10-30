@@ -30,8 +30,12 @@ type ButtonProps = Omit<PressableProps, 'children' | 'style'> & {
   icon?: LucideIcon;
   /** Shows a spinner instead of the label and disables the button. */
   loading?: boolean;
-  /** `error` colors outlined/text buttons for destructive actions such as signing out. */
-  tone?: 'default' | 'error';
+  /**
+   * Color of outlined/text buttons: `error` for destructive actions such as
+   * signing out; `secondary` for low-emphasis links on screens whose
+   * `primary` is taken by the main action.
+   */
+  tone?: 'default' | 'error' | 'secondary';
   /** Stretches to the full width of its parent. */
   fullWidth?: boolean;
   style?: StyleProp<ViewStyle>;
@@ -54,7 +58,7 @@ export function Button({
   const { colors } = useAppTheme();
   const inactive = disabled || loading;
 
-  const accent = tone === 'error' ? colors.error : colors.primary;
+  const accent = { default: colors.primary, error: colors.error, secondary: colors.secondary }[tone];
   const palette = {
     filled: { container: colors.primary, content: colors.onPrimary },
     tonal: { container: colors.secondaryContainer, content: colors.onSecondaryContainer },

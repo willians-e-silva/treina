@@ -1,24 +1,25 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import Apple from 'lucide-react-native/icons/apple';
-import ChevronRight from 'lucide-react-native/icons/chevron-right';
 import RotateCw from 'lucide-react-native/icons/rotate-cw';
-import Search from 'lucide-react-native/icons/search';
 import { useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { HeaderBackButton } from '@/components/ui/header-back-button';
 import { formatInt } from '@/components/dashboard/format';
 import { ThemedText } from '@/components/themed-text';
-import { Brand, MaxContentWidth, Spacing } from '@/constants/theme';
+import { Button } from '@/components/ui/button';
+import { HeaderBackButton } from '@/components/ui/header-back-button';
+import { ListRow } from '@/components/ui/list-row';
+import { SearchBar } from '@/components/ui/search-bar';
+import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useFoodLog } from '@/context/food-log';
 import { useFoodSearch } from '@/hooks/use-food-search';
-import { useTheme } from '@/hooks/use-theme';
 import { toDateKey } from '@/lib/exercises';
 import type { Food } from '@/lib/foods';
+import { useAppTheme } from '@/theme';
 
 export default function SearchFoodScreen() {
-  const theme = useTheme();
+  const { colors } = useAppTheme();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ meal?: string; date?: string }>();
   const { meals } = useFoodLog();
@@ -48,37 +49,35 @@ export default function SearchFoodScreen() {
         data={data}
         keyExtractor={(food) => food.id}
         renderItem={({ item, index }) => (
-          <FoodRow
-            food={item}
+          <ListRow
+            title={item.name}
+            supporting={[`${formatInt(item.per100g.kcal)} kcal / 100 g`, item.detail]
+              .filter(Boolean)
+              .join(' · ')}
             first={index === 0}
             last={index === data.length - 1}
             onPress={() => openFood(item)}
           />
         )}
-        style={{ backgroundColor: theme.background }}
+        style={styles.list}
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.four }]}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         ListHeaderComponent={
-          <View style={[styles.search, { backgroundColor: theme.backgroundElement }]}>
-            <Search color={theme.textSecondary} size={18} aria-hidden />
-            <TextInput
-              value={query}
-              onChangeText={setQuery}
-              placeholder="Buscar alimento ou marca"
-              placeholderTextColor={theme.textSecondary}
-              autoFocus
-              autoCorrect={false}
-              returnKeyType="search"
-              accessibilityLabel="Buscar alimento"
-              style={[styles.input, { color: theme.text }]}
-            />
-          </View>
+          <SearchBar
+            value={query}
+            onChangeText={setQuery}
+            placeholder="Buscar alimento ou marca"
+            autoFocus
+            autoCorrect={false}
+            accessibilityLabel="Buscar alimento"
+            style={styles.search}
+          />
         }
         ListEmptyComponent={
           !searching ? (
             <View style={styles.empty}>
-              <Apple color={theme.backgroundSelected} size={96} strokeWidth={1.5} aria-hidden />
+              <Apple color={colors.outlineVariant} size={96} strokeWidth={1.5} aria-hidden />
               <ThemedText themeColor="onSurfaceVariant">Busque e adicione alimentos</ThemedText>
             </View>
           ) : remote.status === 'done' || remote.status === 'idle' ? (
@@ -89,21 +88,13 @@ export default function SearchFoodScreen() {
         }
         ListFooterComponent={
           !searching ? undefined : remote.status === 'loading' ? (
-            <ActivityIndicator color={Brand.primary} style={styles.footer} />
+            <ActivityIndicator color={colors.primary} style={styles.footer} />
           ) : remote.status === 'error' ? (
             <View style={[styles.footer, styles.footerError]}>
-              <ThemedText type="bodyMedium" style={styles.error}>
+              <ThemedText type="bodyMedium" themeColor="error">
                 {remote.message}
               </ThemedText>
-              <Pressable
-                onPress={retry}
-                accessibilityRole="button"
-                style={({ pressed }) => [styles.action, pressed && styles.pressed]}>
-                <RotateCw color={Brand.primary} size={18} strokeWidth={2.5} aria-hidden />
-                <ThemedText type="titleSmall" style={styles.actionText}>
-                  Tentar novamente
-                </ThemedText>
-              </Pressable>
+              <Button label="Tentar novamente" variant="tonal" icon={RotateCw} onPress={retry} />
             </View>
           ) : undefined
         }
@@ -112,71 +103,19 @@ export default function SearchFoodScreen() {
   );
 }
 
-type FoodRowProps = {
-  food: Food;
-  /** The first and last rows round their corners so the list reads as one panel. */
-  first: boolean;
-  last: boolean;
-  onPress: () => void;
-};
-
-function FoodRow({ food, first, last, onPress }: FoodRowProps) {
-  const theme = useTheme();
-
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      style={({ pressed }) => [
-        styles.row,
-        { backgroundColor: theme.backgroundElement },
-        first && styles.rowFirst,
-        last && styles.rowLast,
-        pressed && styles.pressed,
-      ]}>
-      <View
-        style={[
-          styles.rowInner,
-          !first && {
-            borderTopWidth: StyleSheet.hairlineWidth,
-            borderTopColor: theme.backgroundSelected,
-          },
-        ]}>
-        <View style={styles.rowText}>
-          <ThemedText numberOfLines={2}>{food.name}</ThemedText>
-          <ThemedText type="bodyMedium" themeColor="onSurfaceVariant" numberOfLines={1}>
-            {[`${formatInt(food.per100g.kcal)} kcal / 100 g`, food.detail]
-              .filter(Boolean)
-              .join(' · ')}
-          </ThemedText>
-        </View>
-        <ChevronRight color={theme.textSecondary} size={18} aria-hidden />
-      </View>
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
+  list: {
+    flex: 1,
+  },
   content: {
     flexGrow: 1,
     width: '100%',
     maxWidth: MaxContentWidth,
     alignSelf: 'center',
-    padding: Spacing.four,
+    padding: Spacing.three,
   },
   search: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
-    height: 48,
-    borderRadius: Spacing.three,
-    paddingHorizontal: Spacing.three,
     marginBottom: Spacing.three,
-  },
-  input: {
-    flex: 1,
-    height: '100%',
-    fontSize: 16,
   },
   empty: {
     flex: 1,
@@ -195,41 +134,5 @@ const styles = StyleSheet.create({
   },
   footerError: {
     gap: Spacing.three,
-  },
-  error: {
-    color: Brand.danger,
-  },
-  action: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
-  },
-  actionText: {
-    color: Brand.primary,
-  },
-  row: {
-    paddingHorizontal: Spacing.three,
-  },
-  rowFirst: {
-    borderTopLeftRadius: Spacing.four,
-    borderTopRightRadius: Spacing.four,
-    paddingTop: Spacing.two,
-  },
-  rowLast: {
-    borderBottomLeftRadius: Spacing.four,
-    borderBottomRightRadius: Spacing.four,
-    paddingBottom: Spacing.two,
-  },
-  rowInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingVertical: Spacing.two + Spacing.one,
-  },
-  rowText: {
-    flex: 1,
-  },
-  pressed: {
-    opacity: 0.5,
   },
 });

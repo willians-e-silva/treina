@@ -1,22 +1,21 @@
 import { Redirect } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { StepScreen } from '@/components/signup/step-screen';
 import { ThemedText } from '@/components/themed-text';
 import { FormField } from '@/components/ui/form-field';
 import { PickerField } from '@/components/ui/picker-field';
-import { Brand, Spacing } from '@/constants/theme';
+import { SegmentedButtons } from '@/components/ui/segmented-buttons';
+import { Spacing } from '@/constants/theme';
 import { useSession } from '@/context/session';
 import { useSignup } from '@/context/signup';
-import { useTheme } from '@/hooks/use-theme';
 import { AGE_OPTIONS, HEIGHT_OPTIONS, parseDecimal, SEX_LABELS, type Sex } from '@/lib/profile';
 
 const SEXES: Sex[] = ['female', 'male', 'unspecified'];
 
 /** Step 2: age, sex, height and current weight. */
 export default function SignupDetailsScreen() {
-  const theme = useTheme();
   const { signUp } = useSession();
   const { account } = useSignup();
 
@@ -88,28 +87,15 @@ export default function SignupDetailsScreen() {
       />
 
       <View style={styles.field}>
-        <ThemedText type="titleSmall">Sexo</ThemedText>
-        <View
-          style={[styles.segmented, { backgroundColor: theme.backgroundElement }]}
-          accessibilityRole="radiogroup">
-          {SEXES.map((value) => (
-            <Pressable
-              key={value}
-              onPress={() => setSex(value)}
-              disabled={submitting}
-              accessibilityRole="radio"
-              accessibilityState={{ checked: sex === value }}
-              style={[styles.segment, sex === value && styles.segmentSelected]}>
-              <ThemedText
-                type="titleSmall"
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                style={sex === value ? styles.segmentSelectedText : undefined}>
-                {SEX_LABELS[value]}
-              </ThemedText>
-            </Pressable>
-          ))}
-        </View>
+        <ThemedText type="labelLarge" themeColor="onSurfaceVariant">
+          Sexo
+        </ThemedText>
+        <SegmentedButtons
+          options={SEXES.map((value) => ({ value, label: SEX_LABELS[value] }))}
+          value={sex}
+          onChange={setSex}
+          disabled={submitting}
+        />
       </View>
 
       <PickerField
@@ -140,24 +126,5 @@ export default function SignupDetailsScreen() {
 const styles = StyleSheet.create({
   field: {
     gap: Spacing.two,
-  },
-  segmented: {
-    flexDirection: 'row',
-    height: 52,
-    borderRadius: Spacing.three,
-    padding: Spacing.one,
-  },
-  segment: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.one,
-    borderRadius: Spacing.three - Spacing.one,
-  },
-  segmentSelected: {
-    backgroundColor: Brand.primary,
-  },
-  segmentSelectedText: {
-    color: Brand.onPrimary,
   },
 });

@@ -1,18 +1,11 @@
 import type { PropsWithChildren } from 'react';
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
-import { Brand, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { Button } from '@/components/ui/button';
+import { Spacing } from '@/constants/theme';
+import { Shape, useAppTheme } from '@/theme';
 
 type StepScreenProps = PropsWithChildren<{
   step: number;
@@ -37,12 +30,12 @@ export function StepScreen({
   onSubmit,
   children,
 }: StepScreenProps) {
-  const theme = useTheme();
+  const { colors } = useAppTheme();
   const insets = useSafeAreaInsets();
 
   return (
     <KeyboardAvoidingView
-      style={[styles.flex, { backgroundColor: theme.background }]}
+      style={[styles.flex, { backgroundColor: colors.surface }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.four }]}
@@ -54,7 +47,11 @@ export function StepScreen({
                 key={index}
                 style={[
                   styles.progressStep,
-                  { backgroundColor: index < step ? Brand.primary : theme.backgroundSelected },
+                  {
+                    // `secondary`: primary is kept for the screen's main button.
+                    backgroundColor:
+                      index < step ? colors.secondary : colors.surfaceContainerHighest,
+                  },
                 ]}
               />
             ))}
@@ -69,22 +66,19 @@ export function StepScreen({
           {children}
 
           {error && (
-            <ThemedText type="bodyMedium" style={styles.error} accessibilityRole="alert">
+            <ThemedText type="bodyMedium" themeColor="error" accessibilityRole="alert">
               {error}
             </ThemedText>
           )}
 
-          <Pressable
+          <Button
+            label={submitLabel}
+            size="medium"
+            fullWidth
+            loading={submitting}
             onPress={onSubmit}
-            disabled={submitting}
-            accessibilityRole="button"
-            style={({ pressed }) => [styles.button, (pressed || submitting) && styles.pressed]}>
-            {submitting ? (
-              <ActivityIndicator color={Brand.onPrimary} />
-            ) : (
-              <ThemedText style={styles.buttonText}>{submitLabel}</ThemedText>
-            )}
-          </Pressable>
+            style={styles.submit}
+          />
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -114,27 +108,12 @@ const styles = StyleSheet.create({
   progressStep: {
     flex: 1,
     height: 4,
-    borderRadius: 2,
+    borderRadius: Shape.full,
   },
   form: {
     gap: Spacing.three,
   },
-  error: {
-    color: Brand.danger,
-  },
-  button: {
-    height: 52,
-    borderRadius: Spacing.three,
-    backgroundColor: Brand.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
+  submit: {
     marginTop: Spacing.two,
-  },
-  pressed: {
-    opacity: 0.8,
-  },
-  buttonText: {
-    color: Brand.onPrimary,
-    fontWeight: 600,
   },
 });

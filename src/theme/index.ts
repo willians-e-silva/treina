@@ -198,3 +198,11 @@ export const BrandColors = {
     mark: '#4285F4',
   },
 } as const;
+
+/**
+ * Colors fixed by third-party content: the ExerciseDB GIFs have a white
+ * background, so their frame stays white in dark mode too.
+ */
+export const MediaColors = {
+  exerciseGif: '#FFFFFF',
+} as const;

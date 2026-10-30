@@ -2,17 +2,22 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import Plus from 'lucide-react-native/icons/plus';
 import Trash from 'lucide-react-native/icons/trash';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { HeaderBackButton } from '@/components/ui/header-back-button';
 import { ThemedText } from '@/components/themed-text';
+import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/ui/icon-button';
+import { SegmentedButtons } from '@/components/ui/segmented-buttons';
+import { StateLayer } from '@/components/ui/state-layer';
 import { Surface } from '@/components/ui/surface';
-import { Brand, MaxContentWidth, Spacing } from '@/constants/theme';
+import { ThemedTextInput } from '@/components/ui/text-input';
+import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTasks } from '@/context/tasks';
-import { useTheme } from '@/hooks/use-theme';
 import { fromDateKey, toDateKey } from '@/lib/exercises';
 import type { RepeatUnit, TaskRepeat } from '@/lib/tasks';
+import { MinTouchTarget, Shape, useAppTheme } from '@/theme';
 
 type RepeatOption = 'none' | 'daily' | 'weekly' | 'custom';
 
@@ -31,7 +36,7 @@ const UNIT_OPTIONS: { value: RepeatUnit; label: string }[] = [
 const longDate = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
 
 export default function AddTaskScreen() {
-  const theme = useTheme();
+  const { colors } = useAppTheme();
   const insets = useSafeAreaInsets();
   const { tasks, addTask, addSubtask } = useTasks();
   const params = useLocalSearchParams<{ date?: string; parentId?: string }>();
@@ -93,19 +98,17 @@ export default function AddTaskScreen() {
         }}
       />
       <ScrollView
-        style={{ backgroundColor: theme.background }}
+        style={styles.scroll}
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.four }]}
         keyboardShouldPersistTaps="handled">
-        <TextInput
+        <ThemedTextInput
           value={title}
           onChangeText={setTitle}
           onSubmitEditing={save}
           placeholder={parent ? 'Nome da subtarefa' : 'Nome da tarefa'}
-          placeholderTextColor={theme.textSecondary}
           autoFocus
           returnKeyType="done"
           accessibilityLabel={parent ? 'Nome da subtarefa' : 'Nome da tarefa'}
-          style={[styles.title, { color: theme.text, backgroundColor: theme.backgroundElement }]}
         />
 
         {parent ? (
@@ -125,22 +128,32 @@ export default function AddTaskScreen() {
                     onPress={() => setOption(item.value)}
                     accessibilityRole="radio"
                     accessibilityState={{ checked: option === item.value }}
-                    style={({ pressed }) => [
+                    style={[
                       styles.option,
                       index > 0 && {
                         borderTopWidth: StyleSheet.hairlineWidth,
-                        borderTopColor: theme.backgroundSelected,
+                        borderTopColor: colors.outlineVariant,
                       },
-                      pressed && styles.pressed,
                     ]}>
-                    <ThemedText style={styles.optionLabel}>{item.label}</ThemedText>
-                    <View
-                      style={[
-                        styles.radio,
-                        { borderColor: option === item.value ? Brand.primary : theme.textSecondary },
-                      ]}>
-                      {option === item.value && <View style={styles.radioDot} />}
-                    </View>
+                    {({ pressed }) => (
+                      <>
+                        <StateLayer color={colors.onSurface} pressed={pressed} />
+                        <ThemedText style={styles.optionLabel}>{item.label}</ThemedText>
+                        {/* `secondary`: primary is kept for the screen's main button. */}
+                        <View
+                          style={[
+                            styles.radio,
+                            {
+                              borderColor:
+                                option === item.value ? colors.secondary : colors.onSurfaceVariant,
+                            },
+                          ]}>
+                          {option === item.value && (
+                            <View style={[styles.radioDot, { backgroundColor: colors.secondary }]} />
+                          )}
+                        </View>
+                      </>
+                    )}
                   </Pressable>
                 ))}
               </Surface>
@@ -149,30 +162,21 @@ export default function AddTaskScreen() {
             {option === 'custom' && (
               <Surface style={styles.custom}>
                 <ThemedText style={styles.optionLabel}>A cada</ThemedText>
-                <TextInput
+                <ThemedTextInput
+                  size="compact"
                   value={interval}
                   onChangeText={setIntervalText}
                   keyboardType="number-pad"
                   selectTextOnFocus
                   accessibilityLabel="Intervalo"
-                  style={[styles.interval, { color: theme.text, backgroundColor: theme.backgroundSelected }]}
+                  style={styles.interval}
                 />
-                <View style={[styles.segmented, { backgroundColor: theme.backgroundSelected }]}>
-                  {UNIT_OPTIONS.map((item) => (
-                    <Pressable
-                      key={item.value}
-                      onPress={() => setUnit(item.value)}
-                      accessibilityRole="radio"
-                      accessibilityState={{ checked: unit === item.value }}
-                      style={[styles.segment, unit === item.value && styles.segmentSelected]}>
-                      <ThemedText
-                        type="titleSmall"
-                        style={unit === item.value && { color: Brand.onPrimary }}>
-                        {item.label}
-                      </ThemedText>
-                    </Pressable>
-                  ))}
-                </View>
+                <SegmentedButtons
+                  options={UNIT_OPTIONS}
+                  value={unit}
+                  onChange={setUnit}
+                  style={styles.segmented}
+                />
               </Surface>
             )}
 
@@ -194,18 +198,15 @@ export default function AddTaskScreen() {
                       styles.option,
                       index > 0 && {
                         borderTopWidth: StyleSheet.hairlineWidth,
-                        borderTopColor: theme.backgroundSelected,
+                        borderTopColor: colors.outlineVariant,
                       },
                     ]}>
                     <ThemedText style={styles.optionLabel}>{subtask}</ThemedText>
-                    <Pressable
+                    <IconButton
+                      icon={Trash}
                       onPress={() => setSubtasks((current) => current.filter((_, i) => i !== index))}
-                      accessibilityRole="button"
                       accessibilityLabel={`Remover ${subtask}`}
-                      hitSlop={Spacing.two}
-                      style={({ pressed }) => pressed && styles.pressed}>
-                      <Trash color={theme.textSecondary} size={18} />
-                    </Pressable>
+                    />
                   </View>
                 ))}
                 <View
@@ -213,61 +214,48 @@ export default function AddTaskScreen() {
                     styles.option,
                     subtasks.length > 0 && {
                       borderTopWidth: StyleSheet.hairlineWidth,
-                      borderTopColor: theme.backgroundSelected,
+                      borderTopColor: colors.outlineVariant,
                     },
                   ]}>
-                  <TextInput
+                  <ThemedTextInput
+                    size="compact"
                     value={subtaskDraft}
                     onChangeText={setSubtaskDraft}
                     onSubmitEditing={addDraftSubtask}
                     placeholder="Adicionar subtarefa"
-                    placeholderTextColor={theme.textSecondary}
                     returnKeyType="next"
                     submitBehavior="submit"
                     accessibilityLabel="Nova subtarefa"
-                    style={[styles.subtaskInput, { color: theme.text }]}
+                    style={styles.subtaskInput}
                   />
-                  <Pressable
+                  <IconButton
+                    icon={Plus}
                     onPress={addDraftSubtask}
                     disabled={!subtaskDraft.trim()}
-                    accessibilityRole="button"
                     accessibilityLabel="Adicionar subtarefa"
-                    hitSlop={Spacing.two}
-                    style={({ pressed }) => (pressed || !subtaskDraft.trim()) && styles.pressed}>
-                    <Plus color={Brand.primary} size={20} strokeWidth={2.5} />
-                  </Pressable>
+                  />
                 </View>
               </Surface>
             </View>
           </>
         )}
 
-        <Pressable
-          onPress={save}
-          disabled={!valid}
-          accessibilityRole="button"
-          accessibilityState={{ disabled: !valid }}
-          style={({ pressed }) => [styles.save, (!valid || pressed) && styles.pressed]}>
-          <ThemedText style={styles.saveText}>Adicionar</ThemedText>
-        </Pressable>
+        <Button label="Adicionar" size="medium" fullWidth onPress={save} disabled={!valid} />
       </ScrollView>
     </>
   );
 }
 
 const styles = StyleSheet.create({
+  scroll: {
+    flex: 1,
+  },
   content: {
     width: '100%',
     maxWidth: MaxContentWidth,
     alignSelf: 'center',
-    padding: Spacing.four,
+    padding: Spacing.three,
     gap: Spacing.four,
-  },
-  title: {
-    height: 52,
-    borderRadius: Spacing.three,
-    paddingHorizontal: Spacing.three,
-    fontSize: 16,
   },
   group: {
     gap: Spacing.two,
@@ -279,19 +267,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.three,
-    paddingVertical: Spacing.three,
+    minHeight: MinTouchTarget + Spacing.two,
+    marginHorizontal: -Spacing.three,
+    paddingHorizontal: Spacing.three,
+    overflow: 'hidden',
   },
   optionLabel: {
     flex: 1,
   },
   subtaskInput: {
     flex: 1,
-    fontSize: 16,
   },
   radio: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 20,
+    height: 20,
+    borderRadius: Shape.full,
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
@@ -299,8 +289,7 @@ const styles = StyleSheet.create({
   radioDot: {
     width: 10,
     height: 10,
-    borderRadius: 5,
-    backgroundColor: Brand.primary,
+    borderRadius: Shape.full,
   },
   custom: {
     flexDirection: 'row',
@@ -310,37 +299,9 @@ const styles = StyleSheet.create({
   },
   interval: {
     width: 64,
-    height: 44,
-    borderRadius: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    fontSize: 16,
     textAlign: 'center',
   },
   segmented: {
-    flexDirection: 'row',
-    borderRadius: Spacing.two,
-    padding: Spacing.half,
-  },
-  segment: {
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    borderRadius: Spacing.two - Spacing.half,
-  },
-  segmentSelected: {
-    backgroundColor: Brand.primary,
-  },
-  save: {
-    height: 52,
-    borderRadius: Spacing.three,
-    backgroundColor: Brand.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  saveText: {
-    color: Brand.onPrimary,
-    fontWeight: 700,
-  },
-  pressed: {
-    opacity: 0.5,
+    flex: 1,
   },
 });

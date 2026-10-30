@@ -1,17 +1,18 @@
 import { Image } from 'expo-image';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import ChevronRight from 'lucide-react-native/icons/chevron-right';
 import Dumbbell from 'lucide-react-native/icons/dumbbell';
 import Plus from 'lucide-react-native/icons/plus';
 import Search from 'lucide-react-native/icons/search';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { HeaderBackButton } from '@/components/ui/header-back-button';
+import { ListRow } from '@/components/ui/list-row';
+import { SearchBar } from '@/components/ui/search-bar';
 import { ThemedText } from '@/components/themed-text';
-import { Brand, MaxContentWidth, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { Button } from '@/components/ui/button';
+import { MaxContentWidth, Spacing } from '@/constants/theme';
 import {
   CATEGORY_LABELS,
   CUSTOM_EXERCISE_ID,
@@ -20,6 +21,7 @@ import {
   type ExerciseCategory,
 } from '@/lib/exercises';
 import { listExercises, searchExercises } from '@/lib/exercisedb';
+import { ComponentShape, MediaColors, useAppTheme } from '@/theme';
 
 type RemoteState =
   | { status: 'idle' }
@@ -82,7 +84,7 @@ function useCatalog(category: ExerciseCategory) {
 }
 
 export default function SearchExerciseScreen() {
-  const theme = useTheme();
+  const { colors } = useAppTheme();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ category?: ExerciseCategory; date?: string }>();
   const category = params.category === 'strength' ? 'strength' : 'cardio';
@@ -143,27 +145,21 @@ export default function SearchExerciseScreen() {
         // Lazy loading: the next catalog page loads as the end of the list gets close.
         onEndReached={showSearch ? undefined : () => loadMore()}
         onEndReachedThreshold={0.5}
-        style={{ backgroundColor: theme.background }}
+        style={styles.list}
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.four }]}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         ListHeaderComponent={
           <View style={styles.header}>
-            <View style={[styles.search, { backgroundColor: theme.backgroundElement }]}>
-              <Search color={theme.textSecondary} size={18} aria-hidden />
-              <TextInput
-                value={query}
-                onChangeText={setQuery}
-                onSubmitEditing={searchRemote}
-                placeholder="Buscar exercício"
-                placeholderTextColor={theme.textSecondary}
-                autoFocus
-                autoCorrect={false}
-                returnKeyType="search"
-                accessibilityLabel="Buscar exercício"
-                style={[styles.input, { color: theme.text }]}
-              />
-            </View>
+            <SearchBar
+              value={query}
+              onChangeText={setQuery}
+              onSubmitEditing={searchRemote}
+              placeholder="Buscar exercício"
+              autoFocus
+              autoCorrect={false}
+              accessibilityLabel="Buscar exercício"
+            />
 
             {customName.length > 0 && (
               <View style={styles.actions}>
@@ -196,7 +192,7 @@ export default function SearchExerciseScreen() {
         }
         ListEmptyComponent={
           listReady && !loading ? (
-            <View style={[styles.emptyBox, { backgroundColor: theme.backgroundElement }]}>
+            <View style={[styles.emptyBox, { backgroundColor: colors.surfaceContainer }]}>
               <ThemedText type="bodyMedium" themeColor="onSurfaceVariant" style={styles.empty}>
                 {showSearch
                   ? 'Nenhum exercício encontrado. Tente um termo em inglês.'
@@ -207,16 +203,17 @@ export default function SearchExerciseScreen() {
         }
         ListFooterComponent={
           <View style={styles.footer}>
-            {loading && <ActivityIndicator color={Brand.primary} />}
+            {loading && <ActivityIndicator color={colors.primary} />}
             {error && (
-              <ThemedText type="bodyMedium" style={styles.error}>
+              <ThemedText type="bodyMedium" themeColor="error">
                 {error}
               </ThemedText>
             )}
             {!showSearch && error && catalog.hasMore && (
-              <TextAction
-                icon={Plus}
+              <Button
                 label="Tentar novamente"
+                variant="tonal"
+                icon={Plus}
                 onPress={() => loadMore({ retry: true })}
               />
             )}
@@ -233,58 +230,41 @@ type TextActionProps = {
   onPress: () => void;
 };
 
-function TextAction({ icon: Icon, label, onPress }: TextActionProps) {
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      style={({ pressed }) => [styles.action, pressed && styles.pressed]}>
-      <Icon color={Brand.primary} size={18} strokeWidth={2.5} aria-hidden />
-      <ThemedText type="titleSmall" style={styles.actionText} numberOfLines={1}>
-        {label}
-      </ThemedText>
-    </Pressable>
-  );
+/** Low-emphasis action under the search bar (M3 text button). */
+function TextAction({ icon, label, onPress }: TextActionProps) {
+  return <Button label={label} variant="text" tone="secondary" icon={icon} onPress={onPress} />;
 }
 
 type ExerciseRowProps = {
   exercise: Exercise;
-  /** The first and last rows round their corners so the list reads as one panel. */
   first: boolean;
   last: boolean;
   onPress: () => void;
 };
 
 function ExerciseRow({ exercise, first, last, onPress }: ExerciseRowProps) {
-  const theme = useTheme();
+  const { colors } = useAppTheme();
 
   return (
-    <Pressable
+    <ListRow
+      title={exercise.name}
+      supporting={
+        exercise.target
+          ? [exercise.target, exercise.equipment].filter(Boolean).join(' · ')
+          : undefined
+      }
+      first={first}
+      last={last}
       onPress={onPress}
-      accessibilityRole="button"
-      style={({ pressed }) => [
-        styles.row,
-        { backgroundColor: theme.backgroundElement },
-        first && styles.rowFirst,
-        last && styles.rowLast,
-        pressed && styles.pressed,
-      ]}>
-      <View
-        style={[
-          styles.rowInner,
-          !first && {
-            borderTopWidth: StyleSheet.hairlineWidth,
-            borderTopColor: theme.backgroundSelected,
-          },
-        ]}>
-        {exercise.gifUrl ? (
+      leading={
+        exercise.gifUrl ? (
           <Image
             source={exercise.gifUrl}
             // First frame only: dozens of animated GIFs would be heavy.
             autoplay={false}
             recyclingKey={exercise.id}
             contentFit="cover"
-            style={styles.thumbnail}
+            style={[styles.thumbnail, { backgroundColor: MediaColors.exerciseGif }]}
             aria-hidden
           />
         ) : (
@@ -292,108 +272,51 @@ function ExerciseRow({ exercise, first, last, onPress }: ExerciseRowProps) {
             style={[
               styles.thumbnail,
               styles.placeholder,
-              { backgroundColor: theme.backgroundSelected },
+              { backgroundColor: colors.surfaceContainerHighest },
             ]}>
-            <Dumbbell color={theme.textSecondary} size={18} aria-hidden />
+            <Dumbbell color={colors.onSurfaceVariant} size={24} aria-hidden />
           </View>
-        )}
-        <View style={styles.rowText}>
-          <ThemedText numberOfLines={2}>{exercise.name}</ThemedText>
-          {exercise.target && (
-            <ThemedText type="bodyMedium" themeColor="onSurfaceVariant" numberOfLines={1}>
-              {[exercise.target, exercise.equipment].filter(Boolean).join(' · ')}
-            </ThemedText>
-          )}
-        </View>
-        <ChevronRight color={theme.textSecondary} size={18} aria-hidden />
-      </View>
-    </Pressable>
+        )
+      }
+    />
   );
 }
 
 const styles = StyleSheet.create({
+  list: {
+    flex: 1,
+  },
   content: {
     width: '100%',
     maxWidth: MaxContentWidth,
     alignSelf: 'center',
-    padding: Spacing.four,
+    padding: Spacing.three,
   },
   header: {
     gap: Spacing.three,
     paddingBottom: Spacing.two,
   },
-  search: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
-    height: 48,
-    borderRadius: Spacing.three,
-    paddingHorizontal: Spacing.three,
-  },
-  input: {
-    flex: 1,
-    height: '100%',
-    fontSize: 16,
-  },
   actions: {
-    gap: Spacing.three,
-  },
-  action: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
-  },
-  actionText: {
-    flexShrink: 1,
-    color: Brand.primary,
+    gap: Spacing.one,
   },
   footer: {
     gap: Spacing.three,
     paddingTop: Spacing.three,
   },
-  error: {
-    color: Brand.danger,
-  },
   emptyBox: {
-    borderRadius: Spacing.four,
+    borderRadius: ComponentShape.card,
     padding: Spacing.three,
   },
   empty: {
     textAlign: 'center',
   },
-  row: {
-    paddingHorizontal: Spacing.three,
-  },
-  rowFirst: {
-    borderTopLeftRadius: Spacing.four,
-    borderTopRightRadius: Spacing.four,
-    paddingTop: Spacing.two,
-  },
-  rowLast: {
-    borderBottomLeftRadius: Spacing.four,
-    borderBottomRightRadius: Spacing.four,
-    paddingBottom: Spacing.two,
-  },
-  rowInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingVertical: Spacing.two + Spacing.one,
-  },
   thumbnail: {
     width: 48,
     height: 48,
-    borderRadius: Spacing.two,
-    backgroundColor: '#ffffff',
+    borderRadius: ComponentShape.listItemImage,
   },
   placeholder: {
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  rowText: {
-    flex: 1,
-  },
-  pressed: {
-    opacity: 0.5,
   },
 });

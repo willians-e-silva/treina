@@ -1,15 +1,16 @@
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useNavigation } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { formatDecimal } from '@/components/dashboard/format';
 import { ThemedText } from '@/components/themed-text';
+import { Button } from '@/components/ui/button';
 import { Surface } from '@/components/ui/surface';
-import { Brand, MaxContentWidth, Spacing } from '@/constants/theme';
+import { ThemedTextInput } from '@/components/ui/text-input';
+import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useExerciseLog } from '@/context/exercise-log';
-import { useTheme } from '@/hooks/use-theme';
 import { useSession } from '@/context/session';
 import { MOCK_PROFILE } from '@/lib/profile';
 import {
@@ -19,7 +20,7 @@ import {
   toDateKey,
   type ExerciseCategory,
 } from '@/lib/exercises';
-
+import { ComponentShape, MediaColors } from '@/theme';
 
 /** Parses user input like "12", "12,5" or "12.5"; `NaN` when invalid. */
 function parseNumber(text: string) {
@@ -27,7 +28,6 @@ function parseNumber(text: string) {
 }
 
 export default function ExerciseDetailsScreen() {
-  const theme = useTheme();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const { addEntry } = useExerciseLog();
@@ -82,7 +82,7 @@ export default function ExerciseDetailsScreen() {
 
   return (
     <ScrollView
-      style={{ backgroundColor: theme.background }}
+      style={styles.scroll}
       contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.four }]}
       keyboardShouldPersistTaps="handled">
       {exercise?.gifUrl && (
@@ -98,7 +98,7 @@ export default function ExerciseDetailsScreen() {
         <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
           {CATEGORY_LABELS[category]}
         </ThemedText>
-        <ThemedText style={styles.name} accessibilityRole="header">
+        <ThemedText type="headlineSmall" emphasized accessibilityRole="header">
           {name}
         </ThemedText>
         {details.length > 0 && (
@@ -132,14 +132,7 @@ export default function ExerciseDetailsScreen() {
         )}
       </Surface>
 
-      <Pressable
-        onPress={save}
-        disabled={!valid}
-        accessibilityRole="button"
-        accessibilityState={{ disabled: !valid }}
-        style={({ pressed }) => [styles.save, (!valid || pressed) && styles.pressed]}>
-        <ThemedText style={styles.saveText}>Adicionar</ThemedText>
-      </Pressable>
+      <Button label="Adicionar" size="medium" fullWidth onPress={save} disabled={!valid} />
     </ScrollView>
   );
 }
@@ -154,21 +147,19 @@ type FieldProps = {
 };
 
 function Field({ label, value, onChangeText, placeholder, hint, integer }: FieldProps) {
-  const theme = useTheme();
-
   return (
     <View style={styles.field}>
       <View style={styles.fieldRow}>
         <ThemedText style={styles.fieldLabel}>{label}</ThemedText>
-        <TextInput
+        <ThemedTextInput
+          size="compact"
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          placeholderTextColor={theme.textSecondary}
           keyboardType={integer ? 'number-pad' : 'decimal-pad'}
           selectTextOnFocus
           accessibilityLabel={label}
-          style={[styles.input, { color: theme.text, backgroundColor: theme.backgroundSelected }]}
+          style={styles.input}
         />
       </View>
       {hint && (
@@ -181,25 +172,22 @@ function Field({ label, value, onChangeText, placeholder, hint, integer }: Field
 }
 
 const styles = StyleSheet.create({
+  scroll: {
+    flex: 1,
+  },
   content: {
     width: '100%',
     maxWidth: MaxContentWidth,
     alignSelf: 'center',
-    padding: Spacing.four,
+    padding: Spacing.three,
     gap: Spacing.four,
   },
   gif: {
     width: '100%',
     aspectRatio: 1,
     maxHeight: 320,
-    borderRadius: Spacing.four,
-    // The GIFs have a white background; keep it in dark mode too.
-    backgroundColor: '#ffffff',
-  },
-  name: {
-    fontSize: 24,
-    lineHeight: 32,
-    fontWeight: 700,
+    borderRadius: ComponentShape.card,
+    backgroundColor: MediaColors.exerciseGif,
   },
   form: {
     gap: Spacing.three,
@@ -218,24 +206,6 @@ const styles = StyleSheet.create({
   },
   input: {
     width: 120,
-    height: 44,
-    borderRadius: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    fontSize: 16,
     textAlign: 'right',
-  },
-  save: {
-    height: 52,
-    borderRadius: Spacing.three,
-    backgroundColor: Brand.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  saveText: {
-    color: Brand.onPrimary,
-    fontWeight: 700,
-  },
-  pressed: {
-    opacity: 0.5,
   },
 });
