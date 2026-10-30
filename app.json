@@ -3,6 +3,9 @@
     "name": "treina",
     "slug": "treina",
     "version": "1.0.0",
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "treina",
@@ -11,6 +14,7 @@
       "icon": "./assets/expo.icon"
     },
     "android": {
+      "package": "com.willianssilva.treina",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
