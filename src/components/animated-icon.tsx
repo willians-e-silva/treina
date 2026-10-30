@@ -5,8 +5,12 @@ import { Dimensions, StyleSheet, View } from 'react-native';
 import Animated, { Easing, Keyframe } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
+import { IconColors, Shape } from '@/theme';
+
 const INITIAL_SCALE_FACTOR = Dimensions.get('screen').height / 90;
 const DURATION = 600;
+/** Same size as the native splash image (`imageWidth` in app.json). */
+const SPLASH_IMAGE_SIZE = 160;
 
 export function AnimatedSplashOverlay() {
   const [animate, setAnimate] = useState(false);
@@ -33,7 +37,10 @@ export function AnimatedSplashOverlay() {
     },
   });
 
-  const image = <Image style={styles.image} source={require('@/assets/images/expo-logo.png')} />;
+  // Continues the native splash: same background and image as app.json.
+  const image = (
+    <Image style={styles.splashImage} source={require('@/assets/images/icon.png')} />
+  );
 
   return animate ? (
     <Animated.View
@@ -132,15 +139,19 @@ const styles = StyleSheet.create({
     height: 71,
   },
   background: {
-    borderRadius: 40,
-    experimental_backgroundImage: `linear-gradient(180deg, #3C9FFE, #0274DF)`,
+    borderRadius: Shape.extraLargeIncreased,
+    experimental_backgroundImage: `linear-gradient(180deg, ${IconColors.blue}, ${IconColors.purple})`,
     width: 128,
     height: 128,
     position: 'absolute',
   },
+  splashImage: {
+    width: SPLASH_IMAGE_SIZE,
+    height: SPLASH_IMAGE_SIZE,
+  },
   splashOverlay: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: '#208AEF',
+    backgroundColor: IconColors.background,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 1000,

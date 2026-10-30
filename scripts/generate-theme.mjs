@@ -178,22 +178,28 @@ if (process.argv.includes('--report')) {
     Contrast.ratioOfTones(Hct.fromInt(argbFromHex(fg)).tone, Hct.fromInt(argbFromHex(bg)).tone);
   /** [foreground, background, minimum ratio, what it is] */
   const pairs = [
-    ['onPrimary', 'primary', 4.5, 'texto do botão filled'],
-    ['onPrimaryContainer', 'primaryContainer', 4.5, 'texto em container primary'],
-    ['onSecondaryContainer', 'secondaryContainer', 4.5, 'botão tonal / chip selecionado'],
-    ['onTertiaryContainer', 'tertiaryContainer', 4.5, 'texto em container tertiary'],
+    ['onPrimary', 'primary', 4.5, 'texto do botão filled (ação principal)'],
+    ['onPrimaryContainer', 'primaryContainer', 4.5, 'texto do FAB estendido'],
+    ['onSecondaryContainer', 'secondaryContainer', 4.5, 'botão tonal / chip e segmento selecionados'],
+    ['onTertiaryContainer', 'tertiaryContainer', 4.5, 'iniciais do avatar'],
     ['onSurface', 'surface', 4.5, 'texto principal'],
     ['onSurfaceVariant', 'surface', 4.5, 'texto secundário'],
-    ['onSurfaceVariant', 'surfaceContainerHighest', 4.5, 'texto secundário em card/campo'],
-    ['onSurface', 'surfaceContainerLow', 4.5, 'texto em card'],
-    ['primary', 'surface', 4.5, 'botão text / link'],
-    ['primary', 'surfaceContainerLow', 4.5, 'botão text em card'],
-    ['error', 'surface', 4.5, 'mensagem de erro'],
-    ['onError', 'error', 4.5, 'texto em botão de erro'],
+    ['onSurface', 'surfaceContainer', 4.5, 'texto em card'],
+    ['onSurfaceVariant', 'surfaceContainer', 4.5, 'texto secundário em card / rótulo da barra'],
+    ['onSurface', 'surfaceContainerHighest', 4.5, 'texto digitado em campo'],
+    ['onSurfaceVariant', 'surfaceContainerHighest', 4.5, 'placeholder em campo'],
+    ['onSurfaceVariant', 'surfaceContainerHigh', 4.5, 'placeholder da busca'],
+    ['onSurface', 'surfaceContainerHigh', 4.5, 'título de diálogo'],
+    ['secondary', 'surface', 4.5, 'botão text secundário (links)'],
+    ['error', 'surface', 4.5, 'mensagem de erro / botão Sair'],
+    ['error', 'surfaceContainer', 4.5, 'calorias acima da meta (card)'],
     ['onPrimaryContainer', 'primaryContainer', 3, 'ícone do FAB'],
-    ['outline', 'surface', 3, 'borda de campo/botão outlined'],
+    ['secondary', 'surfaceContainer', 3, 'checkbox/radio marcado em card'],
+    ['outline', 'surface', 3, 'borda de segmented button'],
     ['onSurfaceVariant', 'surfaceContainer', 3, 'ícone inativo da barra inferior'],
     ['onSecondaryContainer', 'secondaryContainer', 3, 'ícone ativo da barra inferior'],
+    ['primary', 'surfaceContainerHighest', 3, 'indicador de foco do campo'],
+    ['tertiary', 'surfaceContainer', 3, 'linha do gráfico de peso'],
   ];
   for (const [mode, colors, custom] of [
     ['CLARO', light, customLight],
@@ -207,12 +213,22 @@ if (process.argv.includes('--report')) {
       );
     }
     for (const [name, c] of Object.entries(custom)) {
-      for (const bg of ['surface', 'surfaceContainerLow']) {
+      for (const bg of ['surface', 'surfaceContainer']) {
         const r = ratio(c.color, colors[bg]);
         console.log(
           `${r >= 3 ? 'OK  ' : 'FAIL'} ${r.toFixed(2).padStart(5)}:1 (mín 3) ${name} ${c.color} / ${bg} ${colors[bg]} — gráfico/ícone`,
         );
       }
     }
+  }
+  // Google sign-in button: fixed brand colors from src/theme (BrandColors).
+  const google = [
+    ['CLARO', '#1F1F1F', '#FFFFFF'],
+    ['ESCURO', '#E3E3E3', '#131314'],
+  ];
+  console.log('\nGOOGLE (cores da marca)');
+  for (const [mode, fg, bg] of google) {
+    const r = ratio(fg, bg);
+    console.log(`${r >= 4.5 ? 'OK  ' : 'FAIL'} ${r.toFixed(2).padStart(5)}:1 (mín 4.5) ${fg} / ${bg} — texto do botão Google (${mode})`);
   }
 }
