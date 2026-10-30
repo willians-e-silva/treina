@@ -1,35 +1,44 @@
 import { MOCK_DASHBOARD } from './dashboard-data';
-import { fromDateKey } from './exercises';
+
+/** `unspecified`: the user preferred not to say. */
+export type Sex = 'female' | 'male' | 'unspecified';
+
+export const SEX_LABELS: Record<Sex, string> = {
+  female: 'Feminino',
+  male: 'Masculino',
+  unspecified: 'Não informar',
+};
+
+/** Pickable ages and heights (cm) in the sign-up. */
+export const AGE_OPTIONS = range(13, 120);
+export const HEIGHT_OPTIONS = range(100, 250);
+
+function range(from: number, to: number) {
+  return Array.from({ length: to - from + 1 }, (_, index) => from + index);
+}
 
 export type Profile = {
   name: string;
-  /** `YYYY-MM-DD`; the age is derived from it so it stays current. */
-  birthDate: string;
+  email: string;
+  age: number;
+  sex: Sex;
   heightCm: number;
-  /** Latest weigh-in. */
+  /** Current weight. */
   weightKg: number;
 };
 
 /**
- * TEMPORARY: static profile until there is a backend. The weight follows the
- * latest mock weigh-in, so it matches the home dashboard.
+ * TEMPORARY: profile shown for accounts that signed in without signing up in
+ * this session, until there is a backend. The weight follows the latest mock
+ * weigh-in, so it matches the home dashboard.
  */
-export const MOCK_PROFILE: Profile = {
+export const MOCK_PROFILE: Omit<Profile, 'email'> = {
   name: 'Usuário Treina',
-  birthDate: '1996-04-12',
+  age: 30,
+  sex: 'male',
   heightCm: 178,
   weightKg: MOCK_DASHBOARD.weight[MOCK_DASHBOARD.weight.length - 1].kg,
 };
-
-/** Whole years from `birthDate` until `today`. */
-export function getAge(birthDate: string, today = new Date()) {
-  const birth = fromDateKey(birthDate);
-  const age = today.getFullYear() - birth.getFullYear();
-  const hadBirthday =
-    today.getMonth() > birth.getMonth() ||
-    (today.getMonth() === birth.getMonth() && today.getDate() >= birth.getDate());
-  return hadBirthday ? age : age - 1;
-}
 
 const meters = new Intl.NumberFormat('pt-BR', {
   minimumFractionDigits: 2,
@@ -48,3 +57,10 @@ export function getInitials(name: string) {
   const last = words.length > 1 ? words[words.length - 1][0] : '';
   return (first + last).toUpperCase();
 }
+
+/** Parses user input like "82", "82,5" or "82.5"; `NaN` when invalid. */
+export function parseDecimal(text: string) {
+  return text.trim() === '' ? NaN : Number(text.trim().replace(',', '.'));
+}
+
+export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
