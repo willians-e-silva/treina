@@ -1,6 +1,5 @@
 import { Image } from 'expo-image';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import ChevronLeft from 'lucide-react-native/icons/chevron-left';
 import ChevronRight from 'lucide-react-native/icons/chevron-right';
 import Dumbbell from 'lucide-react-native/icons/dumbbell';
 import Plus from 'lucide-react-native/icons/plus';
@@ -9,6 +8,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { HeaderBackButton } from '@/components/ui/header-back-button';
 import { ThemedText } from '@/components/themed-text';
 import { Brand, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -126,16 +126,7 @@ export default function SearchExerciseScreen() {
       <Stack.Screen
         options={{
           title: CATEGORY_LABELS[category],
-          headerLeft: () => (
-            <Pressable
-              onPress={() => router.back()}
-              accessibilityRole="button"
-              accessibilityLabel="Voltar"
-              hitSlop={Spacing.two}
-              style={({ pressed }) => pressed && styles.pressed}>
-              <ChevronLeft color={Brand.primary} size={24} />
-            </Pressable>
-          ),
+          headerLeft: () => <HeaderBackButton />,
         }}
       />
       <FlatList

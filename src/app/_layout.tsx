@@ -1,6 +1,5 @@
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import { Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
@@ -8,15 +7,15 @@ import { ExerciseLogProvider } from '@/context/exercise-log';
 import { FoodLogProvider } from '@/context/food-log';
 import { SessionProvider, useSession } from '@/context/session';
 import { TasksProvider } from '@/context/tasks';
+import { useNavigationTheme, useTopAppBarOptions } from '@/theme/navigation';
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
   return (
     // Required by react-native-gesture-handler (used by the tab swipe).
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <ThemeProvider value={useNavigationTheme()}>
         <SessionProvider>
           <FoodLogProvider>
             <ExerciseLogProvider>
@@ -34,9 +33,11 @@ export default function RootLayout() {
 
 function RootNavigator() {
   const { session } = useSession();
+  const topAppBar = useTopAppBarOptions();
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    // Modals that show a header (add-task, meals) get the M3 top app bar.
+    <Stack screenOptions={{ ...topAppBar, headerShown: false }}>
       <Stack.Protected guard={!!session}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="log-food" options={{ presentation: 'modal' }} />

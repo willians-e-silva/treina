@@ -1,11 +1,10 @@
 import { router, Stack } from 'expo-router';
-import ChevronLeft from 'lucide-react-native/icons/chevron-left';
 import { useRef, useState } from 'react';
-import { Pressable, StyleSheet, type TextInputInstance } from 'react-native';
+import type { TextInputInstance } from 'react-native';
 
+import { HeaderBackButton } from '@/components/ui/header-back-button';
 import { StepScreen } from '@/components/signup/step-screen';
 import { FormField } from '@/components/ui/form-field';
-import { Brand, Spacing } from '@/constants/theme';
 import { useSignup } from '@/context/signup';
 import { EMAIL_PATTERN } from '@/lib/profile';
 
@@ -45,16 +44,7 @@ export default function SignupAccountScreen() {
       <Stack.Screen
         options={{
           // First screen of the nested stack: goes back to the login.
-          headerLeft: () => (
-            <Pressable
-              onPress={() => router.back()}
-              accessibilityRole="button"
-              accessibilityLabel="Voltar"
-              hitSlop={Spacing.two}
-              style={({ pressed }) => pressed && styles.pressed}>
-              <ChevronLeft color={Brand.primary} size={24} />
-            </Pressable>
-          ),
+          headerLeft: () => <HeaderBackButton />,
         }}
       />
       <StepScreen
@@ -110,9 +100,3 @@ export default function SignupAccountScreen() {
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  pressed: {
-    opacity: 0.5,
-  },
-});

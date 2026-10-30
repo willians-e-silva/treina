@@ -1,6 +1,5 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import Apple from 'lucide-react-native/icons/apple';
-import ChevronLeft from 'lucide-react-native/icons/chevron-left';
 import ChevronRight from 'lucide-react-native/icons/chevron-right';
 import RotateCw from 'lucide-react-native/icons/rotate-cw';
 import Search from 'lucide-react-native/icons/search';
@@ -8,6 +7,7 @@ import { useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { HeaderBackButton } from '@/components/ui/header-back-button';
 import { formatInt } from '@/components/dashboard/format';
 import { ThemedText } from '@/components/themed-text';
 import { Brand, MaxContentWidth, Spacing } from '@/constants/theme';
@@ -41,16 +41,7 @@ export default function SearchFoodScreen() {
       <Stack.Screen
         options={{
           title: meal?.name ?? 'Adicionar alimento',
-          headerLeft: () => (
-            <Pressable
-              onPress={() => router.back()}
-              accessibilityRole="button"
-              accessibilityLabel="Voltar"
-              hitSlop={Spacing.two}
-              style={({ pressed }) => pressed && styles.pressed}>
-              <ChevronLeft color={Brand.primary} size={24} />
-            </Pressable>
-          ),
+          headerLeft: () => <HeaderBackButton />,
         }}
       />
       <FlatList

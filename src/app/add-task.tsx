@@ -1,11 +1,11 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import ChevronLeft from 'lucide-react-native/icons/chevron-left';
 import Plus from 'lucide-react-native/icons/plus';
 import Trash from 'lucide-react-native/icons/trash';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { HeaderBackButton } from '@/components/ui/header-back-button';
 import { ThemedText } from '@/components/themed-text';
 import { Surface } from '@/components/ui/surface';
 import { Brand, MaxContentWidth, Spacing } from '@/constants/theme';
@@ -88,19 +88,8 @@ export default function AddTaskScreen() {
       <Stack.Screen
         options={{
           headerShown: true,
-          // Opaque: since SDK 58 the header is transparent on iOS 26+.
-          headerTransparent: false,
           title: parent ? 'Nova subtarefa' : 'Nova tarefa',
-          headerLeft: () => (
-            <Pressable
-              onPress={() => router.back()}
-              accessibilityRole="button"
-              accessibilityLabel="Voltar"
-              hitSlop={Spacing.two}
-              style={({ pressed }) => pressed && styles.pressed}>
-              <ChevronLeft color={Brand.primary} size={24} />
-            </Pressable>
-          ),
+          headerLeft: () => <HeaderBackButton />,
         }}
       />
       <ScrollView
