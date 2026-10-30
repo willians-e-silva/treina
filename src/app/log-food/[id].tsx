@@ -12,10 +12,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { toDateKey } from '@/lib/exercises';
 import {
   getFood,
-  MEAL_LABELS,
-  MEALS,
   scaleNutrients,
-  type MealKey,
 } from '@/lib/foods';
 
 /** Parses user input like "12", "12,5" or "12.5"; `NaN` when invalid. */
@@ -27,14 +24,13 @@ export default function FoodDetailsScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
-  const { addEntry } = useFoodLog();
-  const params = useLocalSearchParams<{ id: string; date?: string; meal?: MealKey }>();
+  const { addEntry, meals } = useFoodLog();
+  const params = useLocalSearchParams<{ id: string; date?: string; meal?: string }>();
   const food = getFood(params.id);
   const date = params.date ?? toDateKey(new Date());
 
-  const [meal, setMeal] = useState<MealKey>(
-    MEALS.includes(params.meal as MealKey) ? (params.meal as MealKey) : 'breakfast',
-  );
+  const [mealId, setMealId] = useState(params.meal);
+  const meal = meals.find((candidate) => candidate.id === mealId) ?? meals[0];
   const [grams, setGrams] = useState(() => String(food?.servingGrams ?? 100));
 
   if (!food) {
@@ -47,7 +43,7 @@ export default function FoodDetailsScreen() {
   }
 
   const gramsValue = parseNumber(grams);
-  const valid = gramsValue > 0;
+  const valid = gramsValue > 0 && !!meal;
   const nutrients = scaleNutrients(food.per100g, valid ? gramsValue : 0);
   const presets = [
     ...(food.servingGrams ? [{ label: `1 porção (${formatInt(food.servingGrams)} g)`, grams: food.servingGrams }] : []),
@@ -58,7 +54,8 @@ export default function FoodDetailsScreen() {
     if (!food || !valid) return;
     addEntry({
       date,
-      meal,
+      meal: meal.id,
+      mealName: meal.name,
       foodId: food.id,
       source: food.source,
       name: food.name,
@@ -112,12 +109,12 @@ export default function FoodDetailsScreen() {
         <View style={styles.field}>
           <ThemedText>Refeição</ThemedText>
           <View style={styles.chips}>
-            {MEALS.map((key) => (
+            {meals.map((option) => (
               <Chip
-                key={key}
-                label={MEAL_LABELS[key]}
-                selected={meal === key}
-                onPress={() => setMeal(key)}
+                key={option.id}
+                label={option.name}
+                selected={meal?.id === option.id}
+                onPress={() => setMealId(option.id)}
               />
             ))}
           </View>

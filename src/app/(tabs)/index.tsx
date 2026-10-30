@@ -1,6 +1,6 @@
 import { StyleSheet, View } from "react-native";
 
-import { AppLogo } from "@/components/app-logo";
+import { AppIcon } from "@/components/app-logo";
 import { ActivityCards } from "@/components/dashboard/activity-cards";
 import { CaloriesCard } from "@/components/dashboard/calories-card";
 import { MacrosCard } from "@/components/dashboard/macros-card";
@@ -27,7 +27,7 @@ export default function HomeScreen() {
   };
 
   return (
-    <TabScreen header={<AppLogo />}>
+    <TabScreen header={<AppIcon />}>
       <View style={styles.welcome}>
         <ThemedText type="subtitle" accessibilityRole="header">
           Hoje

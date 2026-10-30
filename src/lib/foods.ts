@@ -25,17 +25,42 @@ export type Food = {
   servingGrams?: number;
 };
 
-export type MealKey = 'breakfast' | 'lunch' | 'snack' | 'dinner';
-
-/** Order here is the order of the diary sections. */
-export const MEALS: readonly MealKey[] = ['breakfast', 'lunch', 'snack', 'dinner'];
-
-export const MEAL_LABELS: Record<MealKey, string> = {
-  breakfast: 'Café da manhã',
-  lunch: 'Almoço',
-  snack: 'Lanche',
-  dinner: 'Jantar',
+/** A diary meal; the user picks which ones the diary shows. */
+export type Meal = {
+  /** Preset key (e.g. `breakfast`) or `custom-…` for meals named by the user. */
+  id: string;
+  name: string;
 };
+
+/** Meals offered ready-made, in the order of the day. */
+export const PRESET_MEALS: readonly Meal[] = [
+  { id: 'breakfast', name: 'Café da manhã' },
+  { id: 'morning-snack', name: 'Lanche da manhã' },
+  { id: 'lunch', name: 'Almoço' },
+  { id: 'snack', name: 'Lanche' },
+  { id: 'pre-workout', name: 'Pré-treino' },
+  { id: 'post-workout', name: 'Pós-treino' },
+  { id: 'dinner', name: 'Jantar' },
+  { id: 'supper', name: 'Ceia' },
+];
+
+/** Meals the diary starts with. */
+export const DEFAULT_MEALS: readonly Meal[] = PRESET_MEALS.filter((meal) =>
+  ['breakfast', 'lunch', 'snack', 'dinner'].includes(meal.id),
+);
+
+const presetRank = (id: string) => PRESET_MEALS.findIndex((meal) => meal.id === id);
+
+/**
+ * Adds `meal` to `meals`. A preset goes before the first preset that comes
+ * later in the day, so the diary keeps the order of the day; anything else
+ * goes at the end.
+ */
+export function insertMeal(meals: readonly Meal[], meal: Meal): Meal[] {
+  const rank = presetRank(meal.id);
+  const index = rank === -1 ? -1 : meals.findIndex((other) => presetRank(other.id) > rank);
+  return index === -1 ? [...meals, meal] : [...meals.slice(0, index), meal, ...meals.slice(index)];
+}
 
 /** Food from either source, if it is in TACO or was already loaded this session. */
 export function getFood(id: string): Food | undefined {
@@ -80,7 +105,10 @@ export type FoodEntry = {
   id: string;
   /** Diary day as `YYYY-MM-DD` (local time). */
   date: string;
-  meal: MealKey;
+  /** `Meal.id`. */
+  meal: string;
+  /** Kept so the entry still shows its meal after that meal is removed. */
+  mealName: string;
   foodId: string;
   source: FoodSource;
   name: string;

@@ -1,5 +1,4 @@
 import { router } from 'expo-router';
-import type { LucideIcon } from 'lucide-react-native';
 import Plus from 'lucide-react-native/icons/plus';
 import Trash from 'lucide-react-native/icons/trash';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -10,21 +9,24 @@ import { Surface } from '@/components/ui/surface';
 import { Brand, Spacing } from '@/constants/theme';
 import { useFoodLog } from '@/context/food-log';
 import { useTheme } from '@/hooks/use-theme';
-import { MEAL_LABELS, sumNutrients, type FoodEntry, type MealKey } from '@/lib/foods';
+import { sumNutrients, type FoodEntry, type Meal } from '@/lib/foods';
+
+import { getMealIcon } from './meal-icons';
 
 type MealSectionProps = {
-  meal: MealKey;
-  icon: LucideIcon;
-  color: string;
+  meal: Meal;
   date: string;
   entries: FoodEntry[];
+  /** The meal was removed from the diary: its foods stay, but no new ones go in. */
+  removed?: boolean;
 };
 
 /** One diary meal with its foods, its total kcal and an add button. */
-export function MealSection({ meal, icon: Icon, color, date, entries }: MealSectionProps) {
+export function MealSection({ meal, date, entries, removed }: MealSectionProps) {
   const theme = useTheme();
   const { removeEntry } = useFoodLog();
   const total = sumNutrients(entries.map((entry) => entry.nutrients));
+  const { icon: Icon, color } = getMealIcon(meal.id);
 
   return (
     <Surface style={styles.container}>
@@ -32,7 +34,7 @@ export function MealSection({ meal, icon: Icon, color, date, entries }: MealSect
         <View style={styles.title}>
           <Icon color={color} size={20} aria-hidden />
           <ThemedText type="smallBold" accessibilityRole="header">
-            {MEAL_LABELS[meal]}
+            {meal.name}
           </ThemedText>
         </View>
         {entries.length > 0 && (
@@ -70,16 +72,18 @@ export function MealSection({ meal, icon: Icon, color, date, entries }: MealSect
         ))
       )}
 
-      <Pressable
-        onPress={() => router.push({ pathname: '/log-food', params: { meal, date } })}
-        accessibilityRole="button"
-        accessibilityLabel={`Adicionar alimento ao ${MEAL_LABELS[meal]}`}
-        style={({ pressed }) => [styles.addButton, pressed && styles.pressed]}>
-        <Plus color={Brand.primary} size={18} strokeWidth={2.5} aria-hidden />
-        <ThemedText type="smallBold" style={styles.addText}>
-          Adicionar alimento
-        </ThemedText>
-      </Pressable>
+      {!removed && (
+        <Pressable
+          onPress={() => router.push({ pathname: '/log-food', params: { meal: meal.id, date } })}
+          accessibilityRole="button"
+          accessibilityLabel={`Adicionar alimento: ${meal.name}`}
+          style={({ pressed }) => [styles.addButton, pressed && styles.pressed]}>
+          <Plus color={Brand.primary} size={18} strokeWidth={2.5} aria-hidden />
+          <ThemedText type="smallBold" style={styles.addText}>
+            Adicionar alimento
+          </ThemedText>
+        </Pressable>
+      )}
     </Surface>
   );
 }

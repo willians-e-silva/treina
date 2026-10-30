@@ -1,4 +1,5 @@
 import Constants from 'expo-constants';
+import { Image } from 'expo-image';
 import Dumbbell from 'lucide-react-native/icons/dumbbell';
 import { StyleSheet, View } from 'react-native';
 
@@ -34,7 +35,27 @@ export function AppLogo({ size = 'medium' }: AppLogoProps) {
   );
 }
 
+/** The app icon (`assets/images/icon.png`), rounded like on the home screen. */
+export function AppIcon() {
+  return (
+    <Image
+      source={require('@/assets/images/icon.png')}
+      accessibilityLabel={`Logo ${APP_NAME}`}
+      style={styles.icon}
+    />
+  );
+}
+
+const ICON_SIZE = 48;
+
 const styles = StyleSheet.create({
+  icon: {
+    alignSelf: 'center',
+    width: ICON_SIZE,
+    height: ICON_SIZE,
+    // Close to the corner radius of iOS and Android launcher icons.
+    borderRadius: ICON_SIZE * 0.225,
+  },
   badge: {
     alignSelf: 'center',
     flexDirection: 'row',

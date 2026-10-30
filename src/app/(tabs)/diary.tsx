@@ -1,10 +1,7 @@
-import type { LucideIcon } from 'lucide-react-native';
-import Coffee from 'lucide-react-native/icons/coffee';
-import Cookie from 'lucide-react-native/icons/cookie';
-import Moon from 'lucide-react-native/icons/moon';
-import Soup from 'lucide-react-native/icons/soup';
+import { router } from 'expo-router';
+import Pencil from 'lucide-react-native/icons/pencil';
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { formatInt } from '@/components/dashboard/format';
 import { MealSection } from '@/components/diary/meal-section';
@@ -14,23 +11,15 @@ import { TabScreen } from '@/components/tab-screen';
 import { ThemedText } from '@/components/themed-text';
 import { Surface } from '@/components/ui/surface';
 import { getMainTab } from '@/constants/tabs';
-import { Nutrition, Spacing } from '@/constants/theme';
+import { Brand, Nutrition, Spacing } from '@/constants/theme';
 import { useFoodDay } from '@/context/food-log';
 import { toDateKey } from '@/lib/exercises';
-import { MEALS, type MealKey } from '@/lib/foods';
 
 const tab = getMainTab('diary');
 
-const MEAL_ICONS: Record<MealKey, { icon: LucideIcon; color: string }> = {
-  breakfast: { icon: Coffee, color: Nutrition.calories },
-  lunch: { icon: Soup, color: Nutrition.protein },
-  snack: { icon: Cookie, color: Nutrition.carbs },
-  dinner: { icon: Moon, color: Nutrition.fat },
-};
-
 export default function DiaryScreen() {
   const [date, setDate] = useState(() => toDateKey(new Date()));
-  const { meals, totals } = useFoodDay(date);
+  const { sections, totals } = useFoodDay(date);
 
   return (
     <TabScreen header={<ScreenTitle>{tab.label}</ScreenTitle>}>
@@ -43,16 +32,19 @@ export default function DiaryScreen() {
         <Total label="Gorduras" value={`${formatInt(totals.fat)} g`} color={Nutrition.fat} />
       </Surface>
 
-      {MEALS.map((meal) => (
-        <MealSection
-          key={meal}
-          meal={meal}
-          icon={MEAL_ICONS[meal].icon}
-          color={MEAL_ICONS[meal].color}
-          date={date}
-          entries={meals[meal]}
-        />
+      {sections.map(({ meal, entries, removed }) => (
+        <MealSection key={meal.id} meal={meal} date={date} entries={entries} removed={removed} />
       ))}
+
+      <Pressable
+        onPress={() => router.push('/meals')}
+        accessibilityRole="button"
+        style={({ pressed }) => [styles.editMeals, pressed && styles.pressed]}>
+        <Pencil color={Brand.primary} size={18} strokeWidth={2.5} aria-hidden />
+        <ThemedText type="smallBold" style={styles.editMealsText}>
+          Editar refeições
+        </ThemedText>
+      </Pressable>
     </TabScreen>
   );
 }
@@ -91,5 +83,18 @@ const styles = StyleSheet.create({
   },
   totalLabel: {
     textAlign: 'center',
+  },
+  editMeals: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.two,
+    paddingVertical: Spacing.two,
+  },
+  editMealsText: {
+    color: Brand.primary,
+  },
+  pressed: {
+    opacity: 0.5,
   },
 });

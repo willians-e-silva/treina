@@ -11,16 +11,18 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatInt } from '@/components/dashboard/format';
 import { ThemedText } from '@/components/themed-text';
 import { Brand, MaxContentWidth, Spacing } from '@/constants/theme';
+import { useFoodLog } from '@/context/food-log';
 import { useFoodSearch } from '@/hooks/use-food-search';
 import { useTheme } from '@/hooks/use-theme';
 import { toDateKey } from '@/lib/exercises';
-import { MEAL_LABELS, MEALS, type Food, type MealKey } from '@/lib/foods';
+import type { Food } from '@/lib/foods';
 
 export default function SearchFoodScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const params = useLocalSearchParams<{ meal?: MealKey; date?: string }>();
-  const meal = MEALS.includes(params.meal as MealKey) ? (params.meal as MealKey) : 'breakfast';
+  const params = useLocalSearchParams<{ meal?: string; date?: string }>();
+  const { meals } = useFoodLog();
+  const meal = meals.find((candidate) => candidate.id === params.meal) ?? meals[0];
   const date = params.date ?? toDateKey(new Date());
   const [query, setQuery] = useState('');
   const { taco, remote, retry } = useFoodSearch(query);
@@ -31,14 +33,14 @@ export default function SearchFoodScreen() {
   const data = searching ? [...taco, ...(remote.status === 'done' ? remote.results : [])] : [];
 
   function openFood(food: Food) {
-    router.push({ pathname: '/log-food/[id]', params: { id: food.id, meal, date } });
+    router.push({ pathname: '/log-food/[id]', params: { id: food.id, meal: meal?.id, date } });
   }
 
   return (
     <>
       <Stack.Screen
         options={{
-          title: MEAL_LABELS[meal],
+          title: meal?.name ?? 'Adicionar alimento',
           headerLeft: () => (
             <Pressable
               onPress={() => router.back()}
@@ -149,9 +151,6 @@ function FoodRow({ food, first, last, onPress }: FoodRowProps) {
             borderTopColor: theme.backgroundSelected,
           },
         ]}>
-        <View style={[styles.thumbnail, { backgroundColor: theme.backgroundSelected }]}>
-          <Apple color={theme.textSecondary} size={18} aria-hidden />
-        </View>
         <View style={styles.rowText}>
           <ThemedText numberOfLines={2}>{food.name}</ThemedText>
           <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
@@ -235,13 +234,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.three,
     paddingVertical: Spacing.two + Spacing.one,
-  },
-  thumbnail: {
-    width: 48,
-    height: 48,
-    borderRadius: Spacing.two,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   rowText: {
     flex: 1,

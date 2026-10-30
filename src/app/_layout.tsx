@@ -40,6 +40,7 @@ function RootNavigator() {
       <Stack.Protected guard={!!session}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="log-food" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="meals" options={{ presentation: 'modal' }} />
         <Stack.Screen name="log-exercise" options={{ presentation: 'modal' }} />
         <Stack.Screen name="add-task" options={{ presentation: 'modal' }} />
       </Stack.Protected>
