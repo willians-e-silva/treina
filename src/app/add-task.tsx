@@ -120,13 +120,13 @@ export default function AddTaskScreen() {
         />
 
         {parent ? (
-          <ThemedText type="small" themeColor="textSecondary">
+          <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
             Em “{parent.title}”. A tarefa fica concluída quando todas as subtarefas estiverem.
           </ThemedText>
         ) : (
           <>
             <View style={styles.group}>
-              <ThemedText type="smallBold" themeColor="textSecondary" accessibilityRole="header">
+              <ThemedText type="titleSmall" themeColor="onSurfaceVariant" accessibilityRole="header">
                 Repetição
               </ThemedText>
               <Surface style={styles.options} accessibilityRole="radiogroup">
@@ -177,7 +177,7 @@ export default function AddTaskScreen() {
                       accessibilityState={{ checked: unit === item.value }}
                       style={[styles.segment, unit === item.value && styles.segmentSelected]}>
                       <ThemedText
-                        type="smallBold"
+                        type="titleSmall"
                         style={unit === item.value && { color: Brand.onPrimary }}>
                         {item.label}
                       </ThemedText>
@@ -188,13 +188,13 @@ export default function AddTaskScreen() {
             )}
 
             {option !== 'none' && (
-              <ThemedText type="small" themeColor="textSecondary">
+              <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
                 Começa em {longDate.format(fromDateKey(startDate))}.
               </ThemedText>
             )}
 
             <View style={styles.group}>
-              <ThemedText type="smallBold" themeColor="textSecondary" accessibilityRole="header">
+              <ThemedText type="titleSmall" themeColor="onSurfaceVariant" accessibilityRole="header">
                 Subtarefas
               </ThemedText>
               <Surface style={styles.options}>

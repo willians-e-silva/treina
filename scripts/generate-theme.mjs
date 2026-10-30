@@ -36,6 +36,8 @@ const ICON = {
   purple: '#6C3CF4',
   /** Green petal (cutlery), count-weighted mean of its clusters. */
   green: '#2AB868',
+  /** Background, mean of a 24px ring along the edges. */
+  background: '#090F19',
 };
 
 /**

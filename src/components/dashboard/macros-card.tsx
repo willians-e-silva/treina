@@ -22,7 +22,7 @@ type MacrosCardProps = {
 export function MacrosCard({ macros }: MacrosCardProps) {
   return (
     <Surface style={styles.container}>
-      <ThemedText type="smallBold">Macronutrientes</ThemedText>
+      <ThemedText type="titleSmall">Macronutrientes</ThemedText>
       <View style={styles.row}>
         {MACROS.map(({ key, label, color }) => {
           const { consumed, goal } = macros[key];
@@ -40,19 +40,19 @@ export function MacrosCard({ macros }: MacrosCardProps) {
                 size={76}
                 strokeWidth={8}
               >
-                <ThemedText type="smallBold">{formatInt(consumed)}</ThemedText>
+                <ThemedText type="titleSmall">{formatInt(consumed)}</ThemedText>
                 <ThemedText
-                  type="small"
-                  themeColor="textSecondary"
+                  type="bodyMedium"
+                  themeColor="onSurfaceVariant"
                   style={styles.goal}
                 >
                   /{formatInt(goal)}g
                 </ThemedText>
               </ProgressRing>
-              <ThemedText type="small" style={{ color }}>
+              <ThemedText type="bodyMedium" style={{ color }}>
                 {label}
               </ThemedText>
-              <ThemedText type="small" themeColor="textSecondary">
+              <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
                 {formatInt(left)}g restantes
               </ThemedText>
             </View>

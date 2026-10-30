@@ -113,7 +113,8 @@ export type ElevationLevel = keyof typeof Elevation;
 
 /** Component → elevation level, per the M3 component specs. */
 export const ComponentElevation = {
-  card: 'level1',
+  /** Filled card: no shadow, `surfaceContainer` tone (a step above `surface`). */
+  card: 'level2',
   navigationBar: 'level2',
   topAppBarScrolled: 'level2',
   fab: 'level3',
@@ -162,3 +163,38 @@ export const DarkTheme: AppTheme = {
 export function useAppTheme(): AppTheme {
   return useColorScheme() === 'dark' ? DarkTheme : LightTheme;
 }
+
+/** M3 state layer opacities, drawn over a component in its content color. */
+export const StateLayer = {
+  hover: 0.08,
+  focus: 0.1,
+  pressed: 0.1,
+  dragged: 0.16,
+} as const;
+
+/** M3 opacities for disabled components. */
+export const Disabled = {
+  container: 0.1,
+  content: 0.38,
+} as const;
+
+/** `color` with `alpha` (0–1) for a `#RRGGBB` color. */
+export function withAlpha(color: string, alpha: number) {
+  return `${color}${Math.round(alpha * 255)
+    .toString(16)
+    .padStart(2, '0')}`;
+}
+
+/**
+ * Third-party brand colors that must not follow the app theme: the Google
+ * sign-in button has to follow Google's branding guidelines
+ * (https://developers.google.com/identity/branding-guidelines).
+ */
+export const BrandColors = {
+  google: {
+    light: { container: '#FFFFFF', outline: '#747775', content: '#1F1F1F' },
+    dark: { container: '#131314', outline: '#8E918F', content: '#E3E3E3' },
+    /** Blue of the "G" mark. */
+    mark: '#4285F4',
+  },
+} as const;

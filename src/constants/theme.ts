@@ -7,6 +7,8 @@ import "@/global.css";
 
 import { Platform } from "react-native";
 
+import { Space } from "@/theme";
+
 export const Colors = {
   light: {
     text: "#000000",
@@ -68,14 +70,18 @@ export const Fonts = Platform.select({
   },
 });
 
+/**
+ * Layout spacing on the 4dp grid, named by step. Values come from the design
+ * system's `Space` tokens.
+ */
 export const Spacing = {
-  half: 2,
-  one: 4,
-  two: 8,
-  three: 16,
-  four: 24,
-  five: 32,
-  six: 64,
+  half: Space.xs / 2,
+  one: Space.xs,
+  two: Space.sm,
+  three: Space.lg,
+  four: Space.xl,
+  five: Space.xxl,
+  six: Space.huge,
 } as const;
 
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;

@@ -22,7 +22,7 @@ export function ComingSoon({
   return (
     <Surface style={styles.container}>
       <Icon color={theme.textSecondary} size={32} aria-hidden />
-      <ThemedText type="small" themeColor="textSecondary" style={styles.message}>
+      <ThemedText type="bodyMedium" themeColor="onSurfaceVariant" style={styles.message}>
         {message}
       </ThemedText>
     </Surface>

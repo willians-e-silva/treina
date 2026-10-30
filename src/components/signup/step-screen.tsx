@@ -59,17 +59,17 @@ export function StepScreen({
               />
             ))}
           </View>
-          <ThemedText type="subtitle" accessibilityRole="header">
+          <ThemedText type="headlineMedium" accessibilityRole="header">
             {title}
           </ThemedText>
-          <ThemedText themeColor="textSecondary">{description}</ThemedText>
+          <ThemedText themeColor="onSurfaceVariant">{description}</ThemedText>
         </View>
 
         <View style={styles.form}>
           {children}
 
           {error && (
-            <ThemedText type="small" style={styles.error} accessibilityRole="alert">
+            <ThemedText type="bodyMedium" style={styles.error} accessibilityRole="alert">
               {error}
             </ThemedText>
           )}

@@ -88,7 +88,7 @@ export default function SignupDetailsScreen() {
       />
 
       <View style={styles.field}>
-        <ThemedText type="smallBold">Sexo</ThemedText>
+        <ThemedText type="titleSmall">Sexo</ThemedText>
         <View
           style={[styles.segmented, { backgroundColor: theme.backgroundElement }]}
           accessibilityRole="radiogroup">
@@ -101,7 +101,7 @@ export default function SignupDetailsScreen() {
               accessibilityState={{ checked: sex === value }}
               style={[styles.segment, sex === value && styles.segmentSelected]}>
               <ThemedText
-                type="smallBold"
+                type="titleSmall"
                 numberOfLines={1}
                 adjustsFontSizeToFit
                 style={sex === value ? styles.segmentSelectedText : undefined}>

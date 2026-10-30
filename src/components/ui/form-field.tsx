@@ -1,46 +1,32 @@
-import type { Ref } from 'react';
-import {
-  StyleSheet,
-  TextInput,
-  View,
-  type TextInputInstance,
-  type TextInputProps,
-} from 'react-native';
+import { StyleSheet, View } from 'react-native';
+
+import { ThemedTextInput, type ThemedTextInputProps } from './text-input';
 
 import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { Space } from '@/theme';
 
-type FormFieldProps = TextInputProps & {
+type FormFieldProps = Omit<ThemedTextInputProps, 'size'> & {
   label: string;
   /** Shown inside the input on the right, e.g. `"kg"`. */
   unit?: string;
-  ref?: Ref<TextInputInstance>;
 };
 
-/** Labeled text input with the login screen's look. */
-export function FormField({ label, unit, style, ref, ...props }: FormFieldProps) {
-  const theme = useTheme();
-
+/** M3 filled text field with its label above. */
+export function FormField({ label, unit, style, ...props }: FormFieldProps) {
   return (
     <View style={styles.field}>
-      <ThemedText type="smallBold">{label}</ThemedText>
+      <ThemedText type="labelLarge" themeColor="onSurfaceVariant">
+        {label}
+      </ThemedText>
       <View>
-        <TextInput
-          ref={ref}
-          placeholderTextColor={theme.textSecondary}
+        <ThemedTextInput
           accessibilityLabel={label}
-          style={[
-            styles.input,
-            { backgroundColor: theme.backgroundElement, color: theme.text },
-            !!unit && styles.inputWithUnit,
-            style,
-          ]}
+          style={[!!unit && styles.inputWithUnit, style]}
           {...props}
         />
         {unit && (
           <View style={styles.unit} pointerEvents="none">
-            <ThemedText type="small" themeColor="textSecondary">
+            <ThemedText type="bodyLarge" themeColor="onSurfaceVariant">
               {unit}
             </ThemedText>
           </View>
@@ -52,20 +38,14 @@ export function FormField({ label, unit, style, ref, ...props }: FormFieldProps)
 
 const styles = StyleSheet.create({
   field: {
-    gap: Spacing.two,
-  },
-  input: {
-    height: 52,
-    borderRadius: Spacing.three,
-    paddingHorizontal: Spacing.three,
-    fontSize: 16,
+    gap: Space.sm,
   },
   inputWithUnit: {
-    paddingRight: 56,
+    paddingRight: Space.huge,
   },
   unit: {
     position: 'absolute',
-    right: Spacing.three,
+    right: Space.lg,
     top: 0,
     bottom: 0,
     justifyContent: 'center',

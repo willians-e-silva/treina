@@ -54,7 +54,7 @@ function Total({ label, value }: { label: string; value: string }) {
   return (
     <View style={styles.total}>
       <ThemedText style={styles.totalValue}>{value}</ThemedText>
-      <ThemedText type="small" themeColor="textSecondary" style={styles.totalLabel}>
+      <ThemedText type="bodyMedium" themeColor="onSurfaceVariant" style={styles.totalLabel}>
         {label}
       </ThemedText>
     </View>

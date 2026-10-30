@@ -34,19 +34,19 @@ export function TaskSection({ title, icon: Icon, color, date, tasks, empty }: Ta
       <View style={styles.header}>
         <View style={styles.title}>
           <Icon color={color} size={20} aria-hidden />
-          <ThemedText type="smallBold" accessibilityRole="header">
+          <ThemedText type="titleSmall" accessibilityRole="header">
             {title}
           </ThemedText>
         </View>
         {tasks.length > 0 && (
-          <ThemedText type="small" themeColor="textSecondary">
+          <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
             {done}/{tasks.length}
           </ThemedText>
         )}
       </View>
 
       {tasks.length === 0 ? (
-        <ThemedText type="small" themeColor="textSecondary">
+        <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
           {empty}
         </ThemedText>
       ) : (
@@ -124,14 +124,14 @@ function CheckRow({ title, details, checked, onToggle, onRemove, onAddSubtask, s
         )}
         <View style={styles.rowText}>
           <ThemedText
-            type={small ? 'small' : 'default'}
+            type={small ? 'bodyMedium' : 'bodyLarge'}
             numberOfLines={2}
-            themeColor={checked ? 'textSecondary' : undefined}
+            themeColor={checked ? 'onSurfaceVariant' : 'onSurface'}
             style={checked && styles.checked}>
             {title}
           </ThemedText>
           {!!details && (
-            <ThemedText type="small" themeColor="textSecondary">
+            <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
               {details}
             </ThemedText>
           )}

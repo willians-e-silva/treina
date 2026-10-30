@@ -60,7 +60,7 @@ export default function MealsScreen() {
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.four }]}
         keyboardShouldPersistTaps="handled">
         <View style={styles.group}>
-          <ThemedText type="smallBold" themeColor="textSecondary" accessibilityRole="header">
+          <ThemedText type="titleSmall" themeColor="onSurfaceVariant" accessibilityRole="header">
             No diário
           </ThemedText>
           <Surface style={styles.list}>
@@ -96,14 +96,14 @@ export default function MealsScreen() {
               );
             })}
           </Surface>
-          <ThemedText type="small" themeColor="textSecondary">
+          <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
             Alimentos já registrados em uma refeição removida continuam no diário.
           </ThemedText>
         </View>
 
         {available.length > 0 && (
           <View style={styles.group}>
-            <ThemedText type="smallBold" themeColor="textSecondary" accessibilityRole="header">
+            <ThemedText type="titleSmall" themeColor="onSurfaceVariant" accessibilityRole="header">
               Refeições padrão
             </ThemedText>
             <View style={styles.chips}>
@@ -119,7 +119,7 @@ export default function MealsScreen() {
                     pressed && styles.pressed,
                   ]}>
                   <Plus color={Brand.primary} size={16} strokeWidth={2.5} aria-hidden />
-                  <ThemedText type="smallBold">{meal.name}</ThemedText>
+                  <ThemedText type="titleSmall">{meal.name}</ThemedText>
                 </Pressable>
               ))}
             </View>
@@ -127,7 +127,7 @@ export default function MealsScreen() {
         )}
 
         <View style={styles.group}>
-          <ThemedText type="smallBold" themeColor="textSecondary" accessibilityRole="header">
+          <ThemedText type="titleSmall" themeColor="onSurfaceVariant" accessibilityRole="header">
             Refeição personalizada
           </ThemedText>
           <View style={styles.custom}>
@@ -153,7 +153,7 @@ export default function MealsScreen() {
             </Pressable>
           </View>
           {duplicate && (
-            <ThemedText type="small" style={styles.error}>
+            <ThemedText type="bodyMedium" style={styles.error}>
               Já existe uma refeição com esse nome.
             </ThemedText>
           )}

@@ -39,19 +39,19 @@ export function ExerciseSection({
       <View style={styles.header}>
         <View style={styles.title}>
           <Icon color={color} size={20} aria-hidden />
-          <ThemedText type="smallBold" accessibilityRole="header">
+          <ThemedText type="titleSmall" accessibilityRole="header">
             {CATEGORY_LABELS[category]}
           </ThemedText>
         </View>
         {summary && (
-          <ThemedText type="small" themeColor="textSecondary">
+          <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
             {summary}
           </ThemedText>
         )}
       </View>
 
       {entries.length === 0 ? (
-        <ThemedText type="small" themeColor="textSecondary">
+        <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
           Nenhum exercício registrado.
         </ThemedText>
       ) : (
@@ -61,12 +61,12 @@ export function ExerciseSection({
             style={[styles.row, { borderTopColor: theme.backgroundSelected }]}>
             <View style={styles.rowText}>
               <ThemedText numberOfLines={1}>{entry.name}</ThemedText>
-              <ThemedText type="small" themeColor="textSecondary">
+              <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
                 {describeEntry(entry)}
               </ThemedText>
             </View>
             {entry.category === 'cardio' && (
-              <ThemedText type="smallBold">{formatInt(entry.calories)} kcal</ThemedText>
+              <ThemedText type="titleSmall">{formatInt(entry.calories)} kcal</ThemedText>
             )}
             <Pressable
               onPress={() => removeEntry(entry.id)}
@@ -85,7 +85,7 @@ export function ExerciseSection({
         accessibilityRole="button"
         style={({ pressed }) => [styles.addButton, pressed && styles.pressed]}>
         <Plus color={Brand.primary} size={18} strokeWidth={2.5} aria-hidden />
-        <ThemedText type="smallBold" style={styles.addText}>
+        <ThemedText type="titleSmall" style={styles.addText}>
           Adicionar exercício
         </ThemedText>
       </Pressable>

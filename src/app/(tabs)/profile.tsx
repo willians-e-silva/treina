@@ -33,12 +33,12 @@ export default function ProfileScreen() {
           {profile.name}
         </ThemedText>
         {!!profile.email && (
-          <ThemedText type="small" themeColor="textSecondary">
+          <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
             {profile.email}
           </ThemedText>
         )}
         {profile.sex !== 'unspecified' && (
-          <ThemedText type="small" themeColor="textSecondary">
+          <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
             {SEX_LABELS[profile.sex]}
           </ThemedText>
         )}
@@ -89,7 +89,7 @@ function Stat({ icon: Icon, color, label, value }: StatProps) {
       <ThemedText style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>
         {value}
       </ThemedText>
-      <ThemedText type="small" themeColor="textSecondary">
+      <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
         {label}
       </ThemedText>
     </Surface>

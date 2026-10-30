@@ -29,7 +29,7 @@ export default function HomeScreen() {
   return (
     <TabScreen header={<AppIcon />}>
       <View style={styles.welcome}>
-        <ThemedText type="subtitle" accessibilityRole="header">
+        <ThemedText type="headlineMedium" accessibilityRole="header">
           Hoje
         </ThemedText>
       </View>

@@ -88,10 +88,10 @@ export default function SearchFoodScreen() {
           !searching ? (
             <View style={styles.empty}>
               <Apple color={theme.backgroundSelected} size={96} strokeWidth={1.5} aria-hidden />
-              <ThemedText themeColor="textSecondary">Busque e adicione alimentos</ThemedText>
+              <ThemedText themeColor="onSurfaceVariant">Busque e adicione alimentos</ThemedText>
             </View>
           ) : remote.status === 'done' || remote.status === 'idle' ? (
-            <ThemedText type="small" themeColor="textSecondary" style={styles.notFound}>
+            <ThemedText type="bodyMedium" themeColor="onSurfaceVariant" style={styles.notFound}>
               Nenhum alimento encontrado.
             </ThemedText>
           ) : undefined
@@ -101,7 +101,7 @@ export default function SearchFoodScreen() {
             <ActivityIndicator color={Brand.primary} style={styles.footer} />
           ) : remote.status === 'error' ? (
             <View style={[styles.footer, styles.footerError]}>
-              <ThemedText type="small" style={styles.error}>
+              <ThemedText type="bodyMedium" style={styles.error}>
                 {remote.message}
               </ThemedText>
               <Pressable
@@ -109,7 +109,7 @@ export default function SearchFoodScreen() {
                 accessibilityRole="button"
                 style={({ pressed }) => [styles.action, pressed && styles.pressed]}>
                 <RotateCw color={Brand.primary} size={18} strokeWidth={2.5} aria-hidden />
-                <ThemedText type="smallBold" style={styles.actionText}>
+                <ThemedText type="titleSmall" style={styles.actionText}>
                   Tentar novamente
                 </ThemedText>
               </Pressable>
@@ -153,7 +153,7 @@ function FoodRow({ food, first, last, onPress }: FoodRowProps) {
         ]}>
         <View style={styles.rowText}>
           <ThemedText numberOfLines={2}>{food.name}</ThemedText>
-          <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
+          <ThemedText type="bodyMedium" themeColor="onSurfaceVariant" numberOfLines={1}>
             {[`${formatInt(food.per100g.kcal)} kcal / 100 g`, food.detail]
               .filter(Boolean)
               .join(' · ')}

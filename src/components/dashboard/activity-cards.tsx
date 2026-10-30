@@ -19,10 +19,10 @@ export function ActivityCards({ steps, exercise }: ActivityCardsProps) {
       <Surface style={styles.tile}>
         <View style={styles.title}>
           <Footprints color={Nutrition.steps} size={20} aria-hidden />
-          <ThemedText type="smallBold">Passos</ThemedText>
+          <ThemedText type="titleSmall">Passos</ThemedText>
         </View>
         <ThemedText style={styles.value}>{formatInt(steps.count)}</ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
+        <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
           Meta: {formatInt(steps.goal)}
         </ThemedText>
         <ProgressBar progress={steps.count / steps.goal} color={Nutrition.steps} />
@@ -31,16 +31,16 @@ export function ActivityCards({ steps, exercise }: ActivityCardsProps) {
       <Surface style={styles.tile}>
         <View style={styles.title}>
           <Dumbbell color={Nutrition.exercise} size={20} aria-hidden />
-          <ThemedText type="smallBold">Exercício</ThemedText>
+          <ThemedText type="titleSmall">Exercício</ThemedText>
         </View>
         <ThemedText style={styles.value}>
           {formatInt(exercise.calories)}
-          <ThemedText type="small" themeColor="textSecondary">
+          <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
             {' '}
             kcal
           </ThemedText>
         </ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
+        <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
           {formatInt(exercise.minutes)} min
         </ThemedText>
       </Surface>

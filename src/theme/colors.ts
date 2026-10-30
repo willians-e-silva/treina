@@ -10,7 +10,8 @@
 export const IconColors = {
   blue: "#0D9BF8",
   purple: "#6C3CF4",
-  green: "#2AB868"
+  green: "#2AB868",
+  background: "#090F19"
 } as const;
 
 export const LightColors = {

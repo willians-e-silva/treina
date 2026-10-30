@@ -1,15 +1,16 @@
+import { useAppTheme } from '@/theme';
+
 /**
- * Learn more about light and dark modes:
- * https://docs.expo.dev/guides/color-schemes/
+ * TEMPORARY: old color names mapped onto the M3 roles while the screens move
+ * to `useAppTheme()`. Removed once nothing uses it.
  */
-
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
 export function useTheme() {
-  const scheme = useColorScheme();
-  // `null` until the scheme is known.
-  const theme = scheme === 'dark' ? 'dark' : 'light';
-
-  return Colors[theme];
+  const { colors } = useAppTheme();
+  return {
+    text: colors.onSurface,
+    background: colors.surface,
+    backgroundElement: colors.surfaceContainer,
+    backgroundSelected: colors.surfaceContainerHighest,
+    textSecondary: colors.onSurfaceVariant,
+  };
 }

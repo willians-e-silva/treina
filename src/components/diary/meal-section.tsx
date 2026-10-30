@@ -33,19 +33,19 @@ export function MealSection({ meal, date, entries, removed }: MealSectionProps) 
       <View style={styles.header}>
         <View style={styles.title}>
           <Icon color={color} size={20} aria-hidden />
-          <ThemedText type="smallBold" accessibilityRole="header">
+          <ThemedText type="titleSmall" accessibilityRole="header">
             {meal.name}
           </ThemedText>
         </View>
         {entries.length > 0 && (
-          <ThemedText type="small" themeColor="textSecondary">
+          <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
             {formatInt(total.kcal)} kcal
           </ThemedText>
         )}
       </View>
 
       {entries.length === 0 ? (
-        <ThemedText type="small" themeColor="textSecondary">
+        <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
           Nenhum alimento registrado.
         </ThemedText>
       ) : (
@@ -55,11 +55,11 @@ export function MealSection({ meal, date, entries, removed }: MealSectionProps) 
             style={[styles.row, { borderTopColor: theme.backgroundSelected }]}>
             <View style={styles.rowText}>
               <ThemedText numberOfLines={1}>{entry.name}</ThemedText>
-              <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
+              <ThemedText type="bodyMedium" themeColor="onSurfaceVariant" numberOfLines={1}>
                 {describeEntry(entry)}
               </ThemedText>
             </View>
-            <ThemedText type="smallBold">{formatInt(entry.nutrients.kcal)} kcal</ThemedText>
+            <ThemedText type="titleSmall">{formatInt(entry.nutrients.kcal)} kcal</ThemedText>
             <Pressable
               onPress={() => removeEntry(entry.id)}
               accessibilityRole="button"
@@ -79,7 +79,7 @@ export function MealSection({ meal, date, entries, removed }: MealSectionProps) 
           accessibilityLabel={`Adicionar alimento: ${meal.name}`}
           style={({ pressed }) => [styles.addButton, pressed && styles.pressed]}>
           <Plus color={Brand.primary} size={18} strokeWidth={2.5} aria-hidden />
-          <ThemedText type="smallBold" style={styles.addText}>
+          <ThemedText type="titleSmall" style={styles.addText}>
             Adicionar alimento
           </ThemedText>
         </Pressable>

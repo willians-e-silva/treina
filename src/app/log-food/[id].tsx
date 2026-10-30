@@ -37,7 +37,7 @@ export default function FoodDetailsScreen() {
     // Products found online are only kept in memory, e.g. lost after a reload.
     return (
       <View style={[styles.missing, { backgroundColor: theme.background }]}>
-        <ThemedText themeColor="textSecondary">Alimento não encontrado. Busque novamente.</ThemedText>
+        <ThemedText themeColor="onSurfaceVariant">Alimento não encontrado. Busque novamente.</ThemedText>
       </View>
     );
   }
@@ -77,7 +77,7 @@ export default function FoodDetailsScreen() {
           {food.name}
         </ThemedText>
         {food.detail && (
-          <ThemedText type="small" themeColor="textSecondary">
+          <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
             {food.detail}
           </ThemedText>
         )}
@@ -162,7 +162,7 @@ function Chip({ label, selected, onPress }: ChipProps) {
         { backgroundColor: selected ? Brand.primary : theme.backgroundSelected },
         pressed && styles.pressed,
       ]}>
-      <ThemedText type="smallBold" style={selected ? styles.chipTextSelected : undefined}>
+      <ThemedText type="titleSmall" style={selected ? styles.chipTextSelected : undefined}>
         {label}
       </ThemedText>
     </Pressable>
@@ -176,7 +176,7 @@ function Nutrient({ label, value, color }: { label: string; value: string; color
         {color && <View style={[styles.dot, { backgroundColor: color }]} />}
         <ThemedText>{label}</ThemedText>
       </View>
-      <ThemedText type="smallBold">{value}</ThemedText>
+      <ThemedText type="titleSmall">{value}</ThemedText>
     </View>
   );
 }

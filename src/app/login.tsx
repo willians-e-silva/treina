@@ -95,15 +95,15 @@ export default function LoginScreen() {
             keyboardShouldPersistTaps="handled"
           >
             <View style={styles.header}>
-              <ThemedText type="subtitle">Bem vindo</ThemedText>
-              <ThemedText themeColor="textSecondary">
+              <ThemedText type="headlineMedium">Bem vindo</ThemedText>
+              <ThemedText themeColor="onSurfaceVariant">
                 Faca login para continuar
               </ThemedText>
             </View>
 
             <View style={styles.form}>
               <View style={styles.field}>
-                <ThemedText type="smallBold">Email</ThemedText>
+                <ThemedText type="titleSmall">Email</ThemedText>
                 <TextInput
                   style={inputStyle}
                   value={email}
@@ -122,7 +122,7 @@ export default function LoginScreen() {
               </View>
 
               <View style={styles.field}>
-                <ThemedText type="smallBold">Senha</ThemedText>
+                <ThemedText type="titleSmall">Senha</ThemedText>
                 <View>
                   <TextInput
                     ref={passwordRef}
@@ -148,7 +148,7 @@ export default function LoginScreen() {
                     }
                     hitSlop={8}
                   >
-                    <ThemedText type="small" themeColor="textSecondary">
+                    <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
                       {showPassword ? "Hide" : "Show"}
                     </ThemedText>
                   </Pressable>
@@ -157,7 +157,7 @@ export default function LoginScreen() {
 
               {error && (
                 <ThemedText
-                  type="small"
+                  type="bodyMedium"
                   style={styles.error}
                   accessibilityRole="alert"
                 >
@@ -190,7 +190,7 @@ export default function LoginScreen() {
                         { backgroundColor: theme.backgroundSelected },
                       ]}
                     />
-                    <ThemedText type="small" themeColor="textSecondary">
+                    <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
                       ou
                     </ThemedText>
                     <View
@@ -228,7 +228,7 @@ export default function LoginScreen() {
               )}
 
               <View style={styles.signupRow}>
-                <ThemedText type="small" themeColor="textSecondary">
+                <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
                   Não tem conta?
                 </ThemedText>
                 <Pressable
@@ -237,7 +237,7 @@ export default function LoginScreen() {
                   accessibilityRole="link"
                   hitSlop={Spacing.two}
                 >
-                  <ThemedText type="smallBold" style={styles.signupLink}>
+                  <ThemedText type="titleSmall" style={styles.signupLink}>
                     Criar conta
                   </ThemedText>
                 </Pressable>

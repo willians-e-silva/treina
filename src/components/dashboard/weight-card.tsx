@@ -48,9 +48,9 @@ export function WeightCard({ weight }: WeightCardProps) {
       <View style={styles.header}>
         <View style={styles.title}>
           <Scale color={theme.textSecondary} size={20} aria-hidden />
-          <ThemedText type="smallBold">Peso</ThemedText>
+          <ThemedText type="titleSmall">Peso</ThemedText>
         </View>
-        <ThemedText type="small" themeColor="textSecondary">
+        <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
           Últimos 90 dias
         </ThemedText>
       </View>
@@ -58,12 +58,12 @@ export function WeightCard({ weight }: WeightCardProps) {
       <View style={styles.summary}>
         <ThemedText style={styles.value}>
           {formatDecimal(latest)}
-          <ThemedText type="small" themeColor="textSecondary">
+          <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
             {' '}
             kg
           </ThemedText>
         </ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
+        <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
           {sign}
           {formatDecimal(Math.abs(change))} kg no período
         </ThemedText>

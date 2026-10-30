@@ -29,7 +29,7 @@ export function MainFlowLoading(props: MainFlowLoadingProps) {
             accessibilityLabel="Carregando"
             accessibilityState={{ busy: true }}>
             <ActivityIndicator size="large" color={Brand.primary} />
-            <ThemedText type="small" themeColor="textSecondary">
+            <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
               Preparando tudo para você…
             </ThemedText>
           </View>
@@ -51,7 +51,7 @@ export function MainFlowLoading(props: MainFlowLoadingProps) {
               accessibilityRole="button"
               hitSlop={8}
               style={({ pressed }) => [styles.secondaryButton, pressed && styles.pressed]}>
-              <ThemedText type="small" style={{ color: theme.textSecondary }}>
+              <ThemedText type="bodyMedium" style={{ color: theme.textSecondary }}>
                 Sair
               </ThemedText>
             </Pressable>

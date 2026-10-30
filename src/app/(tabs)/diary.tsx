@@ -41,7 +41,7 @@ export default function DiaryScreen() {
         accessibilityRole="button"
         style={({ pressed }) => [styles.editMeals, pressed && styles.pressed]}>
         <Pencil color={Brand.primary} size={18} strokeWidth={2.5} aria-hidden />
-        <ThemedText type="smallBold" style={styles.editMealsText}>
+        <ThemedText type="titleSmall" style={styles.editMealsText}>
           Editar refeições
         </ThemedText>
       </Pressable>
@@ -55,8 +55,8 @@ function Total({ label, value, color }: { label: string; value: string; color?: 
       <ThemedText style={[styles.totalValue, color ? { color } : undefined]}>{value}</ThemedText>
       {/* Four columns are narrow on small phones: shrink rather than wrap. */}
       <ThemedText
-        type="small"
-        themeColor="textSecondary"
+        type="bodyMedium"
+        themeColor="onSurfaceVariant"
         numberOfLines={1}
         adjustsFontSizeToFit
         style={styles.totalLabel}>

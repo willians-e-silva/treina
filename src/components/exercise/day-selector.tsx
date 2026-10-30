@@ -41,7 +41,7 @@ export function DaySelector({ date, onChange }: DaySelectorProps) {
         style={({ pressed }) => pressed && styles.pressed}>
         <ChevronLeft color={theme.text} size={24} />
       </Pressable>
-      <ThemedText type="smallBold" accessibilityLiveRegion="polite">
+      <ThemedText type="titleSmall" accessibilityLiveRegion="polite">
         {formatDay(date)}
       </ThemedText>
       <Pressable

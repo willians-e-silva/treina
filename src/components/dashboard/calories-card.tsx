@@ -27,7 +27,7 @@ export function CaloriesCard({ calories }: CaloriesCardProps) {
   return (
     <Surface style={styles.container}>
       <View>
-        <ThemedText type="smallBold">Meta diaria</ThemedText>
+        <ThemedText type="titleSmall">Meta diaria</ThemedText>
       </View>
 
       <View style={styles.content}>
@@ -43,7 +43,7 @@ export function CaloriesCard({ calories }: CaloriesCardProps) {
           >
             {formatInt(Math.abs(remaining))}
           </ThemedText>
-          <ThemedText type="small" themeColor="textSecondary">
+          <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
             {over ? "Acima" : "Restantes"}
           </ThemedText>
         </ProgressRing>
@@ -77,10 +77,10 @@ function LegendRow({ icon: Icon, label, value, color }: LegendRowProps) {
     <View style={styles.legendRow}>
       <Icon color={color ?? theme.textSecondary} size={20} aria-hidden />
       <View>
-        <ThemedText type="small" themeColor="textSecondary">
+        <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
           {label}
         </ThemedText>
-        <ThemedText type="smallBold">{formatInt(value)}</ThemedText>
+        <ThemedText type="titleSmall">{formatInt(value)}</ThemedText>
       </View>
     </View>
   );

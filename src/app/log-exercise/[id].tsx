@@ -95,14 +95,14 @@ export default function ExerciseDetailsScreen() {
       )}
 
       <View>
-        <ThemedText type="small" themeColor="textSecondary">
+        <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
           {CATEGORY_LABELS[category]}
         </ThemedText>
         <ThemedText style={styles.name} accessibilityRole="header">
           {name}
         </ThemedText>
         {details.length > 0 && (
-          <ThemedText type="small" themeColor="textSecondary">
+          <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
             {details.join(' · ')}
           </ThemedText>
         )}
@@ -172,7 +172,7 @@ function Field({ label, value, onChangeText, placeholder, hint, integer }: Field
         />
       </View>
       {hint && (
-        <ThemedText type="small" themeColor="textSecondary">
+        <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
           {hint}
         </ThemedText>
       )}

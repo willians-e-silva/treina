@@ -195,7 +195,7 @@ export default function SearchExerciseScreen() {
             )}
 
             {listReady && (
-              <ThemedText type="smallBold" themeColor="textSecondary" accessibilityRole="header">
+              <ThemedText type="titleSmall" themeColor="onSurfaceVariant" accessibilityRole="header">
                 {remote.status === 'done' && showSearch
                   ? `Resultados para “${remote.query}”`
                   : 'Exercícios'}
@@ -206,7 +206,7 @@ export default function SearchExerciseScreen() {
         ListEmptyComponent={
           listReady && !loading ? (
             <View style={[styles.emptyBox, { backgroundColor: theme.backgroundElement }]}>
-              <ThemedText type="small" themeColor="textSecondary" style={styles.empty}>
+              <ThemedText type="bodyMedium" themeColor="onSurfaceVariant" style={styles.empty}>
                 {showSearch
                   ? 'Nenhum exercício encontrado. Tente um termo em inglês.'
                   : 'Nenhum exercício encontrado.'}
@@ -218,7 +218,7 @@ export default function SearchExerciseScreen() {
           <View style={styles.footer}>
             {loading && <ActivityIndicator color={Brand.primary} />}
             {error && (
-              <ThemedText type="small" style={styles.error}>
+              <ThemedText type="bodyMedium" style={styles.error}>
                 {error}
               </ThemedText>
             )}
@@ -249,7 +249,7 @@ function TextAction({ icon: Icon, label, onPress }: TextActionProps) {
       accessibilityRole="button"
       style={({ pressed }) => [styles.action, pressed && styles.pressed]}>
       <Icon color={Brand.primary} size={18} strokeWidth={2.5} aria-hidden />
-      <ThemedText type="smallBold" style={styles.actionText} numberOfLines={1}>
+      <ThemedText type="titleSmall" style={styles.actionText} numberOfLines={1}>
         {label}
       </ThemedText>
     </Pressable>
@@ -309,7 +309,7 @@ function ExerciseRow({ exercise, first, last, onPress }: ExerciseRowProps) {
         <View style={styles.rowText}>
           <ThemedText numberOfLines={2}>{exercise.name}</ThemedText>
           {exercise.target && (
-            <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
+            <ThemedText type="bodyMedium" themeColor="onSurfaceVariant" numberOfLines={1}>
               {[exercise.target, exercise.equipment].filter(Boolean).join(' · ')}
             </ThemedText>
           )}
