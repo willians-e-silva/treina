@@ -2,14 +2,16 @@ import { router } from 'expo-router';
 import type { LucideIcon } from 'lucide-react-native';
 import Plus from 'lucide-react-native/icons/plus';
 import Trash from 'lucide-react-native/icons/trash';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { formatDecimal, formatInt } from '@/components/dashboard/format';
 import { ThemedText } from '@/components/themed-text';
+import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/ui/icon-button';
 import { Surface } from '@/components/ui/surface';
-import { Brand, Spacing } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { useExerciseLog } from '@/context/exercise-log';
-import { useTheme } from '@/hooks/use-theme';
+import { useAppTheme } from '@/theme';
 import { CATEGORY_LABELS, type ExerciseCategory, type ExerciseEntry } from '@/lib/exercises';
 
 type ExerciseSectionProps = {
@@ -31,7 +33,7 @@ export function ExerciseSection({
   entries,
   summary,
 }: ExerciseSectionProps) {
-  const theme = useTheme();
+  const { colors } = useAppTheme();
   const { removeEntry } = useExerciseLog();
 
   return (
@@ -58,7 +60,7 @@ export function ExerciseSection({
         entries.map((entry) => (
           <View
             key={entry.id}
-            style={[styles.row, { borderTopColor: theme.backgroundSelected }]}>
+            style={[styles.row, { borderTopColor: colors.outlineVariant }]}>
             <View style={styles.rowText}>
               <ThemedText numberOfLines={1}>{entry.name}</ThemedText>
               <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
@@ -68,27 +70,21 @@ export function ExerciseSection({
             {entry.category === 'cardio' && (
               <ThemedText type="titleSmall">{formatInt(entry.calories)} kcal</ThemedText>
             )}
-            <Pressable
+            <IconButton
+              icon={Trash}
               onPress={() => removeEntry(entry.id)}
-              accessibilityRole="button"
               accessibilityLabel={`Remover ${entry.name}`}
-              hitSlop={Spacing.two}
-              style={({ pressed }) => pressed && styles.pressed}>
-              <Trash color={theme.textSecondary} size={18} />
-            </Pressable>
+            />
           </View>
         ))
       )}
 
-      <Pressable
+      <Button
+        label="Adicionar exercício"
+        variant="tonal"
+        icon={Plus}
         onPress={() => router.push({ pathname: '/log-exercise', params: { category, date } })}
-        accessibilityRole="button"
-        style={({ pressed }) => [styles.addButton, pressed && styles.pressed]}>
-        <Plus color={Brand.primary} size={18} strokeWidth={2.5} aria-hidden />
-        <ThemedText type="titleSmall" style={styles.addText}>
-          Adicionar exercício
-        </ThemedText>
-      </Pressable>
+      />
     </Surface>
   );
 }
@@ -119,23 +115,11 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.three,
-    paddingTop: Spacing.three,
+    gap: Spacing.two,
+    paddingTop: Spacing.two,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   rowText: {
     flex: 1,
-  },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
-    alignSelf: 'flex-start',
-  },
-  addText: {
-    color: Brand.primary,
-  },
-  pressed: {
-    opacity: 0.5,
   },
 });

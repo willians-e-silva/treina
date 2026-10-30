@@ -7,10 +7,12 @@ import Trash from 'lucide-react-native/icons/trash';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
+import { IconButton } from '@/components/ui/icon-button';
+import { StateLayer } from '@/components/ui/state-layer';
 import { Surface } from '@/components/ui/surface';
-import { Brand, Spacing } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { useTasks } from '@/context/tasks';
-import { useTheme } from '@/hooks/use-theme';
+import { MinTouchTarget, Shape, useAppTheme } from '@/theme';
 import { describeRepeat, isDoneOn, isTaskDone, type Task } from '@/lib/tasks';
 
 type TaskSectionProps = {
@@ -25,7 +27,7 @@ type TaskSectionProps = {
 
 /** Panel with a checklist of tasks, like the exercise diary sections. */
 export function TaskSection({ title, icon: Icon, color, date, tasks, empty }: TaskSectionProps) {
-  const theme = useTheme();
+  const { colors } = useAppTheme();
   const { toggleTask, removeTask, toggleSubtask, removeSubtask } = useTasks();
   const done = tasks.filter((task) => isTaskDone(task, date)).length;
 
@@ -60,7 +62,7 @@ export function TaskSection({ title, icon: Icon, color, date, tasks, empty }: Ta
           ].filter(Boolean);
 
           return (
-            <View key={task.id} style={[styles.task, { borderTopColor: theme.backgroundSelected }]}>
+            <View key={task.id} style={[styles.task, { borderTopColor: colors.outlineVariant }]}>
               <CheckRow
                 title={task.title}
                 details={details.join(' · ')}
@@ -106,8 +108,8 @@ type CheckRowProps = {
 };
 
 function CheckRow({ title, details, checked, onToggle, onRemove, onAddSubtask, small }: CheckRowProps) {
-  const theme = useTheme();
-  const iconSize = small ? 18 : 22;
+  const { colors } = useAppTheme();
+  const iconSize = small ? 20 : 24;
 
   return (
     <View style={styles.row}>
@@ -116,45 +118,46 @@ function CheckRow({ title, details, checked, onToggle, onRemove, onAddSubtask, s
         accessibilityRole="checkbox"
         accessibilityState={{ checked }}
         accessibilityLabel={title}
-        style={({ pressed }) => [styles.check, pressed && styles.pressed]}>
-        {checked ? (
-          <CircleCheck color={Brand.primary} size={iconSize} aria-hidden />
-        ) : (
-          <Circle color={theme.textSecondary} size={iconSize} aria-hidden />
+        style={styles.check}>
+        {({ pressed }) => (
+          <>
+            <StateLayer color={colors.onSurface} pressed={pressed} />
+            {/* `secondary`: primary is kept for each screen's main action. */}
+            {checked ? (
+              <CircleCheck color={colors.secondary} size={iconSize} aria-hidden />
+            ) : (
+              <Circle color={colors.onSurfaceVariant} size={iconSize} aria-hidden />
+            )}
+            <View style={styles.rowText}>
+              <ThemedText
+                type={small ? 'bodyMedium' : 'bodyLarge'}
+                numberOfLines={2}
+                themeColor={checked ? 'onSurfaceVariant' : 'onSurface'}
+                style={checked && styles.checked}>
+                {title}
+              </ThemedText>
+              {!!details && (
+                <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
+                  {details}
+                </ThemedText>
+              )}
+            </View>
+          </>
         )}
-        <View style={styles.rowText}>
-          <ThemedText
-            type={small ? 'bodyMedium' : 'bodyLarge'}
-            numberOfLines={2}
-            themeColor={checked ? 'onSurfaceVariant' : 'onSurface'}
-            style={checked && styles.checked}>
-            {title}
-          </ThemedText>
-          {!!details && (
-            <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
-              {details}
-            </ThemedText>
-          )}
-        </View>
       </Pressable>
       {onAddSubtask && (
-        <Pressable
+        <IconButton
+          icon={Plus}
           onPress={onAddSubtask}
-          accessibilityRole="button"
           accessibilityLabel={`Adicionar subtarefa em ${title}`}
-          hitSlop={Spacing.two}
-          style={({ pressed }) => pressed && styles.pressed}>
-          <Plus color={theme.textSecondary} size={18} />
-        </Pressable>
+        />
       )}
-      <Pressable
+      <IconButton
+        icon={Trash}
+        size={small ? 20 : 24}
         onPress={onRemove}
-        accessibilityRole="button"
         accessibilityLabel={`Remover ${title}`}
-        hitSlop={Spacing.two}
-        style={({ pressed }) => pressed && styles.pressed}>
-        <Trash color={theme.textSecondary} size={small ? 16 : 18} />
-      </Pressable>
+      />
     </View>
   );
 }
@@ -175,33 +178,33 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   task: {
-    gap: Spacing.two,
-    paddingTop: Spacing.three,
+    gap: Spacing.one,
+    paddingTop: Spacing.two,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   subtasks: {
     gap: Spacing.two,
     // Lines the subtask checkboxes up under the task title.
-    paddingLeft: 22 + Spacing.three,
+    paddingLeft: 24 + Spacing.three,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.three,
+    gap: Spacing.one,
   },
   check: {
     flex: 1,
+    minHeight: MinTouchTarget,
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.three,
+    borderRadius: Shape.medium,
+    overflow: 'hidden',
   },
   rowText: {
     flex: 1,
   },
   checked: {
     textDecorationLine: 'line-through',
-  },
-  pressed: {
-    opacity: 0.5,
   },
 });

@@ -8,7 +8,7 @@ import { formatDecimal } from './format';
 import { ThemedText } from '@/components/themed-text';
 import { Surface } from '@/components/ui/surface';
 import { Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { useAppTheme } from '@/theme';
 import type { DashboardData } from '@/lib/dashboard-data';
 
 const CHART_HEIGHT = 72;
@@ -20,7 +20,7 @@ type WeightCardProps = {
 
 /** Latest weigh-in, change since the first one, and a trend line. */
 export function WeightCard({ weight }: WeightCardProps) {
-  const theme = useTheme();
+  const { colors } = useAppTheme();
   const [width, setWidth] = useState(0);
 
   if (weight.length === 0) {
@@ -47,7 +47,7 @@ export function WeightCard({ weight }: WeightCardProps) {
     <Surface style={styles.container}>
       <View style={styles.header}>
         <View style={styles.title}>
-          <Scale color={theme.textSecondary} size={20} aria-hidden />
+          <Scale color={colors.onSurfaceVariant} size={20} aria-hidden />
           <ThemedText type="titleSmall">Peso</ThemedText>
         </View>
         <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
@@ -56,7 +56,7 @@ export function WeightCard({ weight }: WeightCardProps) {
       </View>
 
       <View style={styles.summary}>
-        <ThemedText style={styles.value}>
+        <ThemedText type="headlineSmall" emphasized>
           {formatDecimal(latest)}
           <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
             {' '}
@@ -78,13 +78,13 @@ export function WeightCard({ weight }: WeightCardProps) {
           <Svg width={width} height={CHART_HEIGHT}>
             <Path
               d={path}
-              stroke={theme.text}
+              stroke={colors.tertiary}
               strokeWidth={2}
               strokeLinejoin="round"
               strokeLinecap="round"
               fill="none"
             />
-            <Circle cx={last.x} cy={last.y} r={4} fill={theme.text} />
+            <Circle cx={last.x} cy={last.y} r={4} fill={colors.tertiary} />
           </Svg>
         )}
       </View>
@@ -113,11 +113,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     flexWrap: 'wrap',
     gap: Spacing.two,
-  },
-  value: {
-    fontSize: 24,
-    lineHeight: 32,
-    fontWeight: 700,
   },
   chart: {
     height: CHART_HEIGHT,

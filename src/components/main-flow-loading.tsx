@@ -1,12 +1,13 @@
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppLogo } from './app-logo';
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
+import { Button } from './ui/button';
 
-import { Brand, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { Spacing } from '@/constants/theme';
+import { useAppTheme } from '@/theme';
 
 type MainFlowLoadingProps =
   | { status: 'loading' }
@@ -14,7 +15,7 @@ type MainFlowLoadingProps =
 
 /** Full-screen state shown between a successful login and the main tabs. */
 export function MainFlowLoading(props: MainFlowLoadingProps) {
-  const theme = useTheme();
+  const { colors } = useAppTheme();
 
   return (
     <ThemedView style={styles.container}>
@@ -28,7 +29,7 @@ export function MainFlowLoading(props: MainFlowLoadingProps) {
             accessibilityRole="progressbar"
             accessibilityLabel="Carregando"
             accessibilityState={{ busy: true }}>
-            <ActivityIndicator size="large" color={Brand.primary} />
+            <ActivityIndicator size="large" color={colors.primary} />
             <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
               Preparando tudo para você…
             </ThemedText>
@@ -39,22 +40,13 @@ export function MainFlowLoading(props: MainFlowLoadingProps) {
               {props.message}
             </ThemedText>
 
-            <Pressable
+            <Button
+              label="Tentar novamente"
+              size="medium"
+              fullWidth
               onPress={props.onRetry}
-              accessibilityRole="button"
-              style={({ pressed }) => [styles.button, pressed && styles.pressed]}>
-              <ThemedText style={styles.buttonText}>Tentar novamente</ThemedText>
-            </Pressable>
-
-            <Pressable
-              onPress={props.onSignOut}
-              accessibilityRole="button"
-              hitSlop={8}
-              style={({ pressed }) => [styles.secondaryButton, pressed && styles.pressed]}>
-              <ThemedText type="bodyMedium" style={{ color: theme.textSecondary }}>
-                Sair
-              </ThemedText>
-            </Pressable>
+            />
+            <Button label="Sair" variant="outlined" fullWidth onPress={props.onSignOut} />
           </View>
         )}
       </SafeAreaView>
@@ -81,25 +73,5 @@ const styles = StyleSheet.create({
   },
   errorText: {
     textAlign: 'center',
-  },
-  button: {
-    alignSelf: 'stretch',
-    height: 52,
-    borderRadius: Spacing.three,
-    backgroundColor: Brand.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  buttonText: {
-    color: Brand.onPrimary,
-    fontWeight: 600,
-  },
-  secondaryButton: {
-    minHeight: 44,
-    paddingHorizontal: Spacing.three,
-    justifyContent: 'center',
-  },
-  pressed: {
-    opacity: 0.8,
   },
 });

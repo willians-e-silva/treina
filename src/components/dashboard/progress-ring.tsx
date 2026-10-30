@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 
-import { useTheme } from '@/hooks/use-theme';
+import { useAppTheme } from '@/theme';
 
 type ProgressRingProps = {
   /** Fraction filled, clamped to 0–1. */
@@ -16,7 +16,7 @@ type ProgressRingProps = {
 
 /** Circular progress indicator drawn with SVG, starting at 12 o'clock. */
 export function ProgressRing({ progress, color, size, strokeWidth, children }: ProgressRingProps) {
-  const theme = useTheme();
+  const { colors } = useAppTheme();
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const clamped = Math.min(Math.max(progress, 0), 1);
@@ -28,7 +28,7 @@ export function ProgressRing({ progress, color, size, strokeWidth, children }: P
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke={theme.backgroundSelected}
+          stroke={colors.surfaceContainerHighest}
           strokeWidth={strokeWidth}
           fill="none"
         />

@@ -3,24 +3,24 @@ import ListChecks from 'lucide-react-native/icons/list-checks';
 import Plus from 'lucide-react-native/icons/plus';
 import Repeat from 'lucide-react-native/icons/repeat';
 import { useState } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
 
 import { DaySelector } from '@/components/exercise/day-selector';
 import { ScreenTitle } from '@/components/screen-title';
 import { TaskSection } from '@/components/tasks/task-section';
 import { TabScreen } from '@/components/tab-screen';
-import { ThemedText } from '@/components/themed-text';
+import { Fab } from '@/components/ui/fab';
 import { getMainTab } from '@/constants/tabs';
-import { Brand, Nutrition, Spacing } from '@/constants/theme';
 import { useTasks } from '@/context/tasks';
 import { toDateKey } from '@/lib/exercises';
 import { isTaskDue } from '@/lib/tasks';
+import { useAppTheme } from '@/theme';
 
 const tab = getMainTab('tasks');
 
 export default function TasksScreen() {
   const [date, setDate] = useState(() => toDateKey(new Date()));
   const { tasks } = useTasks();
+  const { custom } = useAppTheme();
 
   const repeating = tasks.filter((task) => isTaskDue(task, date));
   // One-off tasks show every day until done, then only on the day they were done.
@@ -30,13 +30,21 @@ export default function TasksScreen() {
   );
 
   return (
-    <TabScreen header={<ScreenTitle>{tab.label}</ScreenTitle>}>
+    <TabScreen
+      header={<ScreenTitle>{tab.label}</ScreenTitle>}
+      fab={
+        <Fab
+          icon={Plus}
+          label="Adicionar tarefa"
+          onPress={() => router.push({ pathname: '/add-task', params: { date } })}
+        />
+      }>
       <DaySelector date={date} onChange={setDate} />
 
       <TaskSection
         title="Do dia"
         icon={Repeat}
-        color={Nutrition.steps}
+        color={custom.steps.color}
         date={date}
         tasks={repeating}
         empty="Nenhuma tarefa repetida para este dia."
@@ -44,38 +52,13 @@ export default function TasksScreen() {
       <TaskSection
         title="Sem repetição"
         icon={ListChecks}
-        color={Brand.primary}
+        color={custom.fat.color}
         date={date}
         tasks={oneOff}
         empty="Nenhuma tarefa pendente."
       />
 
-      <Pressable
-        onPress={() => router.push({ pathname: '/add-task', params: { date } })}
-        accessibilityRole="button"
-        style={({ pressed }) => [styles.addButton, pressed && styles.pressed]}>
-        <Plus color={Brand.onPrimary} size={18} strokeWidth={2.5} aria-hidden />
-        <ThemedText style={styles.addText}>Adicionar tarefa</ThemedText>
-      </Pressable>
     </TabScreen>
   );
 }
 
-const styles = StyleSheet.create({
-  addButton: {
-    height: 52,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.two,
-    borderRadius: Spacing.three,
-    backgroundColor: Brand.primary,
-  },
-  addText: {
-    color: Brand.onPrimary,
-    fontWeight: 700,
-  },
-  pressed: {
-    opacity: 0.5,
-  },
-});

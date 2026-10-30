@@ -1,11 +1,11 @@
 import ChevronLeft from 'lucide-react-native/icons/chevron-left';
 import ChevronRight from 'lucide-react-native/icons/chevron-right';
-import { Pressable, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
+import { IconButton } from '@/components/ui/icon-button';
 import { Surface } from '@/components/ui/surface';
 import { Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
 import { addDays, fromDateKey, toDateKey } from '@/lib/exercises';
 
 const weekday = new Intl.DateTimeFormat('pt-BR', {
@@ -29,29 +29,21 @@ type DaySelectorProps = {
 
 /** Previous / next day arrows around the diary day, like the MyFitnessPal diary. */
 export function DaySelector({ date, onChange }: DaySelectorProps) {
-  const theme = useTheme();
-
   return (
     <Surface style={styles.container}>
-      <Pressable
+      <IconButton
+        icon={ChevronLeft}
         onPress={() => onChange(addDays(date, -1))}
-        accessibilityRole="button"
         accessibilityLabel="Dia anterior"
-        hitSlop={Spacing.two}
-        style={({ pressed }) => pressed && styles.pressed}>
-        <ChevronLeft color={theme.text} size={24} />
-      </Pressable>
-      <ThemedText type="titleSmall" accessibilityLiveRegion="polite">
+      />
+      <ThemedText type="titleMedium" accessibilityLiveRegion="polite">
         {formatDay(date)}
       </ThemedText>
-      <Pressable
+      <IconButton
+        icon={ChevronRight}
         onPress={() => onChange(addDays(date, 1))}
-        accessibilityRole="button"
         accessibilityLabel="Próximo dia"
-        hitSlop={Spacing.two}
-        style={({ pressed }) => pressed && styles.pressed}>
-        <ChevronRight color={theme.text} size={24} />
-      </Pressable>
+      />
     </Surface>
   );
 }
@@ -61,10 +53,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two + Spacing.one,
-  },
-  pressed: {
-    opacity: 0.5,
+    paddingHorizontal: Spacing.one,
+    paddingVertical: Spacing.one,
   },
 });

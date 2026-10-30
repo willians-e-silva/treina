@@ -9,8 +9,8 @@ import { ProgressRing } from "./progress-ring";
 
 import { ThemedText } from "@/components/themed-text";
 import { Surface } from "@/components/ui/surface";
-import { Brand, Nutrition, Spacing } from "@/constants/theme";
-import { useTheme } from "@/hooks/use-theme";
+import { Spacing } from "@/constants/theme";
+import { useAppTheme } from "@/theme";
 import type { DashboardData } from "@/lib/dashboard-data";
 
 type CaloriesCardProps = {
@@ -23,6 +23,7 @@ export function CaloriesCard({ calories }: CaloriesCardProps) {
   const budget = goal + exercise;
   const remaining = budget - food;
   const over = remaining < 0;
+  const { colors, custom } = useAppTheme();
 
   return (
     <Surface style={styles.container}>
@@ -33,12 +34,14 @@ export function CaloriesCard({ calories }: CaloriesCardProps) {
       <View style={styles.content}>
         <ProgressRing
           progress={budget > 0 ? food / budget : 0}
-          color={over ? Brand.danger : Nutrition.calories}
+          color={over ? colors.error : custom.diet.color}
           size={136}
           strokeWidth={12}
         >
           <ThemedText
-            style={[styles.remaining, over && { color: Brand.danger }]}
+            type="headlineMedium"
+            emphasized
+            themeColor={over ? "error" : "onSurface"}
             accessibilityLabel={`${formatInt(Math.abs(remaining))} calorias ${over ? "acima da meta" : "restantes"}`}
           >
             {formatInt(Math.abs(remaining))}
@@ -55,7 +58,7 @@ export function CaloriesCard({ calories }: CaloriesCardProps) {
             icon={Flame}
             label="Exercício"
             value={exercise}
-            color={Nutrition.exercise}
+            color={custom.exercise.color}
           />
         </View>
       </View>
@@ -71,11 +74,11 @@ type LegendRowProps = {
 };
 
 function LegendRow({ icon: Icon, label, value, color }: LegendRowProps) {
-  const theme = useTheme();
+  const { colors } = useAppTheme();
 
   return (
     <View style={styles.legendRow}>
-      <Icon color={color ?? theme.textSecondary} size={20} aria-hidden />
+      <Icon color={color ?? colors.onSurfaceVariant} size={20} aria-hidden />
       <View>
         <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
           {label}
@@ -96,11 +99,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-around",
     gap: Spacing.three,
-  },
-  remaining: {
-    fontSize: 28,
-    lineHeight: 34,
-    fontWeight: 700,
   },
   legend: {
     gap: Spacing.three,

@@ -5,7 +5,7 @@ import { Surface } from './ui/surface';
 
 import type { MainTab } from '@/constants/tabs';
 import { Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { useAppTheme } from '@/theme';
 
 type ComingSoonProps = {
   icon: MainTab['icon'];
@@ -17,11 +17,11 @@ export function ComingSoon({
   icon: Icon,
   message = 'Esta funcionalidade será implementada em breve.',
 }: ComingSoonProps) {
-  const theme = useTheme();
+  const { colors } = useAppTheme();
 
   return (
     <Surface style={styles.container}>
-      <Icon color={theme.textSecondary} size={32} aria-hidden />
+      <Icon color={colors.onSurfaceVariant} size={32} aria-hidden />
       <ThemedText type="bodyMedium" themeColor="onSurfaceVariant" style={styles.message}>
         {message}
       </ThemedText>

@@ -9,22 +9,28 @@ import Soup from 'lucide-react-native/icons/soup';
 import Utensils from 'lucide-react-native/icons/utensils';
 import Zap from 'lucide-react-native/icons/zap';
 
-import { Brand, Nutrition } from '@/constants/theme';
+import { useAppTheme, type CustomColorName } from '@/theme';
 
-type MealIcon = { icon: LucideIcon; color: string };
-
-const PRESET_ICONS: Record<string, MealIcon> = {
-  breakfast: { icon: Coffee, color: Nutrition.calories },
-  'morning-snack': { icon: Croissant, color: Nutrition.carbs },
-  lunch: { icon: Soup, color: Nutrition.protein },
-  snack: { icon: Cookie, color: Nutrition.carbs },
-  'pre-workout': { icon: Zap, color: Nutrition.exercise },
-  'post-workout': { icon: Dumbbell, color: Nutrition.steps },
-  dinner: { icon: Moon, color: Nutrition.fat },
-  supper: { icon: MoonStar, color: Nutrition.fat },
+/** Each preset meal's icon and the theme custom color it is drawn in. */
+const PRESET_ICONS: Record<string, { icon: LucideIcon; tone: CustomColorName }> = {
+  breakfast: { icon: Coffee, tone: 'diet' },
+  'morning-snack': { icon: Croissant, tone: 'carbs' },
+  lunch: { icon: Soup, tone: 'protein' },
+  snack: { icon: Cookie, tone: 'carbs' },
+  'pre-workout': { icon: Zap, tone: 'exercise' },
+  'post-workout': { icon: Dumbbell, tone: 'steps' },
+  dinner: { icon: Moon, tone: 'fat' },
+  supper: { icon: MoonStar, tone: 'fat' },
 };
 
-/** Icon of a preset meal; custom meals share a generic one. */
-export function getMealIcon(mealId: string): MealIcon {
-  return PRESET_ICONS[mealId] ?? { icon: Utensils, color: Brand.primary };
+/**
+ * Icon and color of a meal for the current light/dark mode; custom meals
+ * share a generic icon in `onSurfaceVariant`.
+ */
+export function useMealIcon(mealId: string): { icon: LucideIcon; color: string } {
+  const { colors, custom } = useAppTheme();
+  const preset = PRESET_ICONS[mealId];
+  return preset
+    ? { icon: preset.icon, color: custom[preset.tone].color }
+    : { icon: Utensils, color: colors.onSurfaceVariant };
 }

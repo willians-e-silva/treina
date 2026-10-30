@@ -1,17 +1,19 @@
 import { router } from 'expo-router';
 import Plus from 'lucide-react-native/icons/plus';
 import Trash from 'lucide-react-native/icons/trash';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { formatInt } from '@/components/dashboard/format';
 import { ThemedText } from '@/components/themed-text';
+import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/ui/icon-button';
 import { Surface } from '@/components/ui/surface';
-import { Brand, Spacing } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { useFoodLog } from '@/context/food-log';
-import { useTheme } from '@/hooks/use-theme';
+import { useAppTheme } from '@/theme';
 import { sumNutrients, type FoodEntry, type Meal } from '@/lib/foods';
 
-import { getMealIcon } from './meal-icons';
+import { useMealIcon } from './meal-icons';
 
 type MealSectionProps = {
   meal: Meal;
@@ -23,10 +25,10 @@ type MealSectionProps = {
 
 /** One diary meal with its foods, its total kcal and an add button. */
 export function MealSection({ meal, date, entries, removed }: MealSectionProps) {
-  const theme = useTheme();
+  const { colors } = useAppTheme();
   const { removeEntry } = useFoodLog();
   const total = sumNutrients(entries.map((entry) => entry.nutrients));
-  const { icon: Icon, color } = getMealIcon(meal.id);
+  const { icon: Icon, color } = useMealIcon(meal.id);
 
   return (
     <Surface style={styles.container}>
@@ -52,7 +54,7 @@ export function MealSection({ meal, date, entries, removed }: MealSectionProps) 
         entries.map((entry) => (
           <View
             key={entry.id}
-            style={[styles.row, { borderTopColor: theme.backgroundSelected }]}>
+            style={[styles.row, { borderTopColor: colors.outlineVariant }]}>
             <View style={styles.rowText}>
               <ThemedText numberOfLines={1}>{entry.name}</ThemedText>
               <ThemedText type="bodyMedium" themeColor="onSurfaceVariant" numberOfLines={1}>
@@ -60,29 +62,23 @@ export function MealSection({ meal, date, entries, removed }: MealSectionProps) 
               </ThemedText>
             </View>
             <ThemedText type="titleSmall">{formatInt(entry.nutrients.kcal)} kcal</ThemedText>
-            <Pressable
+            <IconButton
+              icon={Trash}
               onPress={() => removeEntry(entry.id)}
-              accessibilityRole="button"
               accessibilityLabel={`Remover ${entry.name}`}
-              hitSlop={Spacing.two}
-              style={({ pressed }) => pressed && styles.pressed}>
-              <Trash color={theme.textSecondary} size={18} />
-            </Pressable>
+            />
           </View>
         ))
       )}
 
       {!removed && (
-        <Pressable
+        <Button
+          label="Adicionar alimento"
+          variant="tonal"
+          icon={Plus}
           onPress={() => router.push({ pathname: '/log-food', params: { meal: meal.id, date } })}
-          accessibilityRole="button"
           accessibilityLabel={`Adicionar alimento: ${meal.name}`}
-          style={({ pressed }) => [styles.addButton, pressed && styles.pressed]}>
-          <Plus color={Brand.primary} size={18} strokeWidth={2.5} aria-hidden />
-          <ThemedText type="titleSmall" style={styles.addText}>
-            Adicionar alimento
-          </ThemedText>
-        </Pressable>
+        />
       )}
     </Surface>
   );
@@ -110,23 +106,11 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.three,
-    paddingTop: Spacing.three,
+    gap: Spacing.two,
+    paddingTop: Spacing.two,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   rowText: {
     flex: 1,
-  },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
-    alignSelf: 'flex-start',
-  },
-  addText: {
-    color: Brand.primary,
-  },
-  pressed: {
-    opacity: 0.5,
   },
 });

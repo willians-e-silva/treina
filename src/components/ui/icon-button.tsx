@@ -9,27 +9,44 @@ type IconButtonProps = Omit<PressableProps, 'children' | 'style'> & {
   icon: LucideIcon;
   /** Required: the button has no visible text. */
   accessibilityLabel: string;
-  /** Icon color; defaults to `onSurfaceVariant` (M3 standard icon button). */
+  /** Icon color of a standard icon button; defaults to `onSurfaceVariant`. */
   color?: string;
   size?: number;
+  /** `filled`: `primary` container, for an icon-only main action. */
+  variant?: 'standard' | 'filled';
 };
 
 /**
- * M3 standard icon button: a 24dp icon in a 48×48dp touch target, with a
- * round state layer while pressed.
+ * M3 icon button: a 24dp icon in a 48×48dp touch target, with a round state
+ * layer while pressed.
  */
-export function IconButton({ icon: Icon, color, size = 24, disabled, ...props }: IconButtonProps) {
+export function IconButton({
+  icon: Icon,
+  color,
+  size = 24,
+  variant = 'standard',
+  disabled,
+  ...props
+}: IconButtonProps) {
   const { colors } = useAppTheme();
+  const filled = variant === 'filled';
   const content = disabled
     ? withAlpha(colors.onSurface, Disabled.content)
-    : (color ?? colors.onSurfaceVariant);
+    : filled
+      ? colors.onPrimary
+      : (color ?? colors.onSurfaceVariant);
+  const container = !filled
+    ? undefined
+    : disabled
+      ? withAlpha(colors.onSurface, Disabled.container)
+      : colors.primary;
 
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityState={{ disabled: !!disabled }}
       disabled={disabled}
-      style={styles.button}
+      style={[styles.button, { backgroundColor: container }]}
       {...props}>
       {({ pressed }) => (
         <>

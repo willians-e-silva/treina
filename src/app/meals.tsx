@@ -2,22 +2,24 @@ import { Stack } from 'expo-router';
 import Plus from 'lucide-react-native/icons/plus';
 import Trash from 'lucide-react-native/icons/trash';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { HeaderBackButton } from '@/components/ui/header-back-button';
-import { getMealIcon } from '@/components/diary/meal-icons';
+import { useMealIcon } from '@/components/diary/meal-icons';
 import { ThemedText } from '@/components/themed-text';
+import { Chip } from '@/components/ui/chip';
+import { HeaderBackButton } from '@/components/ui/header-back-button';
+import { IconButton } from '@/components/ui/icon-button';
 import { Surface } from '@/components/ui/surface';
-import { Brand, MaxContentWidth, Spacing } from '@/constants/theme';
+import { ThemedTextInput } from '@/components/ui/text-input';
+import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useFoodLog } from '@/context/food-log';
-import { useTheme } from '@/hooks/use-theme';
-import { PRESET_MEALS } from '@/lib/foods';
+import { PRESET_MEALS, type Meal } from '@/lib/foods';
 import { normalizeText } from '@/lib/taco';
+import { useAppTheme } from '@/theme';
 
 /** Adds and removes the meals shown in the food diary. */
 export default function MealsScreen() {
-  const theme = useTheme();
   const insets = useSafeAreaInsets();
   const { meals, addMeal, removeMeal } = useFoodLog();
   const [name, setName] = useState('');
@@ -45,7 +47,7 @@ export default function MealsScreen() {
         }}
       />
       <ScrollView
-        style={{ backgroundColor: theme.background }}
+        style={styles.scroll}
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.four }]}
         keyboardShouldPersistTaps="handled">
         <View style={styles.group}>
@@ -53,37 +55,16 @@ export default function MealsScreen() {
             No diário
           </ThemedText>
           <Surface style={styles.list}>
-            {meals.map((meal, index) => {
-              const { icon: Icon, color } = getMealIcon(meal.id);
-              // The diary always keeps at least one meal to log foods in.
-              const last = meals.length === 1;
-              return (
-                <View
-                  key={meal.id}
-                  style={[
-                    styles.row,
-                    index > 0 && {
-                      borderTopWidth: StyleSheet.hairlineWidth,
-                      borderTopColor: theme.backgroundSelected,
-                    },
-                  ]}>
-                  <Icon color={color} size={20} aria-hidden />
-                  <ThemedText style={styles.rowName} numberOfLines={1}>
-                    {meal.name}
-                  </ThemedText>
-                  <Pressable
-                    onPress={() => removeMeal(meal.id)}
-                    disabled={last}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Remover ${meal.name}`}
-                    accessibilityState={{ disabled: last }}
-                    hitSlop={Spacing.two}
-                    style={({ pressed }) => (pressed || last) && styles.pressed}>
-                    <Trash color={theme.textSecondary} size={18} />
-                  </Pressable>
-                </View>
-              );
-            })}
+            {meals.map((meal, index) => (
+              <MealRow
+                key={meal.id}
+                meal={meal}
+                divider={index > 0}
+                // The diary always keeps at least one meal to log foods in.
+                removable={meals.length > 1}
+                onRemove={() => removeMeal(meal.id)}
+              />
+            ))}
           </Surface>
           <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
             Alimentos já registrados em uma refeição removida continuam no diário.
@@ -97,19 +78,13 @@ export default function MealsScreen() {
             </ThemedText>
             <View style={styles.chips}>
               {available.map((meal) => (
-                <Pressable
+                <Chip
                   key={meal.id}
+                  label={meal.name}
+                  icon={Plus}
                   onPress={() => addMeal({ presetId: meal.id })}
-                  accessibilityRole="button"
                   accessibilityLabel={`Adicionar ${meal.name}`}
-                  style={({ pressed }) => [
-                    styles.chip,
-                    { backgroundColor: theme.backgroundElement },
-                    pressed && styles.pressed,
-                  ]}>
-                  <Plus color={Brand.primary} size={16} strokeWidth={2.5} aria-hidden />
-                  <ThemedText type="titleSmall">{meal.name}</ThemedText>
-                </Pressable>
+                />
               ))}
             </View>
           </View>
@@ -120,29 +95,26 @@ export default function MealsScreen() {
             Refeição personalizada
           </ThemedText>
           <View style={styles.custom}>
-            <TextInput
+            <ThemedTextInput
               value={name}
               onChangeText={setName}
               onSubmitEditing={addCustom}
               placeholder="Nome da refeição"
-              placeholderTextColor={theme.textSecondary}
               returnKeyType="done"
               submitBehavior="submit"
               accessibilityLabel="Nome da refeição personalizada"
-              style={[styles.input, { color: theme.text, backgroundColor: theme.backgroundElement }]}
+              style={styles.input}
             />
-            <Pressable
+            <IconButton
+              icon={Plus}
+              variant="filled"
               onPress={addCustom}
               disabled={!canAdd}
-              accessibilityRole="button"
               accessibilityLabel="Adicionar refeição"
-              accessibilityState={{ disabled: !canAdd }}
-              style={({ pressed }) => [styles.addButton, (!canAdd || pressed) && styles.pressed]}>
-              <Plus color={Brand.onPrimary} size={22} strokeWidth={2.5} />
-            </Pressable>
+            />
           </View>
           {duplicate && (
-            <ThemedText type="bodyMedium" style={styles.error}>
+            <ThemedText type="bodyMedium" themeColor="error">
               Já existe uma refeição com esse nome.
             </ThemedText>
           )}
@@ -152,12 +124,52 @@ export default function MealsScreen() {
   );
 }
 
+function MealRow({
+  meal,
+  divider,
+  removable,
+  onRemove,
+}: {
+  meal: Meal;
+  divider: boolean;
+  removable: boolean;
+  onRemove: () => void;
+}) {
+  const { colors } = useAppTheme();
+  const { icon: Icon, color } = useMealIcon(meal.id);
+
+  return (
+    <View
+      style={[
+        styles.row,
+        divider && {
+          borderTopWidth: StyleSheet.hairlineWidth,
+          borderTopColor: colors.outlineVariant,
+        },
+      ]}>
+      <Icon color={color} size={24} aria-hidden />
+      <ThemedText style={styles.rowName} numberOfLines={1}>
+        {meal.name}
+      </ThemedText>
+      <IconButton
+        icon={Trash}
+        onPress={onRemove}
+        disabled={!removable}
+        accessibilityLabel={`Remover ${meal.name}`}
+      />
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  scroll: {
+    flex: 1,
+  },
   content: {
     width: '100%',
     maxWidth: MaxContentWidth,
     alignSelf: 'center',
-    padding: Spacing.four,
+    padding: Spacing.three,
     gap: Spacing.four,
   },
   group: {
@@ -170,7 +182,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.three,
-    paddingVertical: Spacing.three,
+    paddingVertical: Spacing.one,
   },
   rowName: {
     flex: 1,
@@ -180,37 +192,12 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: Spacing.two,
   },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.one,
-    borderRadius: Spacing.four,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-  },
   custom: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: Spacing.two,
   },
   input: {
     flex: 1,
-    height: 52,
-    borderRadius: Spacing.three,
-    paddingHorizontal: Spacing.three,
-    fontSize: 16,
-  },
-  addButton: {
-    width: 52,
-    height: 52,
-    borderRadius: Spacing.three,
-    backgroundColor: Brand.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  error: {
-    color: Brand.danger,
-  },
-  pressed: {
-    opacity: 0.5,
   },
 });

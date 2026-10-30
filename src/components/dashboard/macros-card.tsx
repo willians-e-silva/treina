@@ -5,13 +5,15 @@ import { ProgressRing } from "./progress-ring";
 
 import { ThemedText } from "@/components/themed-text";
 import { Surface } from "@/components/ui/surface";
-import { Nutrition, Spacing } from "@/constants/theme";
+import { Spacing } from "@/constants/theme";
 import type { DashboardData, MacroKey } from "@/lib/dashboard-data";
+import { useAppTheme } from "@/theme";
 
-const MACROS: { key: MacroKey; label: string; color: string }[] = [
-  { key: "carbs", label: "Carboidratos", color: Nutrition.carbs },
-  { key: "protein", label: "Proteínas", color: Nutrition.protein },
-  { key: "fat", label: "Gorduras", color: Nutrition.fat },
+/** Macro → its custom color in the theme (same key). */
+const MACROS: { key: MacroKey; label: string }[] = [
+  { key: "carbs", label: "Carboidratos" },
+  { key: "protein", label: "Proteínas" },
+  { key: "fat", label: "Gorduras" },
 ];
 
 type MacrosCardProps = {
@@ -20,12 +22,15 @@ type MacrosCardProps = {
 
 /** One ring per macronutrient with grams consumed against the goal. */
 export function MacrosCard({ macros }: MacrosCardProps) {
+  const { custom } = useAppTheme();
+
   return (
     <Surface style={styles.container}>
       <ThemedText type="titleSmall">Macronutrientes</ThemedText>
       <View style={styles.row}>
-        {MACROS.map(({ key, label, color }) => {
+        {MACROS.map(({ key, label }) => {
           const { consumed, goal } = macros[key];
+          const { color } = custom[key];
           const left = Math.max(goal - consumed, 0);
           return (
             <View
@@ -41,15 +46,11 @@ export function MacrosCard({ macros }: MacrosCardProps) {
                 strokeWidth={8}
               >
                 <ThemedText type="titleSmall">{formatInt(consumed)}</ThemedText>
-                <ThemedText
-                  type="bodyMedium"
-                  themeColor="onSurfaceVariant"
-                  style={styles.goal}
-                >
+                <ThemedText type="labelSmall" themeColor="onSurfaceVariant">
                   /{formatInt(goal)}g
                 </ThemedText>
               </ProgressRing>
-              <ThemedText type="bodyMedium" style={{ color }}>
+              <ThemedText type="labelLarge" style={{ color }}>
                 {label}
               </ThemedText>
               <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
@@ -77,9 +78,5 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     gap: Spacing.one,
-  },
-  goal: {
-    fontSize: 11,
-    lineHeight: 14,
   },
 });
