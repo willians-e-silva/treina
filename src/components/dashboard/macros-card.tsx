@@ -1,6 +1,9 @@
+import ChartPie from "lucide-react-native/icons/chart-pie";
 import { StyleSheet, View } from "react-native";
 
+import { CardTitle } from "./card-title";
 import { formatInt } from "./format";
+import { ProgressBar } from "./progress-bar";
 import { ProgressRing } from "./progress-ring";
 
 import { ThemedText } from "@/components/themed-text";
@@ -18,26 +21,61 @@ const MACROS: { key: MacroKey; label: string }[] = [
 
 type MacrosCardProps = {
   macros: DashboardData["macros"];
+  /** Half-width version: one bar per macronutrient instead of rings. */
+  compact?: boolean;
 };
 
 /** One ring per macronutrient with grams consumed against the goal. */
-export function MacrosCard({ macros }: MacrosCardProps) {
-  const { custom } = useAppTheme();
+export function MacrosCard({ macros, compact }: MacrosCardProps) {
+  const { colors, custom } = useAppTheme();
+
+  if (compact) {
+    return (
+      <Surface style={[styles.container, styles.compact]}>
+        <CardTitle icon={ChartPie} color={colors.onSurfaceVariant}>
+          Macronutrientes
+        </CardTitle>
+        {MACROS.map(({ key, label }) => {
+          const { consumed, goal } = macros[key];
+          const { color } = custom[key];
+          return (
+            <View
+              key={key}
+              style={styles.bar}
+              accessible
+              accessibilityLabel={`${label}: ${consumed} de ${goal} gramas`}
+            >
+              <View style={styles.barLabel}>
+                <ThemedText type="labelMedium" style={{ color }} numberOfLines={1}>
+                  {label}
+                </ThemedText>
+                <ThemedText type="labelMedium" themeColor="onSurfaceVariant">
+                  {formatInt(consumed)}/{formatInt(goal)}g
+                </ThemedText>
+              </View>
+              <ProgressBar progress={consumed / goal} color={color} />
+            </View>
+          );
+        })}
+      </Surface>
+    );
+  }
 
   return (
     <Surface style={styles.container}>
-      <ThemedText type="titleSmall">Macronutrientes</ThemedText>
+      <CardTitle icon={ChartPie} color={colors.onSurfaceVariant}>
+        Macronutrientes
+      </CardTitle>
       <View style={styles.row}>
         {MACROS.map(({ key, label }) => {
           const { consumed, goal } = macros[key];
           const { color } = custom[key];
-          const left = Math.max(goal - consumed, 0);
           return (
             <View
               key={key}
               style={styles.macro}
               accessible
-              accessibilityLabel={`${label}: ${consumed} de ${goal} gramas, faltam ${left}`}
+              accessibilityLabel={`${label}: ${consumed} de ${goal} gramas`}
             >
               <ProgressRing
                 progress={consumed / goal}
@@ -53,9 +91,6 @@ export function MacrosCard({ macros }: MacrosCardProps) {
               <ThemedText type="labelLarge" style={{ color }}>
                 {label}
               </ThemedText>
-              <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
-                {formatInt(left)}g restantes
-              </ThemedText>
             </View>
           );
         })}
@@ -66,8 +101,23 @@ export function MacrosCard({ macros }: MacrosCardProps) {
 
 const styles = StyleSheet.create({
   container: {
+    // Fills its row when it sits next to a taller card.
+    flexGrow: 1,
     gap: Spacing.three,
     paddingVertical: Spacing.four,
+  },
+  compact: {
+    gap: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.three,
+  },
+  bar: {
+    gap: Spacing.one,
+  },
+  barLabel: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: Spacing.one,
   },
   row: {
     flexDirection: "row",

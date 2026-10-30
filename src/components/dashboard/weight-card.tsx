@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 
+import { CardTitle } from './card-title';
 import { formatDecimal } from './format';
 
 import { ThemedText } from '@/components/themed-text';
@@ -12,14 +13,18 @@ import { useAppTheme } from '@/theme';
 import type { DashboardData } from '@/lib/dashboard-data';
 
 const CHART_HEIGHT = 72;
+const COMPACT_CHART_HEIGHT = 44;
 const PADDING = 6;
 
 type WeightCardProps = {
   weight: DashboardData['weight'];
+  /** Half-width version: shorter chart, without the period label. */
+  compact?: boolean;
 };
 
 /** Latest weigh-in, change since the first one, and a trend line. */
-export function WeightCard({ weight }: WeightCardProps) {
+export function WeightCard({ weight, compact }: WeightCardProps) {
+  const chartHeight = compact ? COMPACT_CHART_HEIGHT : CHART_HEIGHT;
   const { colors } = useAppTheme();
   const [width, setWidth] = useState(0);
 
@@ -38,21 +43,22 @@ export function WeightCard({ weight }: WeightCardProps) {
   const range = max - min || 1;
   const points = values.map((kg, i) => ({
     x: PADDING + (i / Math.max(values.length - 1, 1)) * (width - PADDING * 2),
-    y: PADDING + ((max - kg) / range) * (CHART_HEIGHT - PADDING * 2),
+    y: PADDING + ((max - kg) / range) * (chartHeight - PADDING * 2),
   }));
   const path = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ');
   const last = points[points.length - 1];
 
   return (
-    <Surface style={styles.container}>
+    <Surface style={[styles.container, compact && styles.compact]}>
       <View style={styles.header}>
-        <View style={styles.title}>
-          <Scale color={colors.onSurfaceVariant} size={20} aria-hidden />
-          <ThemedText type="titleSmall">Peso</ThemedText>
-        </View>
-        <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
-          Últimos 90 dias
-        </ThemedText>
+        <CardTitle icon={Scale} color={colors.onSurfaceVariant}>
+          Peso
+        </CardTitle>
+        {!compact && (
+          <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
+            Últimos 90 dias
+          </ThemedText>
+        )}
       </View>
 
       <View style={styles.summary}>
@@ -70,12 +76,12 @@ export function WeightCard({ weight }: WeightCardProps) {
       </View>
 
       <View
-        style={styles.chart}
+        style={{ height: chartHeight }}
         onLayout={(e) => setWidth(e.nativeEvent.layout.width)}
         accessible
         accessibilityLabel={`Tendência de peso: de ${formatDecimal(first)} para ${formatDecimal(latest)} quilos`}>
         {width > 0 && (
-          <Svg width={width} height={CHART_HEIGHT}>
+          <Svg width={width} height={chartHeight}>
             <Path
               d={path}
               stroke={colors.tertiary}
@@ -94,18 +100,19 @@ export function WeightCard({ weight }: WeightCardProps) {
 
 const styles = StyleSheet.create({
   container: {
+    // Fills its row when it sits next to a taller card.
+    flexGrow: 1,
     gap: Spacing.two,
     paddingVertical: Spacing.four,
+  },
+  compact: {
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.three,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-  },
-  title: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
   },
   summary: {
     flexDirection: 'row',
@@ -113,8 +120,5 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     flexWrap: 'wrap',
     gap: Spacing.two,
-  },
-  chart: {
-    height: CHART_HEIGHT,
   },
 });

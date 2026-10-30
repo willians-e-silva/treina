@@ -1,9 +1,11 @@
 import type { LucideIcon } from "lucide-react-native";
 import Flag from "lucide-react-native/icons/flag";
+import Target from "lucide-react-native/icons/target";
 import Flame from "lucide-react-native/icons/flame";
 import Utensils from "lucide-react-native/icons/utensils";
 import { StyleSheet, View } from "react-native";
 
+import { CardTitle } from "./card-title";
 import { formatInt } from "./format";
 import { ProgressRing } from "./progress-ring";
 
@@ -15,10 +17,12 @@ import type { DashboardData } from "@/lib/dashboard-data";
 
 type CaloriesCardProps = {
   calories: DashboardData["calories"];
+  /** Half-width version: the ring only, without the legend. */
+  compact?: boolean;
 };
 
 /** Remaining calories = goal − food + exercise, shown as a ring. */
-export function CaloriesCard({ calories }: CaloriesCardProps) {
+export function CaloriesCard({ calories, compact }: CaloriesCardProps) {
   const { goal, food, exercise } = calories;
   const budget = goal + exercise;
   const remaining = budget - food;
@@ -26,41 +30,46 @@ export function CaloriesCard({ calories }: CaloriesCardProps) {
   const { colors, custom } = useAppTheme();
 
   return (
-    <Surface style={styles.container}>
-      <View>
-        <ThemedText type="titleSmall">Meta diaria</ThemedText>
-      </View>
+    <Surface style={[styles.container, compact && styles.compact]}>
+      <CardTitle icon={Target} color={custom.diet.color}>
+        Meta diaria
+      </CardTitle>
 
       <View style={styles.content}>
         <ProgressRing
           progress={budget > 0 ? food / budget : 0}
           color={over ? colors.error : custom.diet.color}
-          size={136}
-          strokeWidth={12}
+          size={compact ? 104 : 136}
+          strokeWidth={compact ? 10 : 12}
         >
           <ThemedText
-            type="headlineMedium"
+            type={compact ? "titleLarge" : "headlineMedium"}
             emphasized
             themeColor={over ? "error" : "onSurface"}
             accessibilityLabel={`${formatInt(Math.abs(remaining))} calorias ${over ? "acima da meta" : "restantes"}`}
           >
             {formatInt(Math.abs(remaining))}
           </ThemedText>
-          <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
+          <ThemedText
+            type={compact ? "labelMedium" : "bodyMedium"}
+            themeColor="onSurfaceVariant"
+          >
             {over ? "Acima" : "Restantes"}
           </ThemedText>
         </ProgressRing>
 
-        <View style={styles.legend}>
-          <LegendRow icon={Flag} label="Meta base" value={goal} />
-          <LegendRow icon={Utensils} label="Alimentos" value={food} />
-          <LegendRow
-            icon={Flame}
-            label="Exercício"
-            value={exercise}
-            color={custom.exercise.color}
-          />
-        </View>
+        {!compact && (
+          <View style={styles.legend}>
+            <LegendRow icon={Flag} label="Meta base" value={goal} />
+            <LegendRow icon={Utensils} label="Alimentos" value={food} />
+            <LegendRow
+              icon={Flame}
+              label="Exercício"
+              value={exercise}
+              color={custom.exercise.color}
+            />
+          </View>
+        )}
       </View>
     </Surface>
   );
@@ -91,8 +100,14 @@ function LegendRow({ icon: Icon, label, value, color }: LegendRowProps) {
 
 const styles = StyleSheet.create({
   container: {
+    // Fills its row when it sits next to a taller card.
+    flexGrow: 1,
     gap: Spacing.three,
     paddingVertical: Spacing.four,
+  },
+  compact: {
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.three,
   },
   content: {
     flexDirection: "row",

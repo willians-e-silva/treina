@@ -26,6 +26,8 @@ type TabPagerProps = {
   index: number;
   position: SharedValue<number>;
   target: SharedValue<number>;
+  /** `false` while a screen handles its own drag (see `useTabSwipeLock`). */
+  swipeEnabled: boolean;
   /** Called on the JS thread when a swipe settles on another tab. */
   onSwipeToIndex: (index: number) => void;
 };
@@ -38,7 +40,14 @@ type TabPagerProps = {
  * never reveals a blank page) or crossed during a jump, and then stays
  * mounted, keeping its state.
  */
-export function TabPager({ tabs, index, position, target, onSwipeToIndex }: TabPagerProps) {
+export function TabPager({
+  tabs,
+  index,
+  position,
+  target,
+  swipeEnabled,
+  onSwipeToIndex,
+}: TabPagerProps) {
   const window = useWindowDimensions();
   const [measuredWidth, setMeasuredWidth] = useState<number | null>(null);
   const width = measuredWidth ?? window.width;
@@ -50,6 +59,7 @@ export function TabPager({ tabs, index, position, target, onSwipeToIndex }: TabP
   const dragFromIndex = useSharedValue(0);
 
   const swipe = Gesture.Pan()
+    .enabled(swipeEnabled)
     .activeOffsetX([-ACTIVATION_DISTANCE, ACTIVATION_DISTANCE])
     .failOffsetY([-FAIL_DISTANCE, FAIL_DISTANCE])
     .onStart(() => {

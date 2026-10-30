@@ -3,6 +3,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
+import { DashboardLayoutProvider } from '@/context/dashboard-layout';
 import { ExerciseLogProvider } from '@/context/exercise-log';
 import { FoodLogProvider } from '@/context/food-log';
 import { SessionProvider, useSession } from '@/context/session';
@@ -20,8 +21,10 @@ export default function RootLayout() {
           <FoodLogProvider>
             <ExerciseLogProvider>
               <TasksProvider>
-                <AnimatedSplashOverlay />
-                <RootNavigator />
+                <DashboardLayoutProvider>
+                  <AnimatedSplashOverlay />
+                  <RootNavigator />
+                </DashboardLayoutProvider>
               </TasksProvider>
             </ExerciseLogProvider>
           </FoodLogProvider>

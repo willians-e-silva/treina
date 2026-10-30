@@ -12,7 +12,7 @@ import { Fab } from '@/components/ui/fab';
 import { getMainTab } from '@/constants/tabs';
 import { useTasks } from '@/context/tasks';
 import { toDateKey } from '@/lib/exercises';
-import { isTaskDue } from '@/lib/tasks';
+import { getTasksForDay } from '@/lib/tasks';
 import { useAppTheme } from '@/theme';
 
 const tab = getMainTab('tasks');
@@ -22,12 +22,7 @@ export default function TasksScreen() {
   const { tasks } = useTasks();
   const { custom } = useAppTheme();
 
-  const repeating = tasks.filter((task) => isTaskDue(task, date));
-  // One-off tasks show every day until done, then only on the day they were done.
-  const oneOff = tasks.filter(
-    (task) =>
-      task.repeat.kind === 'none' && (task.doneDates.length === 0 || task.doneDates[0] === date),
-  );
+  const { repeating, oneOff } = getTasksForDay(tasks, date);
 
   return (
     <TabScreen

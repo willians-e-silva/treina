@@ -10,9 +10,10 @@ import {
   type TabNavigationState,
   type TabRouterOptions,
 } from 'expo-router/react-navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { SwipeLockContext } from './swipe-lock';
 import { TabBar } from './tab-bar';
 import { TabPager } from './tab-pager';
 import type { SlidingTab, SlidingTabsEventMap, SlidingTabsOptions } from './types';
@@ -60,6 +61,7 @@ function SlidingTabsNavigator(props: SlidingTabsNavigatorProps) {
   });
   const index = state.routeNames.indexOf(state.routes[state.index].name);
   const { position, target } = useTabPosition(index);
+  const [swipeLocked, setSwipeLocked] = useState(false);
 
   // Joined into a string so the effect only reruns when the set changes.
   const missing = tabs
@@ -81,22 +83,25 @@ function SlidingTabsNavigator(props: SlidingTabsNavigatorProps) {
 
   return (
     <NavigationContent>
-      <View style={styles.container}>
-        <TabPager
-          tabs={tabs}
-          index={index}
-          position={position}
-          target={target}
-          onSwipeToIndex={jumpToIndex}
-        />
-        <TabBar
-          tabs={tabs}
-          index={index}
-          navigation={navigation}
-          position={position}
-          onPressIndex={jumpToIndex}
-        />
-      </View>
+      <SwipeLockContext value={setSwipeLocked}>
+        <View style={styles.container}>
+          <TabPager
+            tabs={tabs}
+            index={index}
+            position={position}
+            target={target}
+            swipeEnabled={!swipeLocked}
+            onSwipeToIndex={jumpToIndex}
+          />
+          <TabBar
+            tabs={tabs}
+            index={index}
+            navigation={navigation}
+            position={position}
+            onPressIndex={jumpToIndex}
+          />
+        </View>
+      </SwipeLockContext>
     </NavigationContent>
   );
 }
