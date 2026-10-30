@@ -1,0 +1,39 @@
+# On every push to main: publishes an OTA update when a compatible preview
+# build exists (same native fingerprint), or makes a new build otherwise.
+name: Preview no celular
+
+on:
+  push:
+    branches: ['main']
+
+jobs:
+  fingerprint:
+    name: Fingerprint
+    type: fingerprint
+    environment: preview
+
+  get_android_build:
+    name: Procurar build compatível
+    needs: [fingerprint]
+    type: get-build
+    params:
+      fingerprint_hash: ${{ needs.fingerprint.outputs.android_fingerprint_hash }}
+      profile: preview
+
+  build_android:
+    name: Novo build Android
+    needs: [get_android_build]
+    if: ${{ !needs.get_android_build.outputs.build_id }}
+    type: build
+    params:
+      platform: android
+      profile: preview
+
+  update_android:
+    name: Publicar atualização OTA
+    needs: [get_android_build]
+    if: ${{ needs.get_android_build.outputs.build_id }}
+    type: update
+    params:
+      branch: preview
+      platform: android

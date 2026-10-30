@@ -9,14 +9,22 @@ import { TabScreen } from "@/components/tab-screen";
 import { ThemedText } from "@/components/themed-text";
 import { Spacing } from "@/constants/theme";
 import { useExerciseDay } from "@/context/exercise-log";
+import { useFoodDay } from "@/context/food-log";
 import { MOCK_DASHBOARD } from "@/lib/dashboard-data";
 import { toDateKey } from "@/lib/exercises";
 
 export default function HomeScreen() {
-  // TODO: load food and weight from the real diary source.
+  // TODO: load steps and weight from the real sources.
   const data = MOCK_DASHBOARD;
-  const exerciseDay = useExerciseDay(toDateKey(new Date()));
+  const today = toDateKey(new Date());
+  const exerciseDay = useExerciseDay(today);
   const exercise = { calories: exerciseDay.calories, minutes: exerciseDay.minutes };
+  const food = useFoodDay(today).totals;
+  const macros = {
+    carbs: { ...data.macros.carbs, consumed: Math.round(food.carbs) },
+    protein: { ...data.macros.protein, consumed: Math.round(food.protein) },
+    fat: { ...data.macros.fat, consumed: Math.round(food.fat) },
+  };
 
   return (
     <TabScreen header={<AppLogo />}>
@@ -26,8 +34,10 @@ export default function HomeScreen() {
         </ThemedText>
       </View>
 
-      <CaloriesCard calories={{ ...data.calories, exercise: exercise.calories }} />
-      <MacrosCard macros={data.macros} />
+      <CaloriesCard
+        calories={{ ...data.calories, food: Math.round(food.kcal), exercise: exercise.calories }}
+      />
+      <MacrosCard macros={macros} />
       <ActivityCards steps={data.steps} exercise={exercise} />
       <WeightCard weight={data.weight} />
     </TabScreen>

@@ -1,11 +1,5 @@
-import type {
-  Descriptor,
-  NavigationProp,
-  ParamListBase,
-  RouteProp,
-  TabNavigationState,
-} from 'expo-router/react-navigation';
 import type { LucideIcon } from 'lucide-react-native';
+import type { ReactNode } from 'react';
 
 export type SlidingTabsOptions = {
   /** Label shown in the footer. */
@@ -19,18 +13,13 @@ export type SlidingTabsEventMap = {
   tabLongPress: { data: undefined };
 };
 
-export type SlidingTabsDescriptors = Record<
-  string,
-  Descriptor<
-    SlidingTabsOptions,
-    NavigationProp<
-      ParamListBase,
-      string,
-      string | undefined,
-      TabNavigationState<ParamListBase>,
-      SlidingTabsOptions,
-      SlidingTabsEventMap
-    >,
-    RouteProp<ParamListBase>
-  >
->;
+/**
+ * One footer tab, in the order declared in the layout. `key` and `render`
+ * are missing until the tab's route exists in the navigation state.
+ */
+export type SlidingTab = {
+  name: string;
+  key?: string;
+  options: SlidingTabsOptions;
+  render?: () => ReactNode;
+};

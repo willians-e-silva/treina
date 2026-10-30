@@ -6,7 +6,14 @@ import { SignupProvider } from '@/context/signup';
 export default function SignupLayout() {
   return (
     <SignupProvider>
-      <Stack screenOptions={{ headerBackButtonDisplayMode: 'minimal', title: 'Criar conta' }} />
+      {/* Opaque header: since SDK 58 it is transparent on iOS 26+. */}
+      <Stack
+        screenOptions={{
+          headerBackButtonDisplayMode: 'minimal',
+          headerTransparent: false,
+          title: 'Criar conta',
+        }}
+      />
     </SignupProvider>
   );
 }

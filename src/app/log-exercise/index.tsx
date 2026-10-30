@@ -212,7 +212,7 @@ export default function SearchExerciseScreen() {
                   : 'Nenhum exercício encontrado.'}
               </ThemedText>
             </View>
-          ) : null
+          ) : undefined
         }
         ListFooterComponent={
           <View style={styles.footer}>

@@ -1,9 +1,4 @@
-import {
-  TabActions,
-  type NavigationHelpers,
-  type ParamListBase,
-  type TabNavigationState,
-} from 'expo-router/react-navigation';
+import type { NavigationHelpers, ParamListBase } from 'expo-router/react-navigation';
 import type { LucideIcon } from 'lucide-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
@@ -13,20 +8,22 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import type { SlidingTabsDescriptors, SlidingTabsEventMap } from './types';
+import type { SlidingTab, SlidingTabsEventMap } from './types';
 
 import { ThemedText } from '@/components/themed-text';
 import { Brand, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 type TabBarProps = {
-  state: TabNavigationState<ParamListBase>;
-  descriptors: SlidingTabsDescriptors;
+  tabs: SlidingTab[];
+  /** Focused tab. */
+  index: number;
   navigation: NavigationHelpers<ParamListBase, SlidingTabsEventMap>;
   position: SharedValue<number>;
+  onPressIndex: (index: number) => void;
 };
 
-export function TabBar({ state, descriptors, navigation, position }: TabBarProps) {
+export function TabBar({ tabs, index: focusedIndex, navigation, position, onPressIndex }: TabBarProps) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
 
@@ -44,34 +41,30 @@ export function TabBar({ state, descriptors, navigation, position }: TabBarProps
         },
       ]}>
       <View style={styles.items}>
-        {state.routes.map((route, index) => {
-          const { options } = descriptors[route.key];
-          const focused = index === state.index;
+        {tabs.map((tab, index) => {
+          const focused = index === focusedIndex;
 
           function onPress() {
             const event = navigation.emit({
               type: 'tabPress',
-              target: route.key,
+              target: tab.key,
               canPreventDefault: true,
             });
             if (!focused && !event.defaultPrevented) {
-              navigation.dispatch({
-                ...TabActions.jumpTo(route.name, route.params),
-                target: state.key,
-              });
+              onPressIndex(index);
             }
           }
 
           return (
             <TabBarButton
-              key={route.key}
+              key={tab.name}
               index={index}
               position={position}
               focused={focused}
-              label={options.title ?? route.name}
-              icon={options.tabBarIcon}
+              label={tab.options.title ?? tab.name}
+              icon={tab.options.tabBarIcon}
               onPress={onPress}
-              onLongPress={() => navigation.emit({ type: 'tabLongPress', target: route.key })}
+              onLongPress={() => navigation.emit({ type: 'tabLongPress', target: tab.key })}
             />
           );
         })}

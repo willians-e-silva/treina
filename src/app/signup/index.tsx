@@ -1,7 +1,7 @@
 import { router, Stack } from 'expo-router';
 import ChevronLeft from 'lucide-react-native/icons/chevron-left';
 import { useRef, useState } from 'react';
-import { Pressable, StyleSheet, TextInput } from 'react-native';
+import { Pressable, StyleSheet, type TextInputInstance } from 'react-native';
 
 import { StepScreen } from '@/components/signup/step-screen';
 import { FormField } from '@/components/ui/form-field';
@@ -12,8 +12,8 @@ import { EMAIL_PATTERN } from '@/lib/profile';
 /** Step 1: name, email and password. */
 export default function SignupAccountScreen() {
   const { account, setAccount } = useSignup();
-  const emailRef = useRef<TextInput>(null);
-  const passwordRef = useRef<TextInput>(null);
+  const emailRef = useRef<TextInputInstance>(null);
+  const passwordRef = useRef<TextInputInstance>(null);
 
   const [name, setName] = useState(account?.name ?? '');
   const [email, setEmail] = useState(account?.email ?? '');

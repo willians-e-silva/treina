@@ -1,4 +1,3 @@
-import type { ParamListBase, TabNavigationState } from 'expo-router/react-navigation';
 import { useState, type ReactNode } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -9,6 +8,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
+import type { SlidingTab } from './types';
 import { animateTabPosition } from './use-tab-position';
 
 /** Horizontal travel (px) before the swipe takes over from vertical scrolling. */
@@ -21,8 +21,9 @@ const VELOCITY_PROJECTION = 0.2;
 const EDGE_RESISTANCE = 0.3;
 
 type TabPagerProps = {
-  state: TabNavigationState<ParamListBase>;
-  renderScene: (routeKey: string) => ReactNode;
+  tabs: SlidingTab[];
+  /** Focused tab. */
+  index: number;
   position: SharedValue<number>;
   target: SharedValue<number>;
   /** Called on the JS thread when a swipe settles on another tab. */
@@ -37,12 +38,12 @@ type TabPagerProps = {
  * never reveals a blank page) or crossed during a jump, and then stays
  * mounted, keeping its state.
  */
-export function TabPager({ state, renderScene, position, target, onSwipeToIndex }: TabPagerProps) {
+export function TabPager({ tabs, index, position, target, onSwipeToIndex }: TabPagerProps) {
   const window = useWindowDimensions();
   const [measuredWidth, setMeasuredWidth] = useState<number | null>(null);
   const width = measuredWidth ?? window.width;
-  const lastIndex = state.routes.length - 1;
-  const mounted = useMountedIndexes(state.index, lastIndex);
+  const lastIndex = tabs.length - 1;
+  const mounted = useMountedIndexes(index, lastIndex);
 
   const dragging = useSharedValue(false);
   const dragStartPosition = useSharedValue(0);
@@ -87,15 +88,16 @@ export function TabPager({ state, renderScene, position, target, onSwipeToIndex 
   return (
     <GestureDetector gesture={swipe}>
       <View style={styles.pager} onLayout={(e) => setMeasuredWidth(e.nativeEvent.layout.width)}>
-        {state.routes.map((route, index) =>
-          mounted.has(index) ? (
+        {tabs.map((tab, tabIndex) =>
+          // A tab whose route is not created yet stays blank until its preload lands.
+          mounted.has(tabIndex) && tab.render ? (
             <Scene
-              key={route.key}
-              index={index}
+              key={tab.key}
+              index={tabIndex}
               width={width}
               position={position}
-              focused={index === state.index}>
-              {renderScene(route.key)}
+              focused={tabIndex === index}>
+              {tab.render()}
             </Scene>
           ) : null,
         )}

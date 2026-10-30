@@ -5,6 +5,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { ExerciseLogProvider } from '@/context/exercise-log';
+import { FoodLogProvider } from '@/context/food-log';
 import { SessionProvider, useSession } from '@/context/session';
 import { TasksProvider } from '@/context/tasks';
 
@@ -17,12 +18,14 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <SessionProvider>
-          <ExerciseLogProvider>
-            <TasksProvider>
-              <AnimatedSplashOverlay />
-              <RootNavigator />
-            </TasksProvider>
-          </ExerciseLogProvider>
+          <FoodLogProvider>
+            <ExerciseLogProvider>
+              <TasksProvider>
+                <AnimatedSplashOverlay />
+                <RootNavigator />
+              </TasksProvider>
+            </ExerciseLogProvider>
+          </FoodLogProvider>
         </SessionProvider>
       </ThemeProvider>
     </GestureHandlerRootView>
@@ -36,6 +39,7 @@ function RootNavigator() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Protected guard={!!session}>
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="log-food" options={{ presentation: 'modal' }} />
         <Stack.Screen name="log-exercise" options={{ presentation: 'modal' }} />
         <Stack.Screen name="add-task" options={{ presentation: 'modal' }} />
       </Stack.Protected>

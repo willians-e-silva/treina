@@ -53,7 +53,7 @@
     },
     "owner": "willians9620",
     "runtimeVersion": {
-      "policy": "appVersion"
+      "policy": "fingerprint"
     },
     "updates": {
       "url": "https://u.expo.dev/7a936ee5-f426-4129-9bbe-1b58296aa3ee"

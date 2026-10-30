@@ -88,6 +88,8 @@ export default function AddTaskScreen() {
       <Stack.Screen
         options={{
           headerShown: true,
+          // Opaque: since SDK 58 the header is transparent on iOS 26+.
+          headerTransparent: false,
           title: parent ? 'Nova subtarefa' : 'Nova tarefa',
           headerLeft: () => (
             <Pressable
