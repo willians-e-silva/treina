@@ -35,12 +35,6 @@ export function useFoodLog() {
   return value;
 }
 
-/** Meal by id among the diary's meals, if it is still there. */
-export function useMeal(id: string | undefined) {
-  const { meals } = useFoodLog();
-  return meals.find((meal) => meal.id === id);
-}
-
 /**
  * Entries of one diary day by meal, plus the day's totals. Meals removed
  * from the diary still get a section on days where they have foods.

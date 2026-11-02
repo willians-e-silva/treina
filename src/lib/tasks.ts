@@ -39,7 +39,7 @@ function daysBetween(from: string, to: string) {
 }
 
 /** Whether a repeating task falls on `date`: every `interval` days or weeks since its start. */
-export function isTaskDue(task: Task, date: string) {
+function isTaskDue(task: Task, date: string) {
   if (task.repeat.kind === 'none') return false;
   const days = daysBetween(task.startDate, date);
   const step = task.repeat.interval * (task.repeat.unit === 'week' ? 7 : 1);

@@ -86,7 +86,7 @@ const cardio = (name: string, minutes: number, met: number, note?: string): NewP
  * MOCK: trainers until there is a backend. Photos come from randomuser.me;
  * the avatar shows the initials when they cannot load.
  */
-export const TRAINERS: Trainer[] = [
+const TRAINERS: Trainer[] = [
   {
     id: 'ana-souza',
     name: 'Ana Souza',

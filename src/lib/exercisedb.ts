@@ -29,7 +29,7 @@ type ApiList<T> = {
   meta: { total: number; hasNextPage: boolean; nextCursor?: string };
 };
 
-export class ExerciseDBError extends Error {
+class ExerciseDBError extends Error {
   constructor(
     message: string,
     readonly status?: number,

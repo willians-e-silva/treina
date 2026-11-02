@@ -11,9 +11,9 @@ import User from 'lucide-react-native/icons/user';
 export type MainTab = {
   /** Route file name inside `src/app/(tabs)/`. */
   name: 'index' | 'diary' | 'exercise' | 'trainers' | 'tasks' | 'profile';
-  /** Short label shown in the footer and used as the screen title. */
+  /** Short label shown in the footer. */
   label: string;
-  /** Lucide icon (https://lucide.dev/icons) used in the footer and placeholders. */
+  /** Lucide icon (https://lucide.dev/icons) used in the footer. */
   icon: LucideIcon;
 };
 
@@ -30,6 +30,3 @@ export const MainTabs: readonly MainTab[] = [
   { name: 'profile', label: 'Perfil', icon: User },
 ];
 
-export function getMainTab(name: MainTab['name']): MainTab {
-  return MainTabs.find((tab) => tab.name === name)!;
-}
