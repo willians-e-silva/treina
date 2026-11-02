@@ -6,23 +6,22 @@ import { StyleSheet, View } from 'react-native';
 import { formatInt } from '@/components/dashboard/format';
 import { DaySelector } from '@/components/exercise/day-selector';
 import { ExerciseSection } from '@/components/exercise/exercise-section';
-import { ScreenTitle } from '@/components/screen-title';
+import { WorkoutCard } from '@/components/exercise/workout-card';
 import { TabScreen } from '@/components/tab-screen';
 import { ThemedText } from '@/components/themed-text';
 import { Surface } from '@/components/ui/surface';
-import { getMainTab } from '@/constants/tabs';
-import { Nutrition, Spacing } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { useExerciseDay } from '@/context/exercise-log';
 import { toDateKey } from '@/lib/exercises';
-
-const tab = getMainTab('exercise');
+import { useAppTheme } from '@/theme';
 
 export default function ExerciseScreen() {
   const [date, setDate] = useState(() => toDateKey(new Date()));
   const day = useExerciseDay(date);
+  const { custom } = useAppTheme();
 
   return (
-    <TabScreen header={<ScreenTitle>{tab.label}</ScreenTitle>}>
+    <TabScreen>
       <DaySelector date={date} onChange={setDate} />
 
       <Surface style={styles.totals}>
@@ -31,10 +30,12 @@ export default function ExerciseScreen() {
         <Total label="Exercícios" value={formatInt(day.cardio.length + day.strength.length)} />
       </Surface>
 
+      <WorkoutCard date={date} />
+
       <ExerciseSection
         category="cardio"
         icon={HeartPulse}
-        color={Nutrition.exercise}
+        color={custom.exercise.color}
         date={date}
         entries={day.cardio}
         summary={`${formatInt(day.calories)} kcal`}
@@ -42,7 +43,7 @@ export default function ExerciseScreen() {
       <ExerciseSection
         category="strength"
         icon={Dumbbell}
-        color={Nutrition.protein}
+        color={custom.protein.color}
         date={date}
         entries={day.strength}
       />
@@ -53,8 +54,10 @@ export default function ExerciseScreen() {
 function Total({ label, value }: { label: string; value: string }) {
   return (
     <View style={styles.total}>
-      <ThemedText style={styles.totalValue}>{value}</ThemedText>
-      <ThemedText type="small" themeColor="textSecondary" style={styles.totalLabel}>
+      <ThemedText type="titleLarge" emphasized>
+        {value}
+      </ThemedText>
+      <ThemedText type="bodyMedium" themeColor="onSurfaceVariant" style={styles.totalLabel}>
         {label}
       </ThemedText>
     </View>
@@ -70,11 +73,6 @@ const styles = StyleSheet.create({
   total: {
     flex: 1,
     alignItems: 'center',
-  },
-  totalValue: {
-    fontSize: 20,
-    lineHeight: 28,
-    fontWeight: 700,
   },
   totalLabel: {
     textAlign: 'center',

@@ -1,6 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 
-import { useTheme } from '@/hooks/use-theme';
+import { Shape, useAppTheme } from '@/theme';
 
 type ProgressBarProps = {
   /** Fraction filled, clamped to 0–1. */
@@ -10,11 +10,11 @@ type ProgressBarProps = {
 
 /** Thin horizontal progress bar. */
 export function ProgressBar({ progress, color }: ProgressBarProps) {
-  const theme = useTheme();
+  const { colors } = useAppTheme();
   const clamped = Math.min(Math.max(progress, 0), 1);
 
   return (
-    <View style={[styles.track, { backgroundColor: theme.backgroundSelected }]}>
+    <View style={[styles.track, { backgroundColor: colors.surfaceContainerHighest }]}>
       <View style={[styles.fill, { width: `${clamped * 100}%`, backgroundColor: color }]} />
     </View>
   );
@@ -22,12 +22,12 @@ export function ProgressBar({ progress, color }: ProgressBarProps) {
 
 const styles = StyleSheet.create({
   track: {
-    height: 6,
-    borderRadius: 3,
+    height: 8,
+    borderRadius: Shape.full,
     overflow: 'hidden',
   },
   fill: {
     height: '100%',
-    borderRadius: 3,
+    borderRadius: Shape.full,
   },
 });

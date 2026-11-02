@@ -1,16 +1,19 @@
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useNavigation } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { formatDecimal } from '@/components/dashboard/format';
 import { ThemedText } from '@/components/themed-text';
+import { Button } from '@/components/ui/button';
 import { Surface } from '@/components/ui/surface';
-import { Brand, MaxContentWidth, Spacing } from '@/constants/theme';
+import { ThemedTextInput } from '@/components/ui/text-input';
+import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useExerciseLog } from '@/context/exercise-log';
-import { useTheme } from '@/hooks/use-theme';
-import { MOCK_DASHBOARD } from '@/lib/dashboard-data';
+import { useSession } from '@/context/session';
+import { useWorkoutPlan } from '@/context/workout-plan';
+import { MOCK_PROFILE } from '@/lib/profile';
 import {
   CATEGORY_LABELS,
   estimateCalories,
@@ -18,9 +21,7 @@ import {
   toDateKey,
   type ExerciseCategory,
 } from '@/lib/exercises';
-
-// TODO: use the user's real latest weigh-in.
-const BODY_WEIGHT_KG = MOCK_DASHBOARD.weight[MOCK_DASHBOARD.weight.length - 1].kg;
+import { ComponentShape, MediaColors } from '@/theme';
 
 /** Parses user input like "12", "12,5" or "12.5"; `NaN` when invalid. */
 function parseNumber(text: string) {
@@ -28,16 +29,20 @@ function parseNumber(text: string) {
 }
 
 export default function ExerciseDetailsScreen() {
-  const theme = useTheme();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const { addEntry } = useExerciseLog();
+  const { addExercise } = useWorkoutPlan();
+  const bodyWeightKg = useSession().profile?.weightKg ?? MOCK_PROFILE.weightKg;
   const params = useLocalSearchParams<{
     id: string;
     date?: string;
     name?: string;
     category?: ExerciseCategory;
+    /** Set when adding the exercise to a workout instead of the diary. */
+    workoutId?: string;
   }>();
+  const { workoutId } = params;
   const exercise = getExercise(params.id);
   const name = exercise?.name ?? params.name ?? 'Exercício';
   const category = exercise?.category ?? (params.category === 'strength' ? 'strength' : 'cardio');
@@ -57,7 +62,7 @@ export default function ExerciseDetailsScreen() {
 
   const minutesValue = parseNumber(minutes);
   const estimated =
-    exercise?.met && minutesValue > 0 ? estimateCalories(exercise.met, BODY_WEIGHT_KG, minutesValue) : 0;
+    exercise?.met && minutesValue > 0 ? estimateCalories(exercise.met, bodyWeightKg, minutesValue) : 0;
   const calories = caloriesOverride ?? String(estimated);
   const caloriesValue = parseNumber(calories);
   const setsValue = parseNumber(sets);
@@ -66,23 +71,38 @@ export default function ExerciseDetailsScreen() {
 
   const valid =
     category === 'cardio'
-      ? minutesValue > 0 && caloriesValue >= 0
+      ? minutesValue > 0 && (!!workoutId || caloriesValue >= 0)
       : Number.isInteger(setsValue) && setsValue > 0 && Number.isInteger(repsValue) && repsValue > 0 && weightValue >= 0;
 
   function save() {
     if (!valid) return;
-    if (category === 'cardio') {
+    if (workoutId) {
+      // Calories are estimated when the workout is done, with the weight of that day.
+      addExercise(
+        workoutId,
+        category === 'cardio'
+          ? { name, category, minutes: minutesValue, met: exercise?.met }
+          : {
+              name,
+              category,
+              sets: setsValue,
+              reps: repsValue,
+              weightKg: weightValue,
+              met: exercise?.met,
+            },
+      );
+    } else if (category === 'cardio') {
       addEntry({ date, name, category, minutes: minutesValue, calories: Math.round(caloriesValue) });
     } else {
       addEntry({ date, name, category, sets: setsValue, reps: repsValue, weightKg: weightValue });
     }
-    // Close the whole modal (search + details), back to the diary.
+    // Close the whole modal (search + details), back to the diary or the workout.
     navigation.getParent()?.goBack();
   }
 
   return (
     <ScrollView
-      style={{ backgroundColor: theme.background }}
+      style={styles.scroll}
       contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.four }]}
       keyboardShouldPersistTaps="handled">
       {exercise?.gifUrl && (
@@ -95,14 +115,14 @@ export default function ExerciseDetailsScreen() {
       )}
 
       <View>
-        <ThemedText type="small" themeColor="textSecondary">
+        <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
           {CATEGORY_LABELS[category]}
         </ThemedText>
-        <ThemedText style={styles.name} accessibilityRole="header">
+        <ThemedText type="headlineSmall" emphasized accessibilityRole="header">
           {name}
         </ThemedText>
         {details.length > 0 && (
-          <ThemedText type="small" themeColor="textSecondary">
+          <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
             {details.join(' · ')}
           </ThemedText>
         )}
@@ -112,16 +132,19 @@ export default function ExerciseDetailsScreen() {
         {category === 'cardio' ? (
           <>
             <Field label="Duração (minutos)" value={minutes} onChangeText={setMinutes} />
-            <Field
-              label="Calorias queimadas"
-              value={calories}
-              onChangeText={setCaloriesOverride}
-              hint={
-                exercise?.met && caloriesOverride === null
-                  ? `Estimativa para ${formatDecimal(BODY_WEIGHT_KG)} kg`
-                  : undefined
-              }
-            />
+            {/* A workout keeps only the duration; calories are estimated when it is done. */}
+            {!workoutId && (
+              <Field
+                label="Calorias queimadas"
+                value={calories}
+                onChangeText={setCaloriesOverride}
+                hint={
+                  exercise?.met && caloriesOverride === null
+                    ? `Estimativa para ${formatDecimal(bodyWeightKg)} kg`
+                    : undefined
+                }
+              />
+            )}
           </>
         ) : (
           <>
@@ -132,14 +155,13 @@ export default function ExerciseDetailsScreen() {
         )}
       </Surface>
 
-      <Pressable
+      <Button
+        label={workoutId ? 'Adicionar ao treino' : 'Adicionar'}
+        size="medium"
+        fullWidth
         onPress={save}
         disabled={!valid}
-        accessibilityRole="button"
-        accessibilityState={{ disabled: !valid }}
-        style={({ pressed }) => [styles.save, (!valid || pressed) && styles.pressed]}>
-        <ThemedText style={styles.saveText}>Adicionar</ThemedText>
-      </Pressable>
+      />
     </ScrollView>
   );
 }
@@ -154,25 +176,23 @@ type FieldProps = {
 };
 
 function Field({ label, value, onChangeText, placeholder, hint, integer }: FieldProps) {
-  const theme = useTheme();
-
   return (
     <View style={styles.field}>
       <View style={styles.fieldRow}>
         <ThemedText style={styles.fieldLabel}>{label}</ThemedText>
-        <TextInput
+        <ThemedTextInput
+          size="compact"
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          placeholderTextColor={theme.textSecondary}
           keyboardType={integer ? 'number-pad' : 'decimal-pad'}
           selectTextOnFocus
           accessibilityLabel={label}
-          style={[styles.input, { color: theme.text, backgroundColor: theme.backgroundSelected }]}
+          style={styles.input}
         />
       </View>
       {hint && (
-        <ThemedText type="small" themeColor="textSecondary">
+        <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
           {hint}
         </ThemedText>
       )}
@@ -181,25 +201,22 @@ function Field({ label, value, onChangeText, placeholder, hint, integer }: Field
 }
 
 const styles = StyleSheet.create({
+  scroll: {
+    flex: 1,
+  },
   content: {
     width: '100%',
     maxWidth: MaxContentWidth,
     alignSelf: 'center',
-    padding: Spacing.four,
+    padding: Spacing.three,
     gap: Spacing.four,
   },
   gif: {
     width: '100%',
     aspectRatio: 1,
     maxHeight: 320,
-    borderRadius: Spacing.four,
-    // The GIFs have a white background; keep it in dark mode too.
-    backgroundColor: '#ffffff',
-  },
-  name: {
-    fontSize: 24,
-    lineHeight: 32,
-    fontWeight: 700,
+    borderRadius: ComponentShape.card,
+    backgroundColor: MediaColors.exerciseGif,
   },
   form: {
     gap: Spacing.three,
@@ -218,24 +235,6 @@ const styles = StyleSheet.create({
   },
   input: {
     width: 120,
-    height: 44,
-    borderRadius: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    fontSize: 16,
     textAlign: 'right',
-  },
-  save: {
-    height: 52,
-    borderRadius: Spacing.three,
-    backgroundColor: Brand.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  saveText: {
-    color: Brand.onPrimary,
-    fontWeight: 700,
-  },
-  pressed: {
-    opacity: 0.5,
   },
 });

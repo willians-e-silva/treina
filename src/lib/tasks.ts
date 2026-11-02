@@ -46,6 +46,20 @@ export function isTaskDue(task: Task, date: string) {
   return days >= 0 && days % step === 0;
 }
 
+/**
+ * Tasks shown on `date`: repeating tasks due that day, and one-off tasks,
+ * which show every day until done and then only on the day they were done.
+ */
+export function getTasksForDay(tasks: Task[], date: string) {
+  return {
+    repeating: tasks.filter((task) => isTaskDue(task, date)),
+    oneOff: tasks.filter(
+      (task) =>
+        task.repeat.kind === 'none' && (task.doneDates.length === 0 || task.doneDates[0] === date),
+    ),
+  };
+}
+
 /** Whether a task or subtask with these `doneDates` counts as done on `date`. */
 export function isDoneOn(doneDates: string[], repeat: TaskRepeat, date: string) {
   return repeat.kind === 'none' ? doneDates.length > 0 : doneDates.includes(date);

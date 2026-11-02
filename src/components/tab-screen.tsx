@@ -1,40 +1,74 @@
 import type { PropsWithChildren, ReactNode } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import Animated, { type AnimatedRef } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { MaxContentWidth, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { useAppTheme } from '@/theme';
 
 type TabScreenProps = PropsWithChildren<{
   /** Rendered above the content, e.g. the logo or a screen title. */
   header?: ReactNode;
+  /** Floating action button, pinned to the bottom-right corner. */
+  fab?: ReactNode;
+  /** Drawn over the screen, outside the scroll view; positions itself. */
+  overlay?: ReactNode;
+  /** Ref to the scroll view, e.g. to scroll while dragging content. */
+  scrollRef?: AnimatedRef<Animated.ScrollView>;
+  /** `false` while the content handles its own drag. */
+  scrollEnabled?: boolean;
 }>;
+
+/** Room kept under the content so the FAB never covers the last item. */
+const FAB_CLEARANCE = 56 + Spacing.three * 2;
 
 /**
  * Scrollable container shared by the main tab screens. The tab bar lays the
  * screen out above itself (and handles the bottom inset), so this only keeps
  * the content clear of the status bar, notches and side insets.
  */
-export function TabScreen({ header, children }: TabScreenProps) {
-  const theme = useTheme();
+export function TabScreen({
+  header,
+  fab,
+  overlay,
+  scrollRef,
+  scrollEnabled = true,
+  children,
+}: TabScreenProps) {
+  const { colors } = useAppTheme();
   const insets = useSafeAreaInsets();
 
   return (
-    <ScrollView
-      style={[styles.scrollView, { backgroundColor: theme.background }]}
-      contentContainerStyle={[
-        styles.contentContainer,
-        { paddingTop: insets.top, paddingLeft: insets.left, paddingRight: insets.right },
-      ]}>
-      <View style={styles.container}>
-        {header && <View style={styles.header}>{header}</View>}
-        <View style={styles.body}>{children}</View>
-      </View>
-    </ScrollView>
+    <View style={[styles.screen, { backgroundColor: colors.surface }]}>
+      <Animated.ScrollView
+        ref={scrollRef}
+        scrollEnabled={scrollEnabled}
+        style={styles.scrollView}
+        contentContainerStyle={[
+          styles.contentContainer,
+          {
+            paddingTop: insets.top,
+            paddingLeft: insets.left,
+            paddingRight: insets.right,
+            paddingBottom: fab ? FAB_CLEARANCE : Spacing.four,
+          },
+        ]}>
+        {/* Without a header, the same top space keeps the content off the status bar. */}
+        <View style={[styles.container, !header && styles.headerless]}>
+          {header && <View style={styles.header}>{header}</View>}
+          <View style={styles.body}>{children}</View>
+        </View>
+      </Animated.ScrollView>
+      {overlay}
+      {fab && <View style={[styles.fab, { right: insets.right + Spacing.three }]}>{fab}</View>}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+  },
   scrollView: {
     flex: 1,
   },
@@ -42,19 +76,25 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     flexDirection: 'row',
     justifyContent: 'center',
-    paddingBottom: Spacing.four,
   },
   container: {
     flex: 1,
     maxWidth: MaxContentWidth,
-    paddingHorizontal: Spacing.four,
+    paddingHorizontal: Spacing.three,
     gap: Spacing.four,
   },
   header: {
     paddingTop: Spacing.three,
   },
+  headerless: {
+    paddingTop: Spacing.three,
+  },
   body: {
     flexGrow: 1,
     gap: Spacing.three,
+  },
+  fab: {
+    position: 'absolute',
+    bottom: Spacing.three,
   },
 });

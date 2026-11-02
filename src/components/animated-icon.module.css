@@ -1,6 +1,7 @@
 .expoLogoBackground {
-  background-image: linear-gradient(180deg, #3c9ffe, #0274df);
-  border-radius: 40px;
+  /* IconColors.blue → IconColors.purple and Shape.extraLargeIncreased (src/theme): CSS cannot import them. */
+  background-image: linear-gradient(180deg, #0d9bf8, #6c3cf4);
+  border-radius: 32px;
   width: 128px;
   height: 128px;
 }

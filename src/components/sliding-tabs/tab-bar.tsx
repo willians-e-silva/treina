@@ -1,9 +1,4 @@
-import {
-  TabActions,
-  type NavigationHelpers,
-  type ParamListBase,
-  type TabNavigationState,
-} from 'expo-router/react-navigation';
+import type { NavigationHelpers, ParamListBase } from 'expo-router/react-navigation';
 import type { LucideIcon } from 'lucide-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
@@ -13,21 +8,23 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import type { SlidingTabsDescriptors, SlidingTabsEventMap } from './types';
+import type { SlidingTab, SlidingTabsEventMap } from './types';
 
 import { ThemedText } from '@/components/themed-text';
-import { Brand, MaxContentWidth, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { MaxContentWidth } from '@/constants/theme';
+import { ComponentShape, Space, useAppTheme } from '@/theme';
 
 type TabBarProps = {
-  state: TabNavigationState<ParamListBase>;
-  descriptors: SlidingTabsDescriptors;
+  tabs: SlidingTab[];
+  /** Focused tab. */
+  index: number;
   navigation: NavigationHelpers<ParamListBase, SlidingTabsEventMap>;
   position: SharedValue<number>;
+  onPressIndex: (index: number) => void;
 };
 
-export function TabBar({ state, descriptors, navigation, position }: TabBarProps) {
-  const theme = useTheme();
+export function TabBar({ tabs, index: focusedIndex, navigation, position, onPressIndex }: TabBarProps) {
+  const { colors } = useAppTheme();
   const insets = useSafeAreaInsets();
 
   return (
@@ -36,42 +33,37 @@ export function TabBar({ state, descriptors, navigation, position }: TabBarProps
       style={[
         styles.bar,
         {
-          backgroundColor: theme.background,
-          borderTopColor: theme.backgroundSelected,
+          backgroundColor: colors.surfaceContainer,
           paddingBottom: insets.bottom,
           paddingLeft: insets.left,
           paddingRight: insets.right,
         },
       ]}>
       <View style={styles.items}>
-        {state.routes.map((route, index) => {
-          const { options } = descriptors[route.key];
-          const focused = index === state.index;
+        {tabs.map((tab, index) => {
+          const focused = index === focusedIndex;
 
           function onPress() {
             const event = navigation.emit({
               type: 'tabPress',
-              target: route.key,
+              target: tab.key,
               canPreventDefault: true,
             });
             if (!focused && !event.defaultPrevented) {
-              navigation.dispatch({
-                ...TabActions.jumpTo(route.name, route.params),
-                target: state.key,
-              });
+              onPressIndex(index);
             }
           }
 
           return (
             <TabBarButton
-              key={route.key}
+              key={tab.name}
               index={index}
               position={position}
               focused={focused}
-              label={options.title ?? route.name}
-              icon={options.tabBarIcon}
+              label={tab.options.title ?? tab.name}
+              icon={tab.options.tabBarIcon}
               onPress={onPress}
-              onLongPress={() => navigation.emit({ type: 'tabLongPress', target: route.key })}
+              onLongPress={() => navigation.emit({ type: 'tabLongPress', target: tab.key })}
             />
           );
         })}
@@ -91,7 +83,8 @@ type TabBarButtonProps = {
 };
 
 /**
- * The selected look (brand-colored icon and label) is drawn on a layer clipped by a one-tab-wide "window"
+ * M3 navigation bar destination. The selected look (indicator pill behind
+ * the icon, stronger icon and label colors) is drawn on a layer clipped by a one-tab-wide "window"
  * that sits at `position` along the footer. As the position moves right, the
  * window leaves the old button (emptying it left to right) and enters the next
  * one (filling it left to right), crossing every button in between. The
@@ -106,7 +99,6 @@ function TabBarButton({
   onPress,
   onLongPress,
 }: TabBarButtonProps) {
-  const theme = useTheme();
   const width = useSharedValue(0);
 
   const windowStyle = useAnimatedStyle(() => {
@@ -133,11 +125,11 @@ function TabBarButton({
       accessibilityLabel={label}
       accessibilityState={{ selected: focused }}
       style={styles.button}>
-      <TabBarItemContent icon={icon} label={label} color={theme.textSecondary} />
+      <TabBarItemContent icon={icon} label={label} />
 
       <Animated.View aria-hidden style={[styles.layer, styles.clip, windowStyle]}>
         <Animated.View style={[styles.layer, contentStyle]}>
-          <TabBarItemContent icon={icon} label={label} color={Brand.primary} selected />
+          <TabBarItemContent icon={icon} label={label} selected />
         </Animated.View>
       </Animated.View>
     </Pressable>
@@ -147,26 +139,40 @@ function TabBarButton({
 type TabBarItemContentProps = {
   icon?: LucideIcon;
   label: string;
-  color: string;
   selected?: boolean;
 };
 
-function TabBarItemContent({ icon: Icon, label, color, selected }: TabBarItemContentProps) {
+function TabBarItemContent({ icon: Icon, label, selected }: TabBarItemContentProps) {
+  const { colors } = useAppTheme();
+
   return (
     <View style={[styles.layer, styles.content]}>
-      {Icon && <Icon color={color} size={24} strokeWidth={selected ? 2.5 : 2} />}
-      <ThemedText style={[styles.label, { color }]} numberOfLines={1}>
+      <View
+        style={[styles.indicator, selected && { backgroundColor: colors.secondaryContainer }]}>
+        {Icon && (
+          <Icon
+            color={selected ? colors.onSecondaryContainer : colors.onSurfaceVariant}
+            size={24}
+            strokeWidth={selected ? 2.5 : 2}
+          />
+        )}
+      </View>
+      <ThemedText
+        type="labelMedium"
+        themeColor={selected ? 'onSurface' : 'onSurfaceVariant'}
+        emphasized={selected}
+        numberOfLines={1}>
         {label}
       </ThemedText>
     </View>
   );
 }
 
-const BUTTON_HEIGHT = 60;
+/** M3 navigation bar height (without the bottom inset). */
+const BAR_HEIGHT = 80;
 
 const styles = StyleSheet.create({
   bar: {
-    borderTopWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
   },
   items: {
@@ -176,7 +182,7 @@ const styles = StyleSheet.create({
   },
   button: {
     flex: 1,
-    height: BUTTON_HEIGHT,
+    height: BAR_HEIGHT,
     // Clips the moving window to this button.
     overflow: 'hidden',
   },
@@ -189,11 +195,13 @@ const styles = StyleSheet.create({
   content: {
     alignItems: 'center',
     justifyContent: 'center',
-    gap: Spacing.half,
+    gap: Space.xs,
   },
-  label: {
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: 600,
+  indicator: {
+    width: 64,
+    height: 32,
+    borderRadius: ComponentShape.navigationIndicator,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
