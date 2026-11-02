@@ -12,6 +12,7 @@ import { ThemedTextInput } from '@/components/ui/text-input';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useExerciseLog } from '@/context/exercise-log';
 import { useSession } from '@/context/session';
+import { useWorkoutPlan } from '@/context/workout-plan';
 import { MOCK_PROFILE } from '@/lib/profile';
 import {
   CATEGORY_LABELS,
@@ -31,13 +32,17 @@ export default function ExerciseDetailsScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const { addEntry } = useExerciseLog();
+  const { addExercise } = useWorkoutPlan();
   const bodyWeightKg = useSession().profile?.weightKg ?? MOCK_PROFILE.weightKg;
   const params = useLocalSearchParams<{
     id: string;
     date?: string;
     name?: string;
     category?: ExerciseCategory;
+    /** Set when adding the exercise to a workout instead of the diary. */
+    workoutId?: string;
   }>();
+  const { workoutId } = params;
   const exercise = getExercise(params.id);
   const name = exercise?.name ?? params.name ?? 'Exercício';
   const category = exercise?.category ?? (params.category === 'strength' ? 'strength' : 'cardio');
@@ -66,17 +71,32 @@ export default function ExerciseDetailsScreen() {
 
   const valid =
     category === 'cardio'
-      ? minutesValue > 0 && caloriesValue >= 0
+      ? minutesValue > 0 && (!!workoutId || caloriesValue >= 0)
       : Number.isInteger(setsValue) && setsValue > 0 && Number.isInteger(repsValue) && repsValue > 0 && weightValue >= 0;
 
   function save() {
     if (!valid) return;
-    if (category === 'cardio') {
+    if (workoutId) {
+      // Calories are estimated when the workout is done, with the weight of that day.
+      addExercise(
+        workoutId,
+        category === 'cardio'
+          ? { name, category, minutes: minutesValue, met: exercise?.met }
+          : {
+              name,
+              category,
+              sets: setsValue,
+              reps: repsValue,
+              weightKg: weightValue,
+              met: exercise?.met,
+            },
+      );
+    } else if (category === 'cardio') {
       addEntry({ date, name, category, minutes: minutesValue, calories: Math.round(caloriesValue) });
     } else {
       addEntry({ date, name, category, sets: setsValue, reps: repsValue, weightKg: weightValue });
     }
-    // Close the whole modal (search + details), back to the diary.
+    // Close the whole modal (search + details), back to the diary or the workout.
     navigation.getParent()?.goBack();
   }
 
@@ -112,16 +132,19 @@ export default function ExerciseDetailsScreen() {
         {category === 'cardio' ? (
           <>
             <Field label="Duração (minutos)" value={minutes} onChangeText={setMinutes} />
-            <Field
-              label="Calorias queimadas"
-              value={calories}
-              onChangeText={setCaloriesOverride}
-              hint={
-                exercise?.met && caloriesOverride === null
-                  ? `Estimativa para ${formatDecimal(bodyWeightKg)} kg`
-                  : undefined
-              }
-            />
+            {/* A workout keeps only the duration; calories are estimated when it is done. */}
+            {!workoutId && (
+              <Field
+                label="Calorias queimadas"
+                value={calories}
+                onChangeText={setCaloriesOverride}
+                hint={
+                  exercise?.met && caloriesOverride === null
+                    ? `Estimativa para ${formatDecimal(bodyWeightKg)} kg`
+                    : undefined
+                }
+              />
+            )}
           </>
         ) : (
           <>
@@ -132,7 +155,13 @@ export default function ExerciseDetailsScreen() {
         )}
       </Surface>
 
-      <Button label="Adicionar" size="medium" fullWidth onPress={save} disabled={!valid} />
+      <Button
+        label={workoutId ? 'Adicionar ao treino' : 'Adicionar'}
+        size="medium"
+        fullWidth
+        onPress={save}
+        disabled={!valid}
+      />
     </ScrollView>
   );
 }

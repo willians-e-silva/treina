@@ -6,17 +6,14 @@ import { StyleSheet, View } from 'react-native';
 import { formatInt } from '@/components/dashboard/format';
 import { DaySelector } from '@/components/exercise/day-selector';
 import { ExerciseSection } from '@/components/exercise/exercise-section';
-import { ScreenTitle } from '@/components/screen-title';
+import { WorkoutCard } from '@/components/exercise/workout-card';
 import { TabScreen } from '@/components/tab-screen';
 import { ThemedText } from '@/components/themed-text';
 import { Surface } from '@/components/ui/surface';
-import { getMainTab } from '@/constants/tabs';
 import { Spacing } from '@/constants/theme';
 import { useExerciseDay } from '@/context/exercise-log';
 import { toDateKey } from '@/lib/exercises';
 import { useAppTheme } from '@/theme';
-
-const tab = getMainTab('exercise');
 
 export default function ExerciseScreen() {
   const [date, setDate] = useState(() => toDateKey(new Date()));
@@ -24,7 +21,7 @@ export default function ExerciseScreen() {
   const { custom } = useAppTheme();
 
   return (
-    <TabScreen header={<ScreenTitle>{tab.label}</ScreenTitle>}>
+    <TabScreen>
       <DaySelector date={date} onChange={setDate} />
 
       <Surface style={styles.totals}>
@@ -32,6 +29,8 @@ export default function ExerciseScreen() {
         <Total label="Minutos" value={formatInt(day.minutes)} />
         <Total label="Exercícios" value={formatInt(day.cardio.length + day.strength.length)} />
       </Surface>
+
+      <WorkoutCard date={date} />
 
       <ExerciseSection
         category="cardio"

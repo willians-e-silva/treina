@@ -1,10 +1,13 @@
+import Trash from 'lucide-react-native/icons/trash';
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { StyleSheet, View, type AccessibilityActionEvent } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
+  interpolateColor,
   measure,
   scrollTo,
   useAnimatedReaction,
+  useAnimatedRef,
   useAnimatedStyle,
   useFrameCallback,
   useScrollOffset,
@@ -52,6 +55,24 @@ type TargetValue = {
 
 const NO_TARGET: TargetValue = { kind: 0, index: 0, position: 0 };
 
+/** Diameter of the trash target shown at the bottom of the screen while dragging. */
+const TRASH_SIZE = 64;
+/** How much the whole trash (circle and icon) grows with an item over it. */
+const TRASH_GROW = 1.4;
+/** Extra room around the trash where a finger still counts as over it. */
+const TRASH_SLOP = 24;
+
+/** Shared by the dashboard (hit test) and the trash drawn over the screen. */
+export type DashboardTrash = {
+  ref: AnimatedRef<Animated.View>;
+  /** The dragged item is over the trash: dropping it removes it. */
+  over: SharedValue<boolean>;
+};
+
+export function useDashboardTrash(): DashboardTrash {
+  return { ref: useAnimatedRef<Animated.View>(), over: useSharedValue(false) };
+}
+
 type DraggableDashboardProps = {
   rows: DashboardRows;
   /** Renders an item; `compact` when it shares its row side by side with another one. */
@@ -61,6 +82,9 @@ type DraggableDashboardProps = {
   scrollRef: AnimatedRef<Animated.ScrollView>;
   /** Called when a drag starts and ends, e.g. to stop the page from scrolling. */
   onDraggingChange: (dragging: boolean) => void;
+  /** Trash target (see `DashboardTrashTarget`); items dropped on it are removed. */
+  trash: DashboardTrash;
+  onRemove: (id: DashboardWidget) => void;
 };
 
 /**
@@ -68,6 +92,7 @@ type DraggableDashboardProps = {
  * between rows, an item gets a row of its own; dropped on the middle of
  * another row, it joins that row. Two items in a row sit side by side in
  * their compact version; three or more form a carousel at full size.
+ * Dropped on the trash, it is removed.
  */
 export function DraggableDashboard({
   rows,
@@ -75,6 +100,8 @@ export function DraggableDashboard({
   onMove,
   scrollRef,
   onDraggingChange,
+  trash,
+  onRemove,
 }: DraggableDashboardProps) {
   const { colors } = useAppTheme();
   const lockTabSwipe = useTabSwipeLock();
@@ -97,6 +124,7 @@ export function DraggableDashboard({
   const translateY = useSharedValue(0);
   const startPointer = useSharedValue({ x: 0, y: 0 });
   const startScroll = useSharedValue(0);
+  const fingerX = useSharedValue(0);
   const fingerY = useSharedValue(0);
   const target = useSharedValue<TargetValue>(NO_TARGET);
   const scrollOffset = useScrollOffset(scrollRef);
@@ -127,6 +155,19 @@ export function DraggableDashboard({
     'worklet';
     const id = dragId.get();
     if (id === null) return;
+    const frame = measure(trash.ref);
+    const over =
+      !!frame &&
+      Math.hypot(
+        fingerX.get() - (frame.pageX + frame.width / 2),
+        fingerY.get() - (frame.pageY + frame.height / 2),
+      ) <=
+        frame.width / 2 + TRASH_SLOP;
+    if (over !== trash.over.get()) trash.over.set(over);
+    if (over) {
+      target.set(NO_TARGET);
+      return;
+    }
     const start = startPointer.get();
     const x = start.x + translateX.get();
     const y = start.y + translateY.get() + scrollOffset.get() - startScroll.get();
@@ -134,7 +175,8 @@ export function DraggableDashboard({
   }
 
   const autoScroll = useFrameCallback(() => {
-    if (dragId.get() === null) return;
+    // The trash sits in the bottom scroll edge: hovering it must not scroll.
+    if (dragId.get() === null || trash.over.get()) return;
     const frame = measure(scrollRef);
     if (!frame) return;
     const top = frame.pageY + SCROLL_EDGE;
@@ -169,6 +211,14 @@ export function DraggableDashboard({
     );
   }
 
+  function handleRemove(id: DashboardWidget) {
+    autoScroll.setActive(false);
+    lockTabSwipe(false);
+    onDraggingChange(false);
+    setDraggingId(null);
+    onRemove(id);
+  }
+
   function makeGesture(id: DashboardWidget) {
     return Gesture.Pan()
       .activateAfterLongPress(LONG_PRESS_MS)
@@ -183,19 +233,28 @@ export function DraggableDashboard({
         translateY.set(0);
         startPointer.set({ x: cell.x - scrolled + event.x, y: row.y + event.y });
         startScroll.set(scrollOffset.get());
+        fingerX.set(event.absoluteX);
         fingerY.set(event.absoluteY);
         target.set(NO_TARGET);
+        trash.over.set(false);
         scheduleOnRN(handleDragStart, id);
       })
       .onUpdate((event) => {
         if (dragId.get() !== id) return;
         translateX.set(event.translationX);
         translateY.set(event.translationY);
+        fingerX.set(event.absoluteX);
         fingerY.set(event.absoluteY);
         updateTarget();
       })
       .onFinalize(() => {
         if (dragId.get() !== id) return;
+        if (trash.over.get()) {
+          trash.over.set(false);
+          // The item stays under the trash until the rows change without it.
+          scheduleOnRN(handleRemove, id);
+          return;
+        }
         const value = target.get();
         if (value.kind === 0) {
           // Back to where it was: fold the scroll into the translation, then glide home.
@@ -327,6 +386,60 @@ export function DraggableDashboard({
         style={[styles.indicator, { borderColor: colors.secondary }, indicatorStyle]}
       />
     </View>
+  );
+}
+
+/**
+ * Round trash target drawn over the bottom of the screen while an item is
+ * dragged. It turns red and grows while the item is over it.
+ */
+export function DashboardTrashTarget({
+  trash: { ref, over },
+  visible,
+}: {
+  trash: DashboardTrash;
+  visible: boolean;
+}) {
+  const { dark, custom } = useAppTheme();
+  // Harmonized red, dark enough in both modes for the white icon (the dark
+  // theme's `color` is a light tone). Semi-transparent at rest, solid with
+  // the item over it.
+  const danger = dark ? custom.danger.colorContainer : custom.danger.color;
+  const idle = withAlpha(danger, 0.5);
+
+  const containerStyle = useAnimatedStyle(() => ({
+    opacity: withTiming(visible ? 1 : 0, { duration: 150 }),
+    transform: [{ translateY: withTiming(visible ? 0 : TRASH_SIZE, { duration: 200 }) }],
+  }));
+  const circleStyle = useAnimatedStyle(() => {
+    const progress = withTiming(over.get() ? 1 : 0, { duration: 150 });
+    // The real size grows (not only drawn bigger): the hit test measures it.
+    const size = TRASH_SIZE * (1 + (TRASH_GROW - 1) * progress);
+    return {
+      width: size,
+      height: size,
+      backgroundColor: interpolateColor(progress, [0, 1], [idle, danger]),
+    };
+  });
+  const iconStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: withTiming(over.get() ? TRASH_GROW : 1, { duration: 150 }) }],
+  }));
+
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[styles.trashContainer, containerStyle]}
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants">
+      <Animated.View
+        ref={ref}
+        // No shadow: it would show through the semi-transparent red.
+        style={[styles.trash, circleStyle]}>
+        <Animated.View style={[styles.trashIcon, iconStyle]}>
+          <Trash color="#FFFFFF" size={28} />
+        </Animated.View>
+      </Animated.View>
+    </Animated.View>
   );
 }
 
@@ -575,6 +688,23 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: Shape.full,
+  },
+  trashContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: Spacing.four,
+    alignItems: 'center',
+  },
+  trash: {
+    width: TRASH_SIZE,
+    height: TRASH_SIZE,
+    borderRadius: Shape.full,
+  },
+  trashIcon: {
+    ...StyleSheet.absoluteFill,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   indicator: {
     position: 'absolute',

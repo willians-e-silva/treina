@@ -10,7 +10,16 @@ import { SegmentedButtons } from '@/components/ui/segmented-buttons';
 import { Spacing } from '@/constants/theme';
 import { useSession } from '@/context/session';
 import { useSignup } from '@/context/signup';
-import { AGE_OPTIONS, HEIGHT_OPTIONS, parseDecimal, SEX_LABELS, type Sex } from '@/lib/profile';
+import {
+  AGE_OPTIONS,
+  HEIGHT_OPTIONS,
+  isValidWeight,
+  parseDecimal,
+  SEX_LABELS,
+  WEIGHT_MAX_KG,
+  WEIGHT_MIN_KG,
+  type Sex,
+} from '@/lib/profile';
 
 const SEXES: Sex[] = ['female', 'male', 'unspecified'];
 
@@ -44,8 +53,8 @@ export default function SignupDetailsScreen() {
       setError('Selecione sua altura.');
       return;
     }
-    if (!(weightValue >= 30 && weightValue <= 400)) {
-      setError('Informe um peso entre 30 e 400 kg.');
+    if (!isValidWeight(weightValue)) {
+      setError(`Informe um peso entre ${WEIGHT_MIN_KG} e ${WEIGHT_MAX_KG} kg.`);
       return;
     }
 

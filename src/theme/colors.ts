@@ -135,6 +135,12 @@ export const LightCustomColors = {
     onColor: "#FFFFFF",
     colorContainer: "#FFD9DF",
     onColorContainer: "#3F0018"
+  },
+  danger: {
+    color: "#BC014E",
+    onColor: "#FFFFFF",
+    colorContainer: "#FFD9DE",
+    onColorContainer: "#3F0015"
   }
 } as const;
 
@@ -174,6 +180,12 @@ export const DarkCustomColors = {
     onColor: "#66002B",
     colorContainer: "#8F003F",
     onColorContainer: "#FFD9DF"
+  },
+  danger: {
+    color: "#FFB2BF",
+    onColor: "#660027",
+    colorContainer: "#90003A",
+    onColorContainer: "#FFD9DE"
   }
 } as const;
 

@@ -58,6 +58,14 @@ export function getInitials(name: string) {
   return (first + last).toUpperCase();
 }
 
+/** Accepted range of body weights, in kg. */
+export const WEIGHT_MIN_KG = 30;
+export const WEIGHT_MAX_KG = 400;
+
+export function isValidWeight(kg: number) {
+  return kg >= WEIGHT_MIN_KG && kg <= WEIGHT_MAX_KG;
+}
+
 /** Parses user input like "82", "82,5" or "82.5"; `NaN` when invalid. */
 export function parseDecimal(text: string) {
   return text.trim() === '' ? NaN : Number(text.trim().replace(',', '.'));

@@ -11,6 +11,8 @@ type TabScreenProps = PropsWithChildren<{
   header?: ReactNode;
   /** Floating action button, pinned to the bottom-right corner. */
   fab?: ReactNode;
+  /** Drawn over the screen, outside the scroll view; positions itself. */
+  overlay?: ReactNode;
   /** Ref to the scroll view, e.g. to scroll while dragging content. */
   scrollRef?: AnimatedRef<Animated.ScrollView>;
   /** `false` while the content handles its own drag. */
@@ -28,6 +30,7 @@ const FAB_CLEARANCE = 56 + Spacing.three * 2;
 export function TabScreen({
   header,
   fab,
+  overlay,
   scrollRef,
   scrollEnabled = true,
   children,
@@ -50,11 +53,13 @@ export function TabScreen({
             paddingBottom: fab ? FAB_CLEARANCE : Spacing.four,
           },
         ]}>
-        <View style={styles.container}>
+        {/* Without a header, the same top space keeps the content off the status bar. */}
+        <View style={[styles.container, !header && styles.headerless]}>
           {header && <View style={styles.header}>{header}</View>}
           <View style={styles.body}>{children}</View>
         </View>
       </Animated.ScrollView>
+      {overlay}
       {fab && <View style={[styles.fab, { right: insets.right + Spacing.three }]}>{fab}</View>}
     </View>
   );
@@ -79,6 +84,9 @@ const styles = StyleSheet.create({
     gap: Spacing.four,
   },
   header: {
+    paddingTop: Spacing.three,
+  },
+  headerless: {
     paddingTop: Spacing.three,
   },
   body: {

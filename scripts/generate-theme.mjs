@@ -51,6 +51,8 @@ const CUSTOM = [
   { name: 'fat', value: '#8E4EC6', blend: true },
   { name: 'steps', value: '#3E63DD', blend: true },
   { name: 'exercise', value: '#E5484D', blend: true },
+  // Destructive drop targets (dashboard trash), solid behind a white icon.
+  { name: 'danger', value: '#E5383B', blend: true },
 ];
 
 const ROLES = [

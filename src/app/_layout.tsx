@@ -3,11 +3,15 @@ import * as SplashScreen from 'expo-splash-screen';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
+import { ChatProvider } from '@/context/chat';
+import { CoachingProvider } from '@/context/coaching';
 import { DashboardLayoutProvider } from '@/context/dashboard-layout';
 import { ExerciseLogProvider } from '@/context/exercise-log';
 import { FoodLogProvider } from '@/context/food-log';
 import { SessionProvider, useSession } from '@/context/session';
 import { TasksProvider } from '@/context/tasks';
+import { WeightLogProvider } from '@/context/weight-log';
+import { WorkoutPlanProvider } from '@/context/workout-plan';
 import { useNavigationTheme, useTopAppBarOptions } from '@/theme/navigation';
 
 SplashScreen.preventAutoHideAsync();
@@ -18,16 +22,24 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider value={useNavigationTheme()}>
         <SessionProvider>
-          <FoodLogProvider>
-            <ExerciseLogProvider>
-              <TasksProvider>
-                <DashboardLayoutProvider>
-                  <AnimatedSplashOverlay />
-                  <RootNavigator />
-                </DashboardLayoutProvider>
-              </TasksProvider>
-            </ExerciseLogProvider>
-          </FoodLogProvider>
+          <WeightLogProvider>
+            <FoodLogProvider>
+              <ExerciseLogProvider>
+                <WorkoutPlanProvider>
+                  <CoachingProvider>
+                    <ChatProvider>
+                      <TasksProvider>
+                        <DashboardLayoutProvider>
+                          <AnimatedSplashOverlay />
+                          <RootNavigator />
+                        </DashboardLayoutProvider>
+                      </TasksProvider>
+                    </ChatProvider>
+                  </CoachingProvider>
+                </WorkoutPlanProvider>
+              </ExerciseLogProvider>
+            </FoodLogProvider>
+          </WeightLogProvider>
         </SessionProvider>
       </ThemeProvider>
     </GestureHandlerRootView>
@@ -46,7 +58,11 @@ function RootNavigator() {
         <Stack.Screen name="log-food" options={{ presentation: 'modal' }} />
         <Stack.Screen name="meals" options={{ presentation: 'modal' }} />
         <Stack.Screen name="log-exercise" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="workouts" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="workout-session" options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="add-task" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="trainer" />
+        <Stack.Screen name="chat/[trainerId]" />
       </Stack.Protected>
 
       <Stack.Protected guard={!session}>

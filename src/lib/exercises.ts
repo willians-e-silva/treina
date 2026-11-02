@@ -38,6 +38,8 @@ type EntryBase = {
   /** Diary day as `YYYY-MM-DD` (local time). */
   date: string;
   name: string;
+  /** `PlannedExercise.id` when the entry was logged from the day's workout. */
+  plannedId?: string;
 };
 
 export type CardioEntry = EntryBase & {

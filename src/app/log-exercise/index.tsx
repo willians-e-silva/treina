@@ -86,9 +86,15 @@ function useCatalog(category: ExerciseCategory) {
 export default function SearchExerciseScreen() {
   const { colors } = useAppTheme();
   const insets = useSafeAreaInsets();
-  const params = useLocalSearchParams<{ category?: ExerciseCategory; date?: string }>();
+  const params = useLocalSearchParams<{
+    category?: ExerciseCategory;
+    date?: string;
+    /** Set when choosing an exercise for a workout instead of logging it. */
+    workoutId?: string;
+  }>();
   const category = params.category === 'strength' ? 'strength' : 'cardio';
   const date = params.date ?? toDateKey(new Date());
+  const { workoutId } = params;
   const [query, setQuery] = useState('');
   const [remote, setRemote] = useState<RemoteState>({ status: 'idle' });
   // Ignores responses of searches that were superseded by a newer one.
@@ -120,7 +126,7 @@ export default function SearchExerciseScreen() {
   }
 
   function openExercise(exercise: Exercise) {
-    router.push({ pathname: '/log-exercise/[id]', params: { id: exercise.id, date } });
+    router.push({ pathname: '/log-exercise/[id]', params: { id: exercise.id, date, workoutId } });
   }
 
   return (
@@ -174,7 +180,7 @@ export default function SearchExerciseScreen() {
                   onPress={() =>
                     router.push({
                       pathname: '/log-exercise/[id]',
-                      params: { id: CUSTOM_EXERCISE_ID, name: customName, category, date },
+                      params: { id: CUSTOM_EXERCISE_ID, name: customName, category, date, workoutId },
                     })
                   }
                 />

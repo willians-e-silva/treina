@@ -10,7 +10,11 @@ import type Animated from "react-native-reanimated";
 import { AppIcon } from "@/components/app-logo";
 import { ExerciseTile, StepsTile } from "@/components/dashboard/activity-tiles";
 import { CaloriesCard } from "@/components/dashboard/calories-card";
-import { DraggableDashboard } from "@/components/dashboard/draggable-dashboard";
+import {
+  DashboardTrashTarget,
+  DraggableDashboard,
+  useDashboardTrash,
+} from "@/components/dashboard/draggable-dashboard";
 import { MacrosCard } from "@/components/dashboard/macros-card";
 import { TasksCard } from "@/components/dashboard/tasks-card";
 import { WeightCard } from "@/components/dashboard/weight-card";
@@ -30,11 +34,15 @@ import { toDateKey } from "@/lib/exercises";
 import { ComponentShape, useAppTheme } from "@/theme";
 
 export default function HomeScreen() {
-  // TODO: load steps and weight from the real sources.
+  // TODO: load steps from the real source.
   const data = MOCK_DASHBOARD;
   const today = toDateKey(new Date());
   const exerciseDay = useExerciseDay(today);
-  const exercise = { calories: exerciseDay.calories, minutes: exerciseDay.minutes };
+  const exercise = {
+    calories: exerciseDay.calories,
+    minutes: exerciseDay.minutes,
+    goal: data.exercise.goal,
+  };
   const food = useFoodDay(today).totals;
   const macros = {
     carbs: { ...data.macros.carbs, consumed: Math.round(food.carbs) },
@@ -46,6 +54,7 @@ export default function HomeScreen() {
   const [editing, setEditing] = useState(false);
   const [dragging, setDragging] = useState(false);
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
+  const trash = useDashboardTrash();
   const hidden = DASHBOARD_WIDGETS.filter((widget) => !widgets.includes(widget.id));
 
   /** A dashboard item; `compact` when it shares its row with another one. */
@@ -63,16 +72,20 @@ export default function HomeScreen() {
       case "steps":
         return <StepsTile steps={data.steps} />;
       case "exercise":
-        return <ExerciseTile exercise={exercise} />;
+        return <ExerciseTile exercise={exercise} date={today} />;
       case "tasks":
         return <TasksCard compact={compact} date={today} />;
       case "weight":
-        return <WeightCard compact={compact} weight={data.weight} />;
+        return <WeightCard compact={compact} />;
     }
   }
 
   return (
-    <TabScreen header={<AppIcon />} scrollRef={scrollRef} scrollEnabled={!dragging}>
+    <TabScreen
+      header={<AppIcon />}
+      scrollRef={scrollRef}
+      scrollEnabled={!dragging}
+      overlay={<DashboardTrashTarget trash={trash} visible={dragging} />}>
       <View style={styles.titleRow}>
         <ThemedText type="headlineMedium" accessibilityRole="header">
           Hoje
@@ -93,6 +106,8 @@ export default function HomeScreen() {
         onMove={moveWidget}
         scrollRef={scrollRef}
         onDraggingChange={setDragging}
+        trash={trash}
+        onRemove={removeWidget}
         renderItem={(id, compact) =>
           editing ? (
             <EditableWidget id={id} onRemove={() => removeWidget(id)}>

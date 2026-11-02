@@ -5,17 +5,13 @@ import Repeat from 'lucide-react-native/icons/repeat';
 import { useState } from 'react';
 
 import { DaySelector } from '@/components/exercise/day-selector';
-import { ScreenTitle } from '@/components/screen-title';
 import { TaskSection } from '@/components/tasks/task-section';
 import { TabScreen } from '@/components/tab-screen';
 import { Fab } from '@/components/ui/fab';
-import { getMainTab } from '@/constants/tabs';
 import { useTasks } from '@/context/tasks';
 import { toDateKey } from '@/lib/exercises';
 import { getTasksForDay } from '@/lib/tasks';
 import { useAppTheme } from '@/theme';
-
-const tab = getMainTab('tasks');
 
 export default function TasksScreen() {
   const [date, setDate] = useState(() => toDateKey(new Date()));
@@ -26,7 +22,6 @@ export default function TasksScreen() {
 
   return (
     <TabScreen
-      header={<ScreenTitle>{tab.label}</ScreenTitle>}
       fab={
         <Fab
           icon={Plus}

@@ -12,7 +12,8 @@ export type DashboardData = {
   /** Grams consumed and daily goal per macronutrient. */
   macros: Record<MacroKey, { consumed: number; goal: number }>;
   steps: { count: number; goal: number };
-  exercise: { calories: number; minutes: number };
+  /** Calories burned and minutes of exercise today, and the daily burn goal (kcal). */
+  exercise: { calories: number; minutes: number; goal: number };
   /** Weigh-ins in kg, oldest first. */
   weight: { date: string; kg: number }[];
 };
@@ -29,7 +30,7 @@ export const MOCK_DASHBOARD: DashboardData = {
     fat: { consumed: 41, goal: 73 },
   },
   steps: { count: 6840, goal: 10000 },
-  exercise: { calories: 320, minutes: 45 },
+  exercise: { calories: 320, minutes: 45, goal: 400 },
   weight: [
     { date: "2026-07-20", kg: 84.6 },
     { date: "2026-08-03", kg: 84.1 },

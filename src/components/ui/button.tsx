@@ -1,4 +1,4 @@
-import type { LucideIcon } from 'lucide-react-native';
+import type { ComponentType } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -22,12 +22,15 @@ import { ComponentShape, Disabled, MinTouchTarget, Space, useAppTheme, withAlpha
  */
 export type ButtonVariant = 'filled' | 'tonal' | 'outlined' | 'text';
 
+/** A Lucide icon, or any icon drawn the same way (e.g. a brand glyph). */
+export type ButtonIcon = ComponentType<{ color: string; size: number }>;
+
 type ButtonProps = Omit<PressableProps, 'children' | 'style'> & {
   label: string;
   variant?: ButtonVariant;
   /** `small` is 40dp tall (48dp touch target); `medium` is 56dp, for form submits. */
   size?: 'small' | 'medium';
-  icon?: LucideIcon;
+  icon?: ButtonIcon;
   /** Shows a spinner instead of the label and disables the button. */
   loading?: boolean;
   /**

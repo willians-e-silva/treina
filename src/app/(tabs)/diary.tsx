@@ -6,18 +6,14 @@ import { StyleSheet, View } from 'react-native';
 import { formatInt } from '@/components/dashboard/format';
 import { MealSection } from '@/components/diary/meal-section';
 import { DaySelector } from '@/components/exercise/day-selector';
-import { ScreenTitle } from '@/components/screen-title';
 import { TabScreen } from '@/components/tab-screen';
 import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
 import { Surface } from '@/components/ui/surface';
-import { getMainTab } from '@/constants/tabs';
 import { Spacing } from '@/constants/theme';
 import { useFoodDay } from '@/context/food-log';
 import { toDateKey } from '@/lib/exercises';
 import { useAppTheme } from '@/theme';
-
-const tab = getMainTab('diary');
 
 export default function DiaryScreen() {
   const [date, setDate] = useState(() => toDateKey(new Date()));
@@ -25,7 +21,7 @@ export default function DiaryScreen() {
   const { custom } = useAppTheme();
 
   return (
-    <TabScreen header={<ScreenTitle>{tab.label}</ScreenTitle>}>
+    <TabScreen>
       <DaySelector date={date} onChange={setDate} />
 
       <Surface style={styles.totals}>

@@ -15,6 +15,8 @@ type SessionContextValue = {
   /** Resolves to `false` if the user cancelled the Google prompt. */
   signInWithGoogle: () => Promise<boolean>;
   signOut: () => void;
+  /** Updates the signed-in user's current weight. */
+  setWeight: (kg: number) => void;
 };
 
 /**
@@ -78,6 +80,15 @@ export function SessionProvider({ children }: PropsWithChildren) {
     return true;
   }
 
+  function setWeight(weightKg: number) {
+    setProfile((current) => current && { ...current, weightKg });
+    setAccounts((current) =>
+      session && current[session]
+        ? { ...current, [session]: { ...current[session], weightKg } }
+        : current,
+    );
+  }
+
   function signOut() {
     setSession(null);
     setProfile(null);
@@ -93,6 +104,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
         signUp,
         signInWithGoogle: handleSignInWithGoogle,
         signOut,
+        setWeight,
       }}>
       {children}
     </SessionContext>
