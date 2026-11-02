@@ -1,17 +1,17 @@
-import { createContext, use, useState, type PropsWithChildren } from 'react';
+import { createContext, use, type PropsWithChildren } from 'react';
 
 import { useSession } from './session';
 
-import { MOCK_DASHBOARD } from '@/lib/dashboard-data';
+import type { Repositories, WeightLogData } from '@/data/types';
+import { useUserStore, type StoreStatus } from '@/data/use-user-store';
 import { toDateKey } from '@/lib/exercises';
+import { upsertWeighIn, type WeighIn } from '@/lib/weight';
 
-export type WeighIn = {
-  /** `YYYY-MM-DD` (local time). */
-  date: string;
-  kg: number;
-};
+export type { WeighIn } from '@/lib/weight';
 
 type WeightLogContextValue = {
+  status: StoreStatus;
+  retry: () => void;
   /** Weigh-ins, oldest first; at most one per day. */
   entries: WeighIn[];
   /** Target weight; `undefined` until the user sets one. */
@@ -32,27 +32,36 @@ export function useWeightLog() {
   return value;
 }
 
-/**
- * TEMPORARY: in-memory weigh-ins and goal until there is a backend; the
- * history starts from the mock dashboard data. Must sit inside `SessionProvider`.
- */
+const EMPTY: WeightLogData = { entries: [], goalKg: undefined };
+const load = (repositories: Repositories) => repositories.weight.load();
+
+/** Weigh-ins and goal of the signed-in account. Must sit inside `SessionProvider`. */
 export function WeightLogProvider({ children }: PropsWithChildren) {
-  const { setWeight } = useSession();
-  const [entries, setEntries] = useState<WeighIn[]>(MOCK_DASHBOARD.weight);
-  const [goalKg, setGoalKg] = useState<number | undefined>();
+  const { session, setWeight } = useSession();
+  const store = useUserStore(session, EMPTY, load);
 
   function logWeight(kg: number) {
-    const date = toDateKey(new Date());
-    setEntries((current) =>
-      [...current.filter((entry) => entry.date !== date), { date, kg }].sort((a, b) =>
-        a.date.localeCompare(b.date),
-      ),
-    );
+    const weighIn = { date: toDateKey(new Date()), kg };
+    store.update((data) => ({ ...data, entries: upsertWeighIn(data.entries, weighIn) }));
+    store.write((repositories) => repositories.weight.saveWeighIn(weighIn));
     setWeight(kg);
   }
 
+  function setGoal(kg: number | undefined) {
+    store.update((data) => ({ ...data, goalKg: kg }));
+    store.write((repositories) => repositories.weight.setGoal(kg));
+  }
+
   return (
-    <WeightLogContext value={{ entries, goalKg, logWeight, setGoal: setGoalKg }}>
+    <WeightLogContext
+      value={{
+        status: store.status,
+        retry: store.retry,
+        entries: store.data.entries,
+        goalKg: store.data.goalKg,
+        logWeight,
+        setGoal,
+      }}>
       {children}
     </WeightLogContext>
   );

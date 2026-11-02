@@ -1,8 +1,15 @@
-import { createContext, use, useState, type PropsWithChildren } from 'react';
+import { createContext, use, type PropsWithChildren } from 'react';
 
+import { useSession } from './session';
+
+import { createId } from '@/data/ids';
+import type { Repositories } from '@/data/types';
+import { useUserStore, type StoreStatus } from '@/data/use-user-store';
 import type { ExerciseEntry, NewExerciseEntry } from '@/lib/exercises';
 
 type ExerciseLogContextValue = {
+  status: StoreStatus;
+  retry: () => void;
   entries: ExerciseEntry[];
   addEntry: (entry: NewExerciseEntry) => void;
   removeEntry: (id: string) => void;
@@ -33,28 +40,35 @@ export function useExerciseDay(date: string) {
   };
 }
 
-let nextId = 0;
-function createId() {
-  nextId += 1;
-  return `${Date.now()}-${nextId}`;
-}
+const EMPTY: ExerciseEntry[] = [];
+const load = (repositories: Repositories) => repositories.exerciseLog.list();
 
-/**
- * TEMPORARY: in-memory log until there is a backend. Entries are lost when
- * the app restarts.
- */
+/** Exercise diary of the signed-in account. Must sit inside `SessionProvider`. */
 export function ExerciseLogProvider({ children }: PropsWithChildren) {
-  const [entries, setEntries] = useState<ExerciseEntry[]>([]);
+  const { session } = useSession();
+  const store = useUserStore(session, EMPTY, load);
 
   function addEntry(entry: NewExerciseEntry) {
-    setEntries((current) => [...current, { ...entry, id: createId() } as ExerciseEntry]);
+    const created = { ...entry, id: createId() } as ExerciseEntry;
+    store.update((entries) => [...entries, created]);
+    store.write((repositories) => repositories.exerciseLog.add(created));
   }
 
   function removeEntry(id: string) {
-    setEntries((current) => current.filter((entry) => entry.id !== id));
+    store.update((entries) => entries.filter((entry) => entry.id !== id));
+    store.write((repositories) => repositories.exerciseLog.remove(id));
   }
 
   return (
-    <ExerciseLogContext value={{ entries, addEntry, removeEntry }}>{children}</ExerciseLogContext>
+    <ExerciseLogContext
+      value={{
+        status: store.status,
+        retry: store.retry,
+        entries: store.data,
+        addEntry,
+        removeEntry,
+      }}>
+      {children}
+    </ExerciseLogContext>
   );
 }

@@ -1,5 +1,10 @@
-import { createContext, use, useState, type PropsWithChildren } from 'react';
+import { createContext, use, type PropsWithChildren } from 'react';
 
+import { useSession } from './session';
+
+import { createId } from '@/data/ids';
+import type { Repositories } from '@/data/types';
+import { useUserStore, type StoreStatus } from '@/data/use-user-store';
 import {
   isDoneOn,
   isTaskDone,
@@ -10,6 +15,8 @@ import {
 } from '@/lib/tasks';
 
 type TasksContextValue = {
+  status: StoreStatus;
+  retry: () => void;
   tasks: Task[];
   addTask: (task: NewTask) => void;
   removeTask: (id: string) => void;
@@ -32,21 +39,20 @@ export function useTasks() {
   return value;
 }
 
-let nextId = 0;
-function createId() {
-  nextId += 1;
-  return `${Date.now()}-${nextId}`;
-}
+const EMPTY: Task[] = [];
+const load = (repositories: Repositories) => repositories.tasks.list();
 
-/**
- * TEMPORARY: in-memory list until there is a backend. Tasks are lost when the
- * app restarts.
- */
+/** Tasks of the signed-in account. Must sit inside `SessionProvider`. */
 export function TasksProvider({ children }: PropsWithChildren) {
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const { session } = useSession();
+  const store = useUserStore(session, EMPTY, load);
 
-  function updateTask(id: string, update: (task: Task) => Task) {
-    setTasks((current) => current.map((task) => (task.id === id ? update(task) : task)));
+  function updateTask(id: string, change: (task: Task) => Task) {
+    const tasks = store.update((current) =>
+      current.map((task) => (task.id === id ? change(task) : task)),
+    );
+    const updated = tasks.find((task) => task.id === id);
+    if (updated) store.write((repositories) => repositories.tasks.update(updated));
   }
 
   function addTask({ subtasks, ...task }: NewTask) {
@@ -56,11 +62,13 @@ export function TasksProvider({ children }: PropsWithChildren) {
       doneDates: [],
       subtasks: subtasks.map((title) => ({ id: createId(), title, doneDates: [] })),
     };
-    setTasks((current) => [...current, created]);
+    store.update((current) => [...current, created]);
+    store.write((repositories) => repositories.tasks.add(created));
   }
 
   function removeTask(id: string) {
-    setTasks((current) => current.filter((task) => task.id !== id));
+    store.update((current) => current.filter((task) => task.id !== id));
+    store.write((repositories) => repositories.tasks.remove(id));
   }
 
   function toggleTask(id: string, date: string) {
@@ -109,7 +117,9 @@ export function TasksProvider({ children }: PropsWithChildren) {
   return (
     <TasksContext
       value={{
-        tasks,
+        status: store.status,
+        retry: store.retry,
+        tasks: store.data,
         addTask,
         removeTask,
         toggleTask,

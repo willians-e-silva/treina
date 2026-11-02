@@ -74,6 +74,9 @@ export type WorkoutPlan = {
   queueIndex: number;
 };
 
+/** Plan of a new account: weekly, with every day a rest day. */
+export const EMPTY_PLAN: WorkoutPlan = { mode: 'weekly', weekly: {}, queue: [], queueIndex: 0 };
+
 /** How the user felt after a workout, from 0 (very bad) to 5 (great). */
 export type Feeling = 0 | 1 | 2 | 3 | 4 | 5;
 

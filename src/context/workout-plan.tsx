@@ -1,17 +1,25 @@
-import { createContext, use, useState, type PropsWithChildren } from 'react';
+import { createContext, use, type PropsWithChildren } from 'react';
 
-import type {
-  NewPlannedExercise,
-  PlanMode,
-  SessionSummary,
-  Weekday,
-  Workout,
-  WorkoutCompletion,
-  WorkoutPlan,
-  WorkoutSource,
+import { useSession } from './session';
+
+import { createId } from '@/data/ids';
+import type { Repositories, WorkoutPlanData } from '@/data/types';
+import { useUserStore, type StoreStatus } from '@/data/use-user-store';
+import {
+  EMPTY_PLAN,
+  type NewPlannedExercise,
+  type PlanMode,
+  type SessionSummary,
+  type Weekday,
+  type Workout,
+  type WorkoutCompletion,
+  type WorkoutPlan,
+  type WorkoutSource,
 } from '@/lib/workouts';
 
 type WorkoutPlanContextValue = {
+  status: StoreStatus;
+  retry: () => void;
   workouts: Workout[];
   plan: WorkoutPlan;
   completions: WorkoutCompletion[];
@@ -24,10 +32,7 @@ type WorkoutPlanContextValue = {
    * Adds ready-made workouts at the end of the queue and returns their ids,
    * in order. With a `source` (a trainer's package) they cannot be changed.
    */
-  importWorkouts: (
-    workouts: ImportedWorkout[],
-    source?: WorkoutSource,
-  ) => string[];
+  importWorkouts: (workouts: ImportedWorkout[], source?: WorkoutSource) => string[];
   addExercise: (workoutId: string, exercise: NewPlannedExercise) => void;
   removeExercise: (workoutId: string, exerciseId: string) => void;
   setMode: (mode: PlanMode) => void;
@@ -60,33 +65,41 @@ export function useWorkoutPlan() {
   return value;
 }
 
-let nextId = 0;
-function createId() {
-  nextId += 1;
-  return `${Date.now()}-${nextId}`;
-}
+const EMPTY: WorkoutPlanData = { workouts: [], plan: EMPTY_PLAN, completions: [] };
+const load = (repositories: Repositories) => repositories.workoutPlan.load();
 
-const EMPTY_PLAN: WorkoutPlan = { mode: 'weekly', weekly: {}, queue: [], queueIndex: 0 };
-
-/**
- * TEMPORARY: in-memory plan until there is a backend. Workouts and the plan
- * are lost when the app restarts.
- */
+/** Workouts, plan and completed days of the signed-in account. Must sit inside `SessionProvider`. */
 export function WorkoutPlanProvider({ children }: PropsWithChildren) {
-  const [workouts, setWorkouts] = useState<Workout[]>([]);
-  const [plan, setPlan] = useState<WorkoutPlan>(EMPTY_PLAN);
-  const [completions, setCompletions] = useState<WorkoutCompletion[]>([]);
+  const { session } = useSession();
+  const store = useUserStore(session, EMPTY, load);
+
+  function changePlan(update: (plan: WorkoutPlan) => WorkoutPlan) {
+    const { plan } = store.update((data) => ({ ...data, plan: update(data.plan) }));
+    store.write((repositories) => repositories.workoutPlan.savePlan(plan));
+  }
 
   function updateWorkout(id: string, update: (workout: Workout) => Workout) {
-    // A trainer's workout stays as published.
-    setWorkouts((current) =>
-      current.map((workout) => (workout.id === id && !workout.source ? update(workout) : workout)),
-    );
+    const { workouts } = store.update((data) => ({
+      ...data,
+      // A trainer's workout stays as published.
+      workouts: data.workouts.map((workout) =>
+        workout.id === id && !workout.source ? update(workout) : workout,
+      ),
+    }));
+    const updated = workouts.find((workout) => workout.id === id);
+    if (updated && !updated.source) {
+      store.write((repositories) => repositories.workoutPlan.saveWorkouts([updated]));
+    }
+  }
+
+  function saveNewWorkouts(added: Workout[]) {
+    store.update((data) => ({ ...data, workouts: [...data.workouts, ...added] }));
+    store.write((repositories) => repositories.workoutPlan.saveWorkouts(added));
   }
 
   function addWorkout(name: string) {
     const id = createId();
-    setWorkouts((current) => [...current, { id, name: name.trim(), exercises: [] }]);
+    saveNewWorkouts([{ id, name: name.trim(), exercises: [] }]);
     return id;
   }
 
@@ -95,8 +108,12 @@ export function WorkoutPlanProvider({ children }: PropsWithChildren) {
   }
 
   function removeWorkout(id: string) {
-    setWorkouts((current) => current.filter((workout) => workout.id !== id));
-    setPlan((current) => {
+    store.update((data) => ({
+      ...data,
+      workouts: data.workouts.filter((workout) => workout.id !== id),
+    }));
+    store.write((repositories) => repositories.workoutPlan.removeWorkout(id));
+    changePlan((current) => {
       const weekly = Object.fromEntries(
         Object.entries(current.weekly).filter(([, workoutId]) => workoutId !== id),
       );
@@ -121,8 +138,8 @@ export function WorkoutPlanProvider({ children }: PropsWithChildren) {
       source,
     }));
     const ids = added.map((workout) => workout.id);
-    setWorkouts((current) => [...current, ...added]);
-    setPlan((current) => ({ ...current, queue: [...current.queue, ...ids] }));
+    saveNewWorkouts(added);
+    changePlan((current) => ({ ...current, queue: [...current.queue, ...ids] }));
     return ids;
   }
 
@@ -141,11 +158,11 @@ export function WorkoutPlanProvider({ children }: PropsWithChildren) {
   }
 
   function setMode(mode: PlanMode) {
-    setPlan((current) => ({ ...current, mode }));
+    changePlan((current) => ({ ...current, mode }));
   }
 
   function setWeekday(day: Weekday, workoutId: string | undefined) {
-    setPlan((current) => {
+    changePlan((current) => {
       const weekly = { ...current.weekly };
       if (workoutId) weekly[day] = workoutId;
       else delete weekly[day];
@@ -154,11 +171,11 @@ export function WorkoutPlanProvider({ children }: PropsWithChildren) {
   }
 
   function addToQueue(workoutId: string) {
-    setPlan((current) => ({ ...current, queue: [...current.queue, workoutId] }));
+    changePlan((current) => ({ ...current, queue: [...current.queue, workoutId] }));
   }
 
   function removeFromQueue(index: number) {
-    setPlan((current) => {
+    changePlan((current) => {
       const queue = current.queue.filter((_, i) => i !== index);
       // Items before the next one shift it down; removing the next one keeps
       // the index, which then points at the item that followed it.
@@ -168,7 +185,7 @@ export function WorkoutPlanProvider({ children }: PropsWithChildren) {
   }
 
   function moveInQueue(index: number, direction: -1 | 1) {
-    setPlan((current) => {
+    changePlan((current) => {
       const target = index + direction;
       if (target < 0 || target >= current.queue.length) return current;
       const queue = [...current.queue];
@@ -185,15 +202,17 @@ export function WorkoutPlanProvider({ children }: PropsWithChildren) {
   }
 
   function setNextInQueue(index: number) {
-    setPlan((current) => ({ ...current, queueIndex: index }));
+    changePlan((current) => ({ ...current, queueIndex: index }));
   }
 
   function completeWorkout(date: string, workoutId: string, session?: SessionSummary) {
-    setCompletions((current) => [
-      ...current.filter((completion) => completion.date !== date),
-      { date, workoutId, session },
-    ]);
-    setPlan((current) =>
+    const completion: WorkoutCompletion = { date, workoutId, session };
+    store.update((data) => ({
+      ...data,
+      completions: [...data.completions.filter((other) => other.date !== date), completion],
+    }));
+    store.write((repositories) => repositories.workoutPlan.saveCompletion(completion));
+    changePlan((current) =>
       current.mode === 'queue' && current.queue.length > 0
         ? { ...current, queueIndex: (current.queueIndex + 1) % current.queue.length }
         : current,
@@ -201,8 +220,12 @@ export function WorkoutPlanProvider({ children }: PropsWithChildren) {
   }
 
   function undoCompletion(date: string) {
-    setCompletions((current) => current.filter((completion) => completion.date !== date));
-    setPlan((current) =>
+    store.update((data) => ({
+      ...data,
+      completions: data.completions.filter((completion) => completion.date !== date),
+    }));
+    store.write((repositories) => repositories.workoutPlan.removeCompletion(date));
+    changePlan((current) =>
       current.mode === 'queue' && current.queue.length > 0
         ? {
             ...current,
@@ -215,9 +238,11 @@ export function WorkoutPlanProvider({ children }: PropsWithChildren) {
   return (
     <WorkoutPlanContext
       value={{
-        workouts,
-        plan,
-        completions,
+        status: store.status,
+        retry: store.retry,
+        workouts: store.data.workouts,
+        plan: store.data.plan,
+        completions: store.data.completions,
         addWorkout,
         renameWorkout,
         removeWorkout,

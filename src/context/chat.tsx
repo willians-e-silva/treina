@@ -1,15 +1,17 @@
-import { createContext, use, useState, type PropsWithChildren } from 'react';
+import { createContext, use, type PropsWithChildren } from 'react';
 
-export type ChatMessage = {
-  id: string;
-  /** `me` is the user; `trainer` is the other side of the conversation. */
-  from: 'me' | 'trainer';
-  text: string;
-  /** Milliseconds since the epoch. */
-  sentAt: number;
-};
+import { useSession } from './session';
+
+import { createId } from '@/data/ids';
+import type { Repositories } from '@/data/types';
+import { useUserStore, type StoreStatus } from '@/data/use-user-store';
+import type { ChatMessage, ChatThreads } from '@/lib/chat';
+
+export type { ChatMessage } from '@/lib/chat';
 
 type ChatContextValue = {
+  status: StoreStatus;
+  retry: () => void;
   /** Messages with the trainer, oldest first. */
   messagesWith: (trainerId: string) => ChatMessage[];
   sendMessage: (trainerId: string, text: string) => void;
@@ -25,33 +27,35 @@ export function useChat() {
   return value;
 }
 
-let nextId = 0;
-function createId() {
-  nextId += 1;
-  return `${Date.now()}-${nextId}`;
-}
+const EMPTY: ChatThreads = {};
+const load = (repositories: Repositories) => repositories.chat.load();
 
 /**
- * TEMPORARY: in-memory conversations with trainers until there is a backend.
- * Messages are not delivered anywhere yet, so trainers never answer.
+ * Conversations of the signed-in account with trainers. Must sit inside
+ * `SessionProvider`. Messages are not delivered anywhere yet, so trainers
+ * never answer.
  */
 export function ChatProvider({ children }: PropsWithChildren) {
-  const [threads, setThreads] = useState<Record<string, ChatMessage[]>>({});
+  const { session } = useSession();
+  const store = useUserStore(session, EMPTY, load);
 
   function sendMessage(trainerId: string, text: string) {
     const trimmed = text.trim();
     if (!trimmed) return;
     const message: ChatMessage = { id: createId(), from: 'me', text: trimmed, sentAt: Date.now() };
-    setThreads((current) => ({
-      ...current,
-      [trainerId]: [...(current[trainerId] ?? []), message],
+    store.update((threads) => ({
+      ...threads,
+      [trainerId]: [...(threads[trainerId] ?? []), message],
     }));
+    store.write((repositories) => repositories.chat.send(trainerId, message));
   }
 
   return (
     <ChatContext
       value={{
-        messagesWith: (trainerId) => threads[trainerId] ?? [],
+        status: store.status,
+        retry: store.retry,
+        messagesWith: (trainerId) => store.data[trainerId] ?? [],
         sendMessage,
       }}>
       {children}

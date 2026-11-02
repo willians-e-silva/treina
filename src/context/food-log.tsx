@@ -1,5 +1,10 @@
-import { createContext, use, useState, type PropsWithChildren } from 'react';
+import { createContext, use, type PropsWithChildren } from 'react';
 
+import { useSession } from './session';
+
+import { createId } from '@/data/ids';
+import type { FoodLogData, Repositories } from '@/data/types';
+import { useUserStore, type StoreStatus } from '@/data/use-user-store';
 import {
   DEFAULT_MEALS,
   insertMeal,
@@ -11,6 +16,8 @@ import {
 } from '@/lib/foods';
 
 type FoodLogContextValue = {
+  status: StoreStatus;
+  retry: () => void;
   entries: FoodEntry[];
   addEntry: (entry: NewFoodEntry) => void;
   removeEntry: (id: string) => void;
@@ -62,26 +69,23 @@ export function useFoodDay(date: string) {
   };
 }
 
-let nextId = 0;
-function createId() {
-  nextId += 1;
-  return `${Date.now()}-${nextId}`;
-}
+const EMPTY: FoodLogData = { entries: [], meals: [...DEFAULT_MEALS] };
+const load = (repositories: Repositories) => repositories.foodLog.load();
 
-/**
- * TEMPORARY: in-memory log until there is a backend. Entries and meals are
- * lost when the app restarts.
- */
+/** Food diary of the signed-in account. Must sit inside `SessionProvider`. */
 export function FoodLogProvider({ children }: PropsWithChildren) {
-  const [entries, setEntries] = useState<FoodEntry[]>([]);
-  const [meals, setMeals] = useState<Meal[]>([...DEFAULT_MEALS]);
+  const { session } = useSession();
+  const store = useUserStore(session, EMPTY, load);
 
   function addEntry(entry: NewFoodEntry) {
-    setEntries((current) => [...current, { ...entry, id: createId() }]);
+    const created: FoodEntry = { ...entry, id: createId() };
+    store.update((data) => ({ ...data, entries: [...data.entries, created] }));
+    store.write((repositories) => repositories.foodLog.addEntry(created));
   }
 
   function removeEntry(id: string) {
-    setEntries((current) => current.filter((entry) => entry.id !== id));
+    store.update((data) => ({ ...data, entries: data.entries.filter((entry) => entry.id !== id) }));
+    store.write((repositories) => repositories.foodLog.removeEntry(id));
   }
 
   function addMeal(input: { presetId: string } | { name: string }) {
@@ -90,17 +94,32 @@ export function FoodLogProvider({ children }: PropsWithChildren) {
         ? PRESET_MEALS.find((preset) => preset.id === input.presetId)
         : { id: `custom-${createId()}`, name: input.name.trim() };
     if (!meal?.name) return;
-    setMeals((current) =>
-      current.some((other) => other.id === meal.id) ? current : insertMeal(current, meal),
-    );
+    let added = false;
+    store.update((data) => {
+      if (data.meals.some((other) => other.id === meal.id)) return data;
+      added = true;
+      return { ...data, meals: insertMeal(data.meals, meal) };
+    });
+    if (added) store.write((repositories) => repositories.foodLog.addMeal(meal));
   }
 
   function removeMeal(id: string) {
-    setMeals((current) => current.filter((meal) => meal.id !== id));
+    store.update((data) => ({ ...data, meals: data.meals.filter((meal) => meal.id !== id) }));
+    store.write((repositories) => repositories.foodLog.removeMeal(id));
   }
 
   return (
-    <FoodLogContext value={{ entries, addEntry, removeEntry, meals, addMeal, removeMeal }}>
+    <FoodLogContext
+      value={{
+        status: store.status,
+        retry: store.retry,
+        entries: store.data.entries,
+        addEntry,
+        removeEntry,
+        meals: store.data.meals,
+        addMeal,
+        removeMeal,
+      }}>
       {children}
     </FoodLogContext>
   );
