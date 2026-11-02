@@ -31,6 +31,18 @@
       '<div class="bar ' + band(v) + '" role="img" aria-label="' + esc(name) + ': ' + num(v) + ' de 10"><i style="width:' + v * 10 + '%"></i></div>' +
       '<span class="val">' + num(v) + '</span></div>';
   }
+  function galleryImg(id) { return D.gallery.images.filter(function (g) { return g.id === id; })[0]; }
+  function screenImages(screenId) { return D.gallery.images.filter(function (g) { return g.screen === screenId; }); }
+  // A row of phone screenshots; each opens the viewer.
+  function shots(list, size) {
+    if (!list.length) return '';
+    return '<div class="shots ' + (size || '') + '">' + list.map(function (g) {
+      return '<button type="button" class="shot" data-img="' + g.id + '" aria-label="Ampliar: ' + esc(g.caption) + '"><img src="' + g.file + '" alt="' + esc(g.caption) + '" loading="lazy" width="390" height="844"></button>';
+    }).join('') + '</div>';
+  }
+  function captions(list) {
+    return list.length ? '<ul class="caps">' + list.map(function (g) { return '<li>' + rich(g.caption) + '</li>'; }).join('') + '</ul>' : '';
+  }
   function issueById(id) { return D.issues.filter(function (i) { return i.id === id; })[0]; }
   function issueLinks(ids) {
     if (!ids || !ids.length) return '<p class="faint">Nenhum problema associado.</p>';
@@ -45,6 +57,7 @@
     { id: 'visao', label: 'Visão geral', render: viewOverview },
     { id: 'scorecard', label: 'Scorecard', count: function () { return D.scores.length; }, render: viewScorecard },
     { id: 'telas', label: 'Telas', count: function () { return D.screens.length; }, render: viewScreens },
+    { id: 'galeria', label: 'Galeria de telas', count: function () { return D.gallery.images.length; }, render: viewGallery },
     { id: 'features', label: 'Features', count: function () { return D.features.length; }, render: viewFeatures },
     { id: 'problemas', label: 'Problemas', count: function () { return D.issues.length; }, render: viewIssues },
     { id: 'arquitetura', label: 'Arquitetura', render: viewArch },
@@ -159,7 +172,9 @@
       }).join('') + '</div></div>' +
       '<div class="grid g-3">' + items.map(function (s) {
         var a = avg(s.scores);
+        var im = screenImages(s.id)[0];
         return '<button type="button" class="card screen-card" data-go="tela-' + s.id + '">' +
+          (im ? '<div class="thumb"><img src="' + im.file + '" alt="" loading="lazy" width="390" height="844"></div>' : '<div class="thumb none"><span>Sem captura</span></div>') +
           '<div class="card-head"><h3>' + esc(s.name) + '</h3><span class="avg ' + '">' + num(a) + '</span></div>' +
           '<span class="route">' + esc(s.route) + '</span><p class="muted">' + esc(s.objective) + '</p>' +
           '<div class="minibars">' + mini('Técnica', s.scores.tech) + mini('UX/UI', s.scores.ux) + mini('Compl.', s.scores.complete) + mini('Matur.', s.scores.maturity) + '</div>' +
@@ -186,6 +201,14 @@
       '<div class="just">' + Object.keys(labels).map(function (k) {
         return '<div class="j"><div class="top"><span>' + labels[k] + '</span><b>' + s.scores[k] + '</b></div><div class="bar ' + band(s.scores[k]) + '"><i style="width:' + s.scores[k] * 10 + '%"></i></div><p class="faint">' + esc(s.justify[k]) + '</p></div>';
       }).join('') + '</div></div>' +
+      (function () {
+        var ims = screenImages(s.id);
+        if (!ims.length) {
+          var m = D.gallery.missing.filter(function (x) { return x.screen === s.id; })[0];
+          return '<section class="card"><h2>Imagem da tela</h2><p class="faint">' + esc(m ? m.why : 'Sem captura.') + '</p></section>';
+        }
+        return '<section class="card"><div class="card-head"><h2>Imagem da tela</h2><span class="faint">toque para ampliar</span></div>' + shots(ims) + captions(ims) + '</section>';
+      })() +
       '<div class="grid g-2">' +
       '<section class="card"><h2>Funcionalidades</h2><div class="block"><h4>Funciona</h4>' + list(s.works, 'list-plus') + '</div>' +
       '<div class="block"><h4>Parcial</h4>' + list(s.partial) + '</div>' +
@@ -199,6 +222,46 @@
       '</div>';
   }
 
+  function viewGallery() {
+    var G = D.gallery;
+    var figs = G.images.map(function (g) {
+      var sc = D.screens.filter(function (x) { return x.id === g.screen; })[0];
+      return '<figure class="fig"><button type="button" class="shot" data-img="' + g.id + '" aria-label="Ampliar: ' + esc(g.caption) + '"><img src="' + g.file + '" alt="' + esc(g.caption) + '" loading="lazy" width="390" height="844"></button>' +
+        '<figcaption><a href="#tela-' + sc.id + '"><b>' + esc(sc.name) + '</b></a><span class="mono faint">' + esc(sc.route) + '</span><span class="faint">' + rich(g.caption) + '</span></figcaption></figure>';
+    }).join('');
+    var missing = G.missing.map(function (m) {
+      var sc = D.screens.filter(function (x) { return x.id === m.screen; })[0];
+      return '<figure class="fig"><div class="shot empty"><span>Sem captura</span></div><figcaption><a href="#tela-' + sc.id + '"><b>' + esc(sc.name) + '</b></a><span class="mono faint">' + esc(sc.route) + '</span><span class="faint">' + esc(m.why) + '</span></figcaption></figure>';
+    }).join('');
+    return head('Seção 2', 'Galeria de telas', G.note) + '<div class="gallery">' + figs + missing + '</div>';
+  }
+
+  // Full-size viewer with previous/next over every captured image.
+  var viewer = null, viewerIdx = 0;
+  function openViewer(id) {
+    if (!viewer) {
+      viewer = document.createElement('div');
+      viewer.className = 'viewer'; viewer.hidden = true;
+      viewer.setAttribute('role', 'dialog'); viewer.setAttribute('aria-modal', 'true'); viewer.setAttribute('aria-label', 'Imagem ampliada');
+      viewer.innerHTML = '<div class="viewer-inner"><img alt=""><div class="viewer-bar"><button type="button" data-v="-1" aria-label="Imagem anterior">←</button><p></p><button type="button" data-v="1" aria-label="Próxima imagem">→</button><button type="button" data-v="0" aria-label="Fechar">✕</button></div></div>';
+      document.body.appendChild(viewer);
+      viewer.addEventListener('click', function (e) {
+        var b = e.target.closest('[data-v]');
+        if (b) { var v = +b.getAttribute('data-v'); if (v === 0) closeViewer(); else showViewer(viewerIdx + v); }
+        else if (e.target === viewer) closeViewer();
+      });
+    }
+    showViewer(D.gallery.images.indexOf(galleryImg(id)));
+    viewer.hidden = false; viewer.querySelector('[data-v="0"]').focus();
+  }
+  function showViewer(i) {
+    var all = D.gallery.images; viewerIdx = (i + all.length) % all.length;
+    var g = all[viewerIdx], sc = D.screens.filter(function (x) { return x.id === g.screen; })[0];
+    var img = viewer.querySelector('img'); img.src = g.file; img.alt = g.caption;
+    viewer.querySelector('p').innerHTML = '<b>' + esc(sc ? sc.name : '') + '</b> · ' + rich(g.caption) + ' <span class="faint">' + (viewerIdx + 1) + '/' + all.length + '</span>';
+  }
+  function closeViewer() { if (viewer) viewer.hidden = true; }
+
   var featFilter = 'Todas';
   var openFeat = null;
   function viewFeatures() {
@@ -206,17 +269,21 @@
     var byImp = {}; D.features.forEach(function (f) { byImp[f.importance] = (byImp[f.importance] || 0) + 1; });
     var byState = {}; D.features.forEach(function (f) { byState[f.state] = (byState[f.state] || 0) + 1; });
     var items = D.features.filter(function (f) { return featFilter === 'Todas' || f.importance === featFilter; });
-    var rows = items.map(function (f) {
-      var r = '<tr class="clickable" data-feat="' + f.id + '" aria-expanded="' + (openFeat === f.id) + '"><td class="n">' + f.id + '</td><td><b>' + esc(f.name) + '</b></td><td>' + pill(f.importance, IMP[f.importance]) + '</td><td>' + pill(f.state, STATE[f.state]) + '</td>' +
-        '<td style="min-width:120px"><div class="score-row" style="grid-template-columns:minmax(0,1fr) 28px"><div class="bar ' + band(f.quality) + '"><i style="width:' + f.quality * 10 + '%"></i></div><span class="val">' + f.quality + '</span></div></td><td>' + pill(f.priority, PRI[f.priority]) + '</td></tr>';
-      if (openFeat === f.id) {
-        r += '<tr class="detail"><td></td><td colspan="5"><div class="detail-grid">' +
-          '<div class="block"><p><b>Problema que resolve:</b> ' + esc(f.problem) + '</p><p><b>Faz sentido para o produto:</b> ' + esc(f.fit) + '</p><p><b>Implementação:</b> ' + esc(f.implementation) + '</p></div>' +
-          '<div class="block"><p><b>Intuitiva:</b> ' + esc(f.intuitive) + '</p><p><b>Etapa faltando:</b> ' + esc(f.missingStep) + '</p><p><b>Impacto da ausência:</b> ' + esc(f.absence) + '</p></div></div>' +
-          (f.screens.length ? '<p style="margin-top:8px"><b>Telas:</b> ' + f.screens.map(function (id) { var s = D.screens.filter(function (x) { return x.id === id; })[0]; return '<a href="#tela-' + id + '">' + esc(s.name) + '</a>'; }).join(', ') + '</p>' : '') +
-          '<div style="margin-top:8px">' + issueLinks(f.issues) + '</div></td></tr>';
-      }
-      return r;
+    var cards = items.map(function (f) {
+      var ims = f.images.map(galleryImg);
+      var open = openFeat === f.id;
+      return '<section class="card feat" id="feat-' + f.id + '">' +
+        '<div class="card-head"><h3><span class="mono faint">' + f.id + '</span> ' + esc(f.name) + '</h3>' + pill(f.priority, PRI[f.priority]) + '</div>' +
+        '<div class="pills">' + pill(f.importance, IMP[f.importance]) + pill(f.state, STATE[f.state]) + '</div>' +
+        '<div class="score-row" style="grid-template-columns:70px minmax(0,1fr) 28px"><span class="name">Qualidade</span><div class="bar ' + band(f.quality) + '"><i style="width:' + f.quality * 10 + '%"></i></div><span class="val">' + f.quality + '</span></div>' +
+        (ims.length ? shots(ims, 'small') : '<p class="faint noimg">' + esc(f.noImage || 'Sem imagem.') + '</p>') +
+        '<p class="muted">' + esc(f.problem) + '</p>' +
+        '<button type="button" class="back" data-feat="' + f.id + '" aria-expanded="' + open + '">' + (open ? 'Ocultar análise' : 'Ver análise') + '</button>' +
+        (open ? '<div class="block"><p><b>Faz sentido para o produto:</b> ' + esc(f.fit) + '</p><p><b>Implementação:</b> ' + esc(f.implementation) + '</p>' +
+          '<p><b>Intuitiva:</b> ' + esc(f.intuitive) + '</p><p><b>Etapa faltando:</b> ' + esc(f.missingStep) + '</p><p><b>Impacto da ausência:</b> ' + esc(f.absence) + '</p>' +
+          (f.screens.length ? '<p><b>Telas:</b> ' + f.screens.map(function (id) { var sc = D.screens.filter(function (x) { return x.id === id; })[0]; return '<a href="#tela-' + id + '">' + esc(sc.name) + '</a>'; }).join(', ') + '</p>' : '') +
+          captions(ims) + issueLinks(f.issues) + '</div>' : '') +
+        '</section>';
     }).join('');
     function dist(obj, map) {
       var total = D.features.length;
@@ -224,12 +291,12 @@
         return '<div class="score-row" style="grid-template-columns:minmax(0,190px) minmax(0,1fr) 28px"><span class="name">' + pill(k, map[k]) + '</span><div class="bar"><i style="width:' + (obj[k] / total * 100) + '%;background:var(--accent)"></i></div><span class="val">' + obj[k] + '</span></div>';
       }).join('') + '</div>';
     }
-    return head('Seção 3', 'Features', 'Inventário de ' + D.features.length + ' funcionalidades com importância para a proposta, estado real da implementação, qualidade (0 a 10) e prioridade de melhoria. Toque em uma linha para ver a análise.') +
+    return head('Seção 3', 'Features', 'Inventário de ' + D.features.length + ' funcionalidades com importância para a proposta, estado real da implementação, qualidade (0 a 10) e prioridade de melhoria. Cada feature traz as telas em que aparece; toque numa imagem para ampliar.') +
       '<div class="grid g-2"><section class="card"><h2>Por importância</h2>' + dist(byImp, IMP) + '</section><section class="card"><h2>Por estado</h2>' + dist(byState, STATE) + '</section></div>' +
       '<div class="toolbar"><div class="seg" role="group" aria-label="Filtrar por importância">' + imps.map(function (g) {
         return '<button type="button" data-ff="' + g + '" aria-pressed="' + (g === featFilter) + '">' + (g === 'Todas' ? 'Todas' : g.charAt(0) + g.slice(1).toLowerCase()) + '</button>';
       }).join('') + '</div></div>' +
-      '<div class="table-wrap"><table><thead><tr><th>ID</th><th>Feature</th><th>Importância</th><th>Estado</th><th>Qualidade</th><th>Prioridade</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+      '<div class="grid g-feat">' + cards + '</div>';
   }
 
   var issueSev = 'Todas', openIssue = null, issueQuery = '';
@@ -361,6 +428,7 @@
   function current() { var h = (location.hash || '').slice(1); return h || 'visao'; }
   function renderNav(active) {
     var base = active.indexOf('tela-') === 0 ? 'telas' : active;
+    closeViewer();
     nav.innerHTML = VIEWS.map(function (v) {
       return '<a href="#' + v.id + '"' + (v.id === base ? ' aria-current="page"' : '') + '><span>' + esc(v.label) + '</span>' + (v.count ? '<span class="count">' + v.count() + '</span>' : '') + '</a>';
     }).join('');
@@ -378,8 +446,9 @@
   window.addEventListener('hashchange', function () { render(false); });
 
   document.addEventListener('click', function (e) {
-    var t = e.target.closest('[data-go],[data-sf],[data-ff],[data-feat],[data-is],[data-rp],[data-open]');
+    var t = e.target.closest('[data-go],[data-sf],[data-ff],[data-feat],[data-is],[data-rp],[data-open],[data-img]');
     if (!t) return;
+    if (t.hasAttribute('data-img')) { e.stopPropagation(); e.preventDefault(); openViewer(t.getAttribute('data-img')); return; }
     if (t.hasAttribute('data-open')) { openIssue = t.getAttribute('data-open'); issueSev = 'Todas'; issueQuery = ''; if (location.hash === '#problemas') { e.preventDefault(); render(true); scrollToIssue(); } else setTimeout(scrollToIssue, 60); return; }
     if (t.hasAttribute('data-go')) { location.hash = t.getAttribute('data-go'); return; }
     if (t.hasAttribute('data-sf')) { screenFilter = t.getAttribute('data-sf'); render(true); }
@@ -389,6 +458,11 @@
     if (t.hasAttribute('data-rp')) { roadPri = t.getAttribute('data-rp'); render(true); }
   });
   document.addEventListener('keydown', function (e) {
+    if (viewer && !viewer.hidden) {
+      if (e.key === 'Escape') closeViewer();
+      if (e.key === 'ArrowRight') showViewer(viewerIdx + 1);
+      if (e.key === 'ArrowLeft') showViewer(viewerIdx - 1);
+    }
     if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('tr[data-go],tr[data-feat]')) { e.preventDefault(); e.target.click(); }
   });
   document.addEventListener('input', function (e) {

@@ -78,6 +78,150 @@ Diálogos: registrar peso, meta de peso (`components/weight/weight-dialog.tsx`),
 
 A documentação da arquitetura, dos domínios e das integrações está em [`architecture.md`](architecture.md).
 
+### Galeria de telas
+
+Capturas do app real, exportado para web (expo export -p web) e navegado com Playwright num viewport de 390 × 844 em 2 de novembro de 2026. Os dados foram criados pela própria interface: cadastro, alimentos, adesão a um pacote, treino próprio, tarefas e uma mensagem. A versão web é uma aproximação do app nativo: fontes, sombras e gestos podem diferir no Android e no iOS. O ambiente da auditoria bloqueia ExerciseDB, Open Food Facts e randomuser.me, por isso essas partes aparecem em estado de erro ou com iniciais no lugar das fotos.
+
+**Login** (`/login`)
+
+<p><img src="screens/login.jpg" width="200" alt="Login com os textos em inglês e 'Faca login' sem cedilha (I-08)."></p>
+
+- *login:* Login com os textos em inglês e 'Faca login' sem cedilha (I-08).
+
+**Criar conta: sua conta** (`/signup`)
+
+<p><img src="screens/signup-account.jpg" width="200" alt="Etapa 1 do cadastro preenchida."></p>
+
+- *signup-account:* Etapa 1 do cadastro preenchida.
+
+**Criar conta: sobre você** (`/signup/details`)
+
+<p><img src="screens/signup-details.jpg" width="200" alt="Etapa 2: idade, sexo, altura e peso. A descrição promete estimar calorias (I-04)."></p>
+
+- *signup-details:* Etapa 2: idade, sexo, altura e peso. A descrição promete estimar calorias (I-04).
+
+**Carregando o app / erro de carregamento** (`(tabs)/_layout`)
+
+*Sem captura:* A tela de carregamento aparece por um único quadro, porque prepareMainFlow ainda resolve na hora, e a tela de erro só surge se ele falhar. Não dá para capturar nenhuma das duas sem alterar o código.
+
+**Início (dashboard)** (`/(tabs)`)
+
+<p><img src="screens/home.jpg" width="200" alt="Início depois de registrar alimentos: calorias e macros reais, meta fixa de 2.200 kcal e 6.840 passos fictícios (I-04, I-05)."> <img src="screens/home-edit.jpg" width="200" alt="Modo de edição da tela inicial, com botão de remover em cada widget."> <img src="screens/home-dark.jpg" width="200" alt="Tema escuro gerado pelo design system, numa conta nova sem registros."></p>
+
+- *home:* Início depois de registrar alimentos: calorias e macros reais, meta fixa de 2.200 kcal e 6.840 passos fictícios (I-04, I-05).
+- *home-edit:* Modo de edição da tela inicial, com botão de remover em cada widget.
+- *home-dark:* Tema escuro gerado pelo design system, numa conta nova sem registros.
+
+**Diário alimentar** (`/(tabs)/diary`)
+
+<p><img src="screens/diary.jpg" width="200" alt="Diário com café da manhã e almoço registrados."></p>
+
+- *diary:* Diário com café da manhã e almoço registrados.
+
+**Adicionar alimento (busca)** (`/log-food`)
+
+<p><img src="screens/log-food.jpg" width="200" alt="Busca 'pao frances': resultados da TACO na hora. A parte online aparece com erro porque o ambiente da auditoria bloqueia o Open Food Facts."></p>
+
+- *log-food:* Busca 'pao frances': resultados da TACO na hora. A parte online aparece com erro porque o ambiente da auditoria bloqueia o Open Food Facts.
+
+**Quantidade do alimento** (`/log-food/[id]`)
+
+<p><img src="screens/food-details.jpg" width="200" alt="Quantidade em gramas, troca de refeição e nutrientes recalculados."></p>
+
+- *food-details:* Quantidade em gramas, troca de refeição e nutrientes recalculados.
+
+**Refeições** (`/meals`)
+
+<p><img src="screens/meals.jpg" width="200" alt="Refeições do diário, refeições padrão e personalizada."></p>
+
+- *meals:* Refeições do diário, refeições padrão e personalizada.
+
+**Exercícios** (`/(tabs)/exercise`)
+
+<p><img src="screens/exercise.jpg" width="200" alt="Exercícios com o treino do dia vindo do pacote de Ana Souza."></p>
+
+- *exercise:* Exercícios com o treino do dia vindo do pacote de Ana Souza.
+
+**Adicionar exercício (busca)** (`/log-exercise`)
+
+<p><img src="screens/log-exercise.jpg" width="200" alt="Catálogo do ExerciseDB em estado de erro: a API está bloqueada no ambiente da auditoria."></p>
+
+- *log-exercise:* Catálogo do ExerciseDB em estado de erro: a API está bloqueada no ambiente da auditoria.
+
+**Detalhes do exercício** (`/log-exercise/[id]`)
+
+<p><img src="screens/exercise-details.jpg" width="200" alt="Exercício digitado à mão: 30 minutos e 0 kcal, porque não há MET (I-28)."></p>
+
+- *exercise-details:* Exercício digitado à mão: 30 minutos e 0 kcal, porque não há MET (I-28).
+
+**Planejamento** (`/workouts`)
+
+<p><img src="screens/workouts.jpg" width="200" alt="Planejamento depois de aderir ao pacote: treinos do treinador distribuídos na semana."></p>
+
+- *workouts:* Planejamento depois de aderir ao pacote: treinos do treinador distribuídos na semana.
+
+**Treino (edição)** (`/workouts/[id]`)
+
+<p><img src="screens/workout.jpg" width="200" alt="Treino próprio com um exercício de cardio manual."></p>
+
+- *workout:* Treino próprio com um exercício de cardio manual.
+
+**Sessão de treino** (`/workout-session`)
+
+<p><img src="screens/session.jpg" width="200" alt="Sessão cronometrada com o primeiro exercício concluído."> <img src="screens/dialog-leave-session.jpg" width="200" alt="Confirmação ao sair da sessão no meio do treino."></p>
+
+- *session:* Sessão cronometrada com o primeiro exercício concluído.
+- *dialog-leave-session:* Confirmação ao sair da sessão no meio do treino.
+
+**Treinador (lista)** (`/(tabs)/trainers`)
+
+<p><img src="screens/trainers.jpg" width="200" alt="Lista de treinadores. As fotos (randomuser.me) estão bloqueadas no ambiente, então aparecem as iniciais."></p>
+
+- *trainers:* Lista de treinadores. As fotos (randomuser.me) estão bloqueadas no ambiente, então aparecem as iniciais.
+
+**Perfil do treinador** (`/trainer/[id]`)
+
+<p><img src="screens/trainer.jpg" width="200" alt="Perfil do treinador com números fixos e pacotes."></p>
+
+- *trainer:* Perfil do treinador com números fixos e pacotes.
+
+**Pacote de treinos** (`/trainer/package/[id]`)
+
+<p><img src="screens/package.jpg" width="200" alt="Pacote com treinos, comentários fixos e botão de aderir."></p>
+
+- *package:* Pacote com treinos, comentários fixos e botão de aderir.
+
+**Treino do pacote** (`/trainer/workout`)
+
+<p><img src="screens/package-workout.jpg" width="200" alt="Treino do pacote com notas do treinador."></p>
+
+- *package-workout:* Treino do pacote com notas do treinador.
+
+**Chat com o treinador** (`/chat/[trainerId]`)
+
+<p><img src="screens/chat.jpg" width="200" alt="Mensagem enviada ao treinador; nunca haverá resposta (I-14)."></p>
+
+- *chat:* Mensagem enviada ao treinador; nunca haverá resposta (I-14).
+
+**Tarefas** (`/(tabs)/tasks`)
+
+<p><img src="screens/tasks.jpg" width="200" alt="Tarefa diária com subtarefas e uma tarefa avulsa."></p>
+
+- *tasks:* Tarefa diária com subtarefas e uma tarefa avulsa.
+
+**Nova tarefa / subtarefa** (`/add-task`)
+
+<p><img src="screens/add-task.jpg" width="200" alt="Nova tarefa com repetição diária e duas subtarefas."></p>
+
+- *add-task:* Nova tarefa com repetição diária e duas subtarefas.
+
+**Perfil** (`/(tabs)/profile`)
+
+<p><img src="screens/profile.jpg" width="200" alt="Perfil da conta criada no cadastro."> <img src="screens/dialog-weight.jpg" width="200" alt="Diálogo de registrar peso."></p>
+
+- *profile:* Perfil da conta criada no cadastro.
+- *dialog-weight:* Diálogo de registrar peso.
+
 ## 2. Análise por tela
 
 ### Login — `/login`
@@ -85,6 +229,10 @@ A documentação da arquitetura, dos domínios e das integrações está em [`ar
 **Objetivo:** Entrar com e-mail e senha ou com Google. **Contexto:** Primeira tela de quem não tem sessão. **Importância no fluxo principal:** Alta.
 
 Arquivos: `src/app/login.tsx`, `src/context/session.tsx`, `src/lib/google-auth.ts`
+
+<p><img src="screens/login.jpg" width="200" alt="Login com os textos em inglês e 'Faca login' sem cedilha (I-08)."></p>
+
+- *login:* Login com os textos em inglês e 'Faca login' sem cedilha (I-08).
 
 **Funciona**
 
@@ -140,6 +288,10 @@ Problemas relacionados: I-08 (Login com textos em inglês e erros de grafia), I-
 
 Arquivos: `src/app/signup/index.tsx`, `src/components/signup/step-screen.tsx`, `src/context/signup.tsx`
 
+<p><img src="screens/signup-account.jpg" width="200" alt="Etapa 1 do cadastro preenchida."></p>
+
+- *signup-account:* Etapa 1 do cadastro preenchida.
+
 **Funciona**
 
 - Exige nome e sobrenome
@@ -186,6 +338,10 @@ Problemas relacionados: I-10 (Autenticação simulada)
 **Objetivo:** Coletar idade, sexo, altura e peso (etapa 2 de 2) e criar a conta. **Contexto:** Continuação do cadastro. **Importância no fluxo principal:** Alta.
 
 Arquivos: `src/app/signup/details.tsx`, `src/components/ui/picker-field.tsx`, `src/lib/profile.ts`
+
+<p><img src="screens/signup-details.jpg" width="200" alt="Etapa 2: idade, sexo, altura e peso. A descrição promete estimar calorias (I-04)."></p>
+
+- *signup-details:* Etapa 2: idade, sexo, altura e peso. A descrição promete estimar calorias (I-04).
 
 **Funciona**
 
@@ -274,6 +430,12 @@ Estados: carregando **sim** · vazio **n/a** · erro **sim** · sucesso **sim**
 
 Arquivos: `src/app/(tabs)/index.tsx`, `src/components/dashboard/draggable-dashboard.tsx`, `src/components/dashboard/*.tsx`, `src/context/dashboard-layout.tsx`, `src/lib/dashboard-widgets.ts`, `src/lib/dashboard-data.ts`
 
+<p><img src="screens/home.jpg" width="200" alt="Início depois de registrar alimentos: calorias e macros reais, meta fixa de 2.200 kcal e 6.840 passos fictícios (I-04, I-05)."> <img src="screens/home-edit.jpg" width="200" alt="Modo de edição da tela inicial, com botão de remover em cada widget."> <img src="screens/home-dark.jpg" width="200" alt="Tema escuro gerado pelo design system, numa conta nova sem registros."></p>
+
+- *home:* Início depois de registrar alimentos: calorias e macros reais, meta fixa de 2.200 kcal e 6.840 passos fictícios (I-04, I-05).
+- *home-edit:* Modo de edição da tela inicial, com botão de remover em cada widget.
+- *home-dark:* Tema escuro gerado pelo design system, numa conta nova sem registros.
+
 **Funciona**
 
 - Calorias consumidas e macros vêm do diário real
@@ -335,6 +497,10 @@ Problemas relacionados: I-03 (Histórico de peso fictício para todo usuário), 
 
 Arquivos: `src/app/(tabs)/diary.tsx`, `src/components/diary/meal-section.tsx`, `src/context/food-log.tsx`
 
+<p><img src="screens/diary.jpg" width="200" alt="Diário com café da manhã e almoço registrados."></p>
+
+- *diary:* Diário com café da manhã e almoço registrados.
+
 **Funciona**
 
 - Seletor de dia (Hoje, Ontem, Amanhã)
@@ -384,6 +550,10 @@ Problemas relacionados: I-11 (Exclusões sem confirmação nem desfazer), I-12 (
 
 Arquivos: `src/app/log-food/index.tsx`, `src/hooks/use-food-search.ts`, `src/lib/taco.ts`, `src/lib/openfoodfacts.ts`
 
+<p><img src="screens/log-food.jpg" width="200" alt="Busca 'pao frances': resultados da TACO na hora. A parte online aparece com erro porque o ambiente da auditoria bloqueia o Open Food Facts."></p>
+
+- *log-food:* Busca 'pao frances': resultados da TACO na hora. A parte online aparece com erro porque o ambiente da auditoria bloqueia o Open Food Facts.
+
 **Funciona**
 
 - TACO filtra a cada tecla, offline, com busca por prefixo sem acento
@@ -425,6 +595,10 @@ Estados: carregando **sim** · vazio **sim** · erro **sim** · sucesso **sim**
 **Objetivo:** Definir gramas e refeição e ver os nutrientes antes de adicionar. **Contexto:** Após escolher o alimento. **Importância no fluxo principal:** Alta.
 
 Arquivos: `src/app/log-food/[id].tsx`, `src/lib/foods.ts`
+
+<p><img src="screens/food-details.jpg" width="200" alt="Quantidade em gramas, troca de refeição e nutrientes recalculados."></p>
+
+- *food-details:* Quantidade em gramas, troca de refeição e nutrientes recalculados.
 
 **Funciona**
 
@@ -475,6 +649,10 @@ Problemas relacionados: I-18 (Helpers duplicados), I-30 (Quantidade de alimento 
 
 Arquivos: `src/app/meals.tsx`, `src/lib/foods.ts (insertMeal)`
 
+<p><img src="screens/meals.jpg" width="200" alt="Refeições do diário, refeições padrão e personalizada."></p>
+
+- *meals:* Refeições do diário, refeições padrão e personalizada.
+
 **Funciona**
 
 - Remover refeição (sempre mantém pelo menos uma)
@@ -513,6 +691,10 @@ Problemas relacionados: I-11 (Exclusões sem confirmação nem desfazer)
 **Objetivo:** Ver o treino do dia e os exercícios registrados. **Contexto:** Dias de treino. **Importância no fluxo principal:** Alta.
 
 Arquivos: `src/app/(tabs)/exercise.tsx`, `src/components/exercise/workout-card.tsx`, `src/components/exercise/exercise-section.tsx`, `src/context/exercise-log.tsx`
+
+<p><img src="screens/exercise.jpg" width="200" alt="Exercícios com o treino do dia vindo do pacote de Ana Souza."></p>
+
+- *exercise:* Exercícios com o treino do dia vindo do pacote de Ana Souza.
 
 **Funciona**
 
@@ -567,6 +749,10 @@ Problemas relacionados: I-07 (Desfazer conclusão antiga desalinha a fila), I-12
 
 Arquivos: `src/app/log-exercise/index.tsx`, `src/lib/exercisedb.ts`
 
+<p><img src="screens/log-exercise.jpg" width="200" alt="Catálogo do ExerciseDB em estado de erro: a API está bloqueada no ambiente da auditoria."></p>
+
+- *log-exercise:* Catálogo do ExerciseDB em estado de erro: a API está bloqueada no ambiente da auditoria.
+
 **Funciona**
 
 - Catálogo paginado por categoria com carregamento ao rolar
@@ -614,6 +800,10 @@ Problemas relacionados: I-25 (Busca de exercícios inconsistente com a de alimen
 **Objetivo:** Definir duração e calorias (cardio) ou séries, repetições e carga (musculação). **Contexto:** Após escolher o exercício. **Importância no fluxo principal:** Alta.
 
 Arquivos: `src/app/log-exercise/[id].tsx`, `src/lib/exercises.ts`
+
+<p><img src="screens/exercise-details.jpg" width="200" alt="Exercício digitado à mão: 30 minutos e 0 kcal, porque não há MET (I-28)."></p>
+
+- *exercise-details:* Exercício digitado à mão: 30 minutos e 0 kcal, porque não há MET (I-28).
 
 **Funciona**
 
@@ -665,6 +855,10 @@ Problemas relacionados: I-18 (Helpers duplicados), I-28 (Calorias de exercício 
 
 Arquivos: `src/app/workouts/index.tsx`, `src/context/workout-plan.tsx`, `src/lib/workouts.ts`
 
+<p><img src="screens/workouts.jpg" width="200" alt="Planejamento depois de aderir ao pacote: treinos do treinador distribuídos na semana."></p>
+
+- *workouts:* Planejamento depois de aderir ao pacote: treinos do treinador distribuídos na semana.
+
 **Funciona**
 
 - Criar treino com nome automático (Treino A, B…)
@@ -714,6 +908,10 @@ Problemas relacionados: I-07 (Desfazer conclusão antiga desalinha a fila)
 
 Arquivos: `src/app/workouts/[id].tsx`, `src/components/trainers/workout-source.tsx`
 
+<p><img src="screens/workout.jpg" width="200" alt="Treino próprio com um exercício de cardio manual."></p>
+
+- *workout:* Treino próprio com um exercício de cardio manual.
+
 **Funciona**
 
 - Renomear com salvamento imediato
@@ -759,6 +957,11 @@ Problemas relacionados: I-11 (Exclusões sem confirmação nem desfazer), I-12 (
 **Objetivo:** Executar o treino com cronômetro e registrar o que foi feito. **Contexto:** Durante o treino, com o celular na mão. **Importância no fluxo principal:** Alta.
 
 Arquivos: `src/app/workout-session.tsx`, `src/components/ui/feeling-picker.tsx`
+
+<p><img src="screens/session.jpg" width="200" alt="Sessão cronometrada com o primeiro exercício concluído."> <img src="screens/dialog-leave-session.jpg" width="200" alt="Confirmação ao sair da sessão no meio do treino."></p>
+
+- *session:* Sessão cronometrada com o primeiro exercício concluído.
+- *dialog-leave-session:* Confirmação ao sair da sessão no meio do treino.
 
 **Funciona**
 
@@ -811,6 +1014,10 @@ Problemas relacionados: I-18 (Helpers duplicados), I-32 (Sessão de treino perdi
 
 Arquivos: `src/app/(tabs)/trainers.tsx`, `src/components/trainers/trainer-card.tsx`, `src/lib/trainers.ts`
 
+<p><img src="screens/trainers.jpg" width="200" alt="Lista de treinadores. As fotos (randomuser.me) estão bloqueadas no ambiente, então aparecem as iniciais."></p>
+
+- *trainers:* Lista de treinadores. As fotos (randomuser.me) estão bloqueadas no ambiente, então aparecem as iniciais.
+
 **Funciona**
 
 - Busca por nome sem acento
@@ -854,6 +1061,10 @@ Problemas relacionados: I-22 (Catálogo de treinadores fixo no código)
 
 Arquivos: `src/app/trainer/[id].tsx`, `src/components/trainers/trainer-avatar.tsx`
 
+<p><img src="screens/trainer.jpg" width="200" alt="Perfil do treinador com números fixos e pacotes."></p>
+
+- *trainer:* Perfil do treinador com números fixos e pacotes.
+
 **Funciona**
 
 - Foto, especialidade, números e bio
@@ -896,6 +1107,10 @@ Problemas relacionados: I-14 (Chat sem resposta e sem aviso), I-22 (Catálogo de
 **Objetivo:** Mostrar treinos, comentários e permitir aderir ao programa. **Contexto:** Decisão de compra ou adesão. **Importância no fluxo principal:** Alta.
 
 Arquivos: `src/app/trainer/package/[id].tsx`, `src/context/coaching.tsx`
+
+<p><img src="screens/package.jpg" width="200" alt="Pacote com treinos, comentários fixos e botão de aderir."></p>
+
+- *package:* Pacote com treinos, comentários fixos e botão de aderir.
 
 **Funciona**
 
@@ -950,6 +1165,10 @@ Problemas relacionados: I-06 (Aderir a um pacote apaga o plano semanal sem aviso
 
 Arquivos: `src/app/trainer/workout.tsx`, `src/components/trainers/workout-exercise-list.tsx`
 
+<p><img src="screens/package-workout.jpg" width="200" alt="Treino do pacote com notas do treinador."></p>
+
+- *package-workout:* Treino do pacote com notas do treinador.
+
 **Funciona**
 
 - Descrição, exercícios e notas do treinador
@@ -982,6 +1201,10 @@ Estados: carregando **n/a** · vazio **sim (não encontrado)** · erro **n/a** �
 **Objetivo:** Tirar dúvidas com o treinador. **Contexto:** Durante o programa. **Importância no fluxo principal:** Média.
 
 Arquivos: `src/app/chat/[trainerId].tsx`, `src/context/chat.tsx`
+
+<p><img src="screens/chat.jpg" width="200" alt="Mensagem enviada ao treinador; nunca haverá resposta (I-14)."></p>
+
+- *chat:* Mensagem enviada ao treinador; nunca haverá resposta (I-14).
 
 **Funciona**
 
@@ -1026,6 +1249,10 @@ Problemas relacionados: I-14 (Chat sem resposta e sem aviso)
 **Objetivo:** Checklist diário com tarefas repetidas e avulsas. **Contexto:** Rotina diária. **Importância no fluxo principal:** Média.
 
 Arquivos: `src/app/(tabs)/tasks.tsx`, `src/components/tasks/task-section.tsx`, `src/context/tasks.tsx`, `src/lib/tasks.ts`
+
+<p><img src="screens/tasks.jpg" width="200" alt="Tarefa diária com subtarefas e uma tarefa avulsa."></p>
+
+- *tasks:* Tarefa diária com subtarefas e uma tarefa avulsa.
 
 **Funciona**
 
@@ -1078,6 +1305,10 @@ Problemas relacionados: I-11 (Exclusões sem confirmação nem desfazer), I-12 (
 
 Arquivos: `src/app/add-task.tsx`
 
+<p><img src="screens/add-task.jpg" width="200" alt="Nova tarefa com repetição diária e duas subtarefas."></p>
+
+- *add-task:* Nova tarefa com repetição diária e duas subtarefas.
+
 **Funciona**
 
 - Repetição: não repete, todo dia, toda semana, personalizada
@@ -1115,6 +1346,11 @@ Estados: carregando **n/a** · vazio **n/a** · erro **parcial** · sucesso **si
 **Objetivo:** Dados pessoais, peso, meta e sair. **Contexto:** Consulta ocasional. **Importância no fluxo principal:** Média.
 
 Arquivos: `src/app/(tabs)/profile.tsx`, `src/components/weight/weight-dialog.tsx`, `src/context/weight-log.tsx`
+
+<p><img src="screens/profile.jpg" width="200" alt="Perfil da conta criada no cadastro."> <img src="screens/dialog-weight.jpg" width="200" alt="Diálogo de registrar peso."></p>
+
+- *profile:* Perfil da conta criada no cadastro.
+- *dialog-weight:* Diálogo de registrar peso.
 
 **Funciona**
 
@@ -1198,6 +1434,10 @@ Problemas relacionados: I-13 (Perfil não editável), I-15 (Duas fontes de verda
 - **Impacto da ausência:** Sem conta não há como sincronizar dados entre aparelhos.
 - **Problemas:** I-08, I-09, I-10
 
+<p><img src="screens/login.jpg" width="200" alt="Login com os textos em inglês e 'Faca login' sem cedilha (I-08)."></p>
+
+- *login:* Login com os textos em inglês e 'Faca login' sem cedilha (I-08).
+
 #### F-02 · Cadastro em duas etapas com dados corporais
 
 - **Problema que resolve:** Criar conta e coletar dados para personalização.
@@ -1208,6 +1448,11 @@ Problemas relacionados: I-13 (Perfil não editável), I-15 (Duas fontes de verda
 - **Impacto da ausência:** Sem os dados corporais não há metas pessoais.
 - **Problemas:** I-04
 
+<p><img src="screens/signup-account.jpg" width="200" alt="Etapa 1 do cadastro preenchida."> <img src="screens/signup-details.jpg" width="200" alt="Etapa 2: idade, sexo, altura e peso. A descrição promete estimar calorias (I-04)."></p>
+
+- *signup-account:* Etapa 1 do cadastro preenchida.
+- *signup-details:* Etapa 2: idade, sexo, altura e peso. A descrição promete estimar calorias (I-04).
+
 #### F-03 · Preparação pós-login com erro e retry
 
 - **Problema que resolve:** Evitar abas vazias enquanto os dados carregam.
@@ -1216,6 +1461,8 @@ Problemas relacionados: I-13 (Perfil não editável), I-15 (Duas fontes de verda
 - **Intuitiva:** Sim.
 - **Etapa faltando:** Nenhuma na fase.
 - **Impacto da ausência:** Telas piscariam vazias após o login.
+
+*Sem captura: a tela de carregamento dura um quadro (prepareMainFlow resolve na hora).*
 
 #### F-04 · Dashboard do dia
 
@@ -1227,6 +1474,10 @@ Problemas relacionados: I-13 (Perfil não editável), I-15 (Duas fontes de verda
 - **Impacto da ausência:** O usuário teria de abrir cada aba para saber como está.
 - **Problemas:** I-03, I-04, I-05
 
+<p><img src="screens/home.jpg" width="200" alt="Início depois de registrar alimentos: calorias e macros reais, meta fixa de 2.200 kcal e 6.840 passos fictícios (I-04, I-05)."></p>
+
+- *home:* Início depois de registrar alimentos: calorias e macros reais, meta fixa de 2.200 kcal e 6.840 passos fictícios (I-04, I-05).
+
 #### F-05 · Personalização do dashboard por arrastar
 
 - **Problema que resolve:** Deixar o usuário escolher o que vê primeiro.
@@ -1236,6 +1487,10 @@ Problemas relacionados: I-13 (Perfil não editável), I-15 (Duas fontes de verda
 - **Etapa faltando:** Persistir o layout.
 - **Impacto da ausência:** Baixo: um layout padrão bem escolhido atenderia a maioria.
 - **Problemas:** I-29, I-01
+
+<p><img src="screens/home-edit.jpg" width="200" alt="Modo de edição da tela inicial, com botão de remover em cada widget."></p>
+
+- *home-edit:* Modo de edição da tela inicial, com botão de remover em cada widget.
 
 #### F-06 · Diário alimentar por refeição
 
@@ -1247,6 +1502,11 @@ Problemas relacionados: I-13 (Perfil não editável), I-15 (Duas fontes de verda
 - **Impacto da ausência:** O app perde metade da proposta.
 - **Problemas:** I-12, I-11
 
+<p><img src="screens/diary.jpg" width="200" alt="Diário com café da manhã e almoço registrados."> <img src="screens/food-details.jpg" width="200" alt="Quantidade em gramas, troca de refeição e nutrientes recalculados."></p>
+
+- *diary:* Diário com café da manhã e almoço registrados.
+- *food-details:* Quantidade em gramas, troca de refeição e nutrientes recalculados.
+
 #### F-07 · Busca de alimentos TACO + Open Food Facts
 
 - **Problema que resolve:** Encontrar rápido alimentos brasileiros e produtos de marca.
@@ -1256,6 +1516,10 @@ Problemas relacionados: I-13 (Perfil não editável), I-15 (Duas fontes de verda
 - **Etapa faltando:** Código de barras.
 - **Impacto da ausência:** Registro manual de nutrientes, inviável no dia a dia.
 
+<p><img src="screens/log-food.jpg" width="200" alt="Busca 'pao frances': resultados da TACO na hora. A parte online aparece com erro porque o ambiente da auditoria bloqueia o Open Food Facts."></p>
+
+- *log-food:* Busca 'pao frances': resultados da TACO na hora. A parte online aparece com erro porque o ambiente da auditoria bloqueia o Open Food Facts.
+
 #### F-08 · Refeições configuráveis
 
 - **Problema que resolve:** Adaptar o diário à rotina (pré e pós-treino, ceia).
@@ -1264,6 +1528,10 @@ Problemas relacionados: I-13 (Perfil não editável), I-15 (Duas fontes de verda
 - **Intuitiva:** Sim.
 - **Etapa faltando:** Reordenar e renomear.
 - **Impacto da ausência:** Baixo.
+
+<p><img src="screens/meals.jpg" width="200" alt="Refeições do diário, refeições padrão e personalizada."></p>
+
+- *meals:* Refeições do diário, refeições padrão e personalizada.
 
 #### F-09 · Registro de exercício avulso (ExerciseDB)
 
@@ -1275,6 +1543,11 @@ Problemas relacionados: I-13 (Perfil não editável), I-15 (Duas fontes de verda
 - **Impacto da ausência:** Atividades fora do plano não entrariam no saldo calórico.
 - **Problemas:** I-25, I-28
 
+<p><img src="screens/exercise-details.jpg" width="200" alt="Exercício digitado à mão: 30 minutos e 0 kcal, porque não há MET (I-28)."> <img src="screens/log-exercise.jpg" width="200" alt="Catálogo do ExerciseDB em estado de erro: a API está bloqueada no ambiente da auditoria."></p>
+
+- *exercise-details:* Exercício digitado à mão: 30 minutos e 0 kcal, porque não há MET (I-28).
+- *log-exercise:* Catálogo do ExerciseDB em estado de erro: a API está bloqueada no ambiente da auditoria.
+
 #### F-10 · Plano de treino semanal ou em fila
 
 - **Problema que resolve:** Saber qual treino fazer hoje.
@@ -1284,6 +1557,11 @@ Problemas relacionados: I-13 (Perfil não editável), I-15 (Duas fontes de verda
 - **Etapa faltando:** Editar e reordenar exercícios.
 - **Impacto da ausência:** O app vira só um registro, sem orientação.
 - **Problemas:** I-07, I-12
+
+<p><img src="screens/workouts.jpg" width="200" alt="Planejamento depois de aderir ao pacote: treinos do treinador distribuídos na semana."> <img src="screens/workout.jpg" width="200" alt="Treino próprio com um exercício de cardio manual."></p>
+
+- *workouts:* Planejamento depois de aderir ao pacote: treinos do treinador distribuídos na semana.
+- *workout:* Treino próprio com um exercício de cardio manual.
 
 #### F-11 · Sessão de treino cronometrada
 
@@ -1295,6 +1573,11 @@ Problemas relacionados: I-13 (Perfil não editável), I-15 (Duas fontes de verda
 - **Impacto da ausência:** O registro voltaria a ser manual e depois do treino.
 - **Problemas:** I-32
 
+<p><img src="screens/session.jpg" width="200" alt="Sessão cronometrada com o primeiro exercício concluído."> <img src="screens/dialog-leave-session.jpg" width="200" alt="Confirmação ao sair da sessão no meio do treino."></p>
+
+- *session:* Sessão cronometrada com o primeiro exercício concluído.
+- *dialog-leave-session:* Confirmação ao sair da sessão no meio do treino.
+
 #### F-12 · Treino do dia no card de Exercícios
 
 - **Problema que resolve:** Marcar exercícios feitos sem abrir a sessão.
@@ -1304,6 +1587,10 @@ Problemas relacionados: I-13 (Perfil não editável), I-15 (Duas fontes de verda
 - **Etapa faltando:** Nenhuma relevante.
 - **Impacto da ausência:** Quem não quer cronômetro teria de registrar avulso.
 - **Problemas:** I-07
+
+<p><img src="screens/exercise.jpg" width="200" alt="Exercícios com o treino do dia vindo do pacote de Ana Souza."></p>
+
+- *exercise:* Exercícios com o treino do dia vindo do pacote de Ana Souza.
 
 #### F-13 · Catálogo e busca de treinadores
 
@@ -1315,6 +1602,11 @@ Problemas relacionados: I-13 (Perfil não editável), I-15 (Duas fontes de verda
 - **Impacto da ausência:** O produto vira um diário comum.
 - **Problemas:** I-22
 
+<p><img src="screens/trainers.jpg" width="200" alt="Lista de treinadores. As fotos (randomuser.me) estão bloqueadas no ambiente, então aparecem as iniciais."> <img src="screens/trainer.jpg" width="200" alt="Perfil do treinador com números fixos e pacotes."></p>
+
+- *trainers:* Lista de treinadores. As fotos (randomuser.me) estão bloqueadas no ambiente, então aparecem as iniciais.
+- *trainer:* Perfil do treinador com números fixos e pacotes.
+
 #### F-14 · Aderir a pacote de treinos
 
 - **Problema que resolve:** Transformar o programa do treinador no plano do aluno.
@@ -1325,6 +1617,11 @@ Problemas relacionados: I-13 (Perfil não editável), I-15 (Duas fontes de verda
 - **Impacto da ausência:** O catálogo seria só leitura.
 - **Problemas:** I-06, I-33
 
+<p><img src="screens/package.jpg" width="200" alt="Pacote com treinos, comentários fixos e botão de aderir."> <img src="screens/package-workout.jpg" width="200" alt="Treino do pacote com notas do treinador."></p>
+
+- *package:* Pacote com treinos, comentários fixos e botão de aderir.
+- *package-workout:* Treino do pacote com notas do treinador.
+
 #### F-15 · Comentários e notas de pacotes
 
 - **Problema que resolve:** Dar prova social ao programa.
@@ -1333,6 +1630,10 @@ Problemas relacionados: I-13 (Perfil não editável), I-15 (Duas fontes de verda
 - **Intuitiva:** Sim.
 - **Etapa faltando:** O aluno avaliar.
 - **Impacto da ausência:** Baixo nesta fase.
+
+<p><img src="screens/package.jpg" width="200" alt="Pacote com treinos, comentários fixos e botão de aderir."></p>
+
+- *package:* Pacote com treinos, comentários fixos e botão de aderir.
 
 #### F-16 · Chat com o treinador
 
@@ -1344,6 +1645,10 @@ Problemas relacionados: I-13 (Perfil não editável), I-15 (Duas fontes de verda
 - **Impacto da ausência:** Nenhum impacto hoje; ausência é melhor que mensagens sem resposta.
 - **Problemas:** I-14
 
+<p><img src="screens/chat.jpg" width="200" alt="Mensagem enviada ao treinador; nunca haverá resposta (I-14)."></p>
+
+- *chat:* Mensagem enviada ao treinador; nunca haverá resposta (I-14).
+
 #### F-17 · Tarefas com repetição e subtarefas
 
 - **Problema que resolve:** Organizar uma rotina diária.
@@ -1353,6 +1658,11 @@ Problemas relacionados: I-13 (Perfil não editável), I-15 (Duas fontes de verda
 - **Etapa faltando:** Lembretes, edição, ligação com metas.
 - **Impacto da ausência:** Baixo para a proposta; ocupa uma aba inteira.
 - **Problemas:** I-11, I-12, I-24
+
+<p><img src="screens/tasks.jpg" width="200" alt="Tarefa diária com subtarefas e uma tarefa avulsa."> <img src="screens/add-task.jpg" width="200" alt="Nova tarefa com repetição diária e duas subtarefas."></p>
+
+- *tasks:* Tarefa diária com subtarefas e uma tarefa avulsa.
+- *add-task:* Nova tarefa com repetição diária e duas subtarefas.
 
 #### F-18 · Registro de peso e meta
 
@@ -1364,6 +1674,12 @@ Problemas relacionados: I-13 (Perfil não editável), I-15 (Duas fontes de verda
 - **Impacto da ausência:** Sem medida de progresso.
 - **Problemas:** I-03, I-15
 
+<p><img src="screens/profile.jpg" width="200" alt="Perfil da conta criada no cadastro."> <img src="screens/dialog-weight.jpg" width="200" alt="Diálogo de registrar peso."> <img src="screens/home.jpg" width="200" alt="Início depois de registrar alimentos: calorias e macros reais, meta fixa de 2.200 kcal e 6.840 passos fictícios (I-04, I-05)."></p>
+
+- *profile:* Perfil da conta criada no cadastro.
+- *dialog-weight:* Diálogo de registrar peso.
+- *home:* Início depois de registrar alimentos: calorias e macros reais, meta fixa de 2.200 kcal e 6.840 passos fictícios (I-04, I-05).
+
 #### F-19 · Perfil do usuário
 
 - **Problema que resolve:** Ver e manter dados pessoais.
@@ -1374,6 +1690,10 @@ Problemas relacionados: I-13 (Perfil não editável), I-15 (Duas fontes de verda
 - **Impacto da ausência:** Dados errados no cadastro ficariam para sempre.
 - **Problemas:** I-13
 
+<p><img src="screens/profile.jpg" width="200" alt="Perfil da conta criada no cadastro."></p>
+
+- *profile:* Perfil da conta criada no cadastro.
+
 #### F-20 · Design system Material 3 gerado do ícone
 
 - **Problema que resolve:** Consistência visual e tema escuro.
@@ -1382,6 +1702,11 @@ Problemas relacionados: I-13 (Perfil não editável), I-15 (Duas fontes de verda
 - **Intuitiva:** n/a
 - **Etapa faltando:** Documentar os componentes.
 - **Impacto da ausência:** Telas inconsistentes.
+
+<p><img src="screens/home.jpg" width="200" alt="Início depois de registrar alimentos: calorias e macros reais, meta fixa de 2.200 kcal e 6.840 passos fictícios (I-04, I-05)."> <img src="screens/home-dark.jpg" width="200" alt="Tema escuro gerado pelo design system, numa conta nova sem registros."></p>
+
+- *home:* Início depois de registrar alimentos: calorias e macros reais, meta fixa de 2.200 kcal e 6.840 passos fictícios (I-04, I-05).
+- *home-dark:* Tema escuro gerado pelo design system, numa conta nova sem registros.
 
 #### F-21 · Abas com swipe (6 destinos)
 
@@ -1393,6 +1718,11 @@ Problemas relacionados: I-13 (Perfil não editável), I-15 (Duas fontes de verda
 - **Impacto da ausência:** n/a
 - **Problemas:** I-24
 
+<p><img src="screens/home.jpg" width="200" alt="Início depois de registrar alimentos: calorias e macros reais, meta fixa de 2.200 kcal e 6.840 passos fictícios (I-04, I-05)."> <img src="screens/exercise.jpg" width="200" alt="Exercícios com o treino do dia vindo do pacote de Ana Souza."></p>
+
+- *home:* Início depois de registrar alimentos: calorias e macros reais, meta fixa de 2.200 kcal e 6.840 passos fictícios (I-04, I-05).
+- *exercise:* Exercícios com o treino do dia vindo do pacote de Ana Souza.
+
 #### F-22 · Entrega contínua EAS (OTA por fingerprint)
 
 - **Problema que resolve:** Colocar versões de teste no celular sem loja.
@@ -1402,6 +1732,8 @@ Problemas relacionados: I-13 (Perfil não editável), I-15 (Duas fontes de verda
 - **Etapa faltando:** Lint, typecheck e testes antes do OTA; iOS.
 - **Impacto da ausência:** Testes só locais.
 - **Problemas:** I-23, I-31
+
+*Sem interface: é configuração de build e atualização (eas.json, .eas/workflows/preview.yml).*
 
 ## 4. Features ausentes
 

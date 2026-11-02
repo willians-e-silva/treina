@@ -1226,6 +1226,173 @@ window.AUDIT = {
    "Tarefas genéricas como app de produtividade: é melhor transformar em hábitos de saúde do que competir com apps de tarefas."
   ]
  },
+ "gallery": {
+  "note": "Capturas do app real, exportado para web (expo export -p web) e navegado com Playwright num viewport de 390 × 844 em 2 de novembro de 2026. Os dados foram criados pela própria interface: cadastro, alimentos, adesão a um pacote, treino próprio, tarefas e uma mensagem. A versão web é uma aproximação do app nativo: fontes, sombras e gestos podem diferir no Android e no iOS. O ambiente da auditoria bloqueia ExerciseDB, Open Food Facts e randomuser.me, por isso essas partes aparecem em estado de erro ou com iniciais no lugar das fotos.",
+  "missing": [
+   {
+    "screen": "bootstrap",
+    "why": "A tela de carregamento aparece por um único quadro, porque prepareMainFlow ainda resolve na hora, e a tela de erro só surge se ele falhar. Não dá para capturar nenhuma das duas sem alterar o código."
+   }
+  ],
+  "images": [
+   {
+    "screen": "login",
+    "file": "screens/login.jpg",
+    "id": "login",
+    "caption": "Login com os textos em inglês e 'Faca login' sem cedilha (I-08)."
+   },
+   {
+    "screen": "signup-account",
+    "file": "screens/signup-account.jpg",
+    "id": "signup-account",
+    "caption": "Etapa 1 do cadastro preenchida."
+   },
+   {
+    "screen": "signup-details",
+    "file": "screens/signup-details.jpg",
+    "id": "signup-details",
+    "caption": "Etapa 2: idade, sexo, altura e peso. A descrição promete estimar calorias (I-04)."
+   },
+   {
+    "screen": "home",
+    "file": "screens/home.jpg",
+    "id": "home",
+    "caption": "Início depois de registrar alimentos: calorias e macros reais, meta fixa de 2.200 kcal e 6.840 passos fictícios (I-04, I-05)."
+   },
+   {
+    "screen": "home",
+    "file": "screens/home-edit.jpg",
+    "id": "home-edit",
+    "caption": "Modo de edição da tela inicial, com botão de remover em cada widget."
+   },
+   {
+    "screen": "home",
+    "file": "screens/home-dark.jpg",
+    "id": "home-dark",
+    "caption": "Tema escuro gerado pelo design system, numa conta nova sem registros."
+   },
+   {
+    "screen": "diary",
+    "file": "screens/diary.jpg",
+    "id": "diary",
+    "caption": "Diário com café da manhã e almoço registrados."
+   },
+   {
+    "screen": "log-food",
+    "file": "screens/log-food.jpg",
+    "id": "log-food",
+    "caption": "Busca 'pao frances': resultados da TACO na hora. A parte online aparece com erro porque o ambiente da auditoria bloqueia o Open Food Facts."
+   },
+   {
+    "screen": "food-details",
+    "file": "screens/food-details.jpg",
+    "id": "food-details",
+    "caption": "Quantidade em gramas, troca de refeição e nutrientes recalculados."
+   },
+   {
+    "screen": "meals",
+    "file": "screens/meals.jpg",
+    "id": "meals",
+    "caption": "Refeições do diário, refeições padrão e personalizada."
+   },
+   {
+    "screen": "exercise",
+    "file": "screens/exercise.jpg",
+    "id": "exercise",
+    "caption": "Exercícios com o treino do dia vindo do pacote de Ana Souza."
+   },
+   {
+    "screen": "log-exercise",
+    "file": "screens/log-exercise.jpg",
+    "id": "log-exercise",
+    "caption": "Catálogo do ExerciseDB em estado de erro: a API está bloqueada no ambiente da auditoria."
+   },
+   {
+    "screen": "exercise-details",
+    "file": "screens/exercise-details.jpg",
+    "id": "exercise-details",
+    "caption": "Exercício digitado à mão: 30 minutos e 0 kcal, porque não há MET (I-28)."
+   },
+   {
+    "screen": "workouts",
+    "file": "screens/workouts.jpg",
+    "id": "workouts",
+    "caption": "Planejamento depois de aderir ao pacote: treinos do treinador distribuídos na semana."
+   },
+   {
+    "screen": "workout",
+    "file": "screens/workout.jpg",
+    "id": "workout",
+    "caption": "Treino próprio com um exercício de cardio manual."
+   },
+   {
+    "screen": "session",
+    "file": "screens/session.jpg",
+    "id": "session",
+    "caption": "Sessão cronometrada com o primeiro exercício concluído."
+   },
+   {
+    "screen": "session",
+    "file": "screens/dialog-leave-session.jpg",
+    "id": "dialog-leave-session",
+    "caption": "Confirmação ao sair da sessão no meio do treino."
+   },
+   {
+    "screen": "trainers",
+    "file": "screens/trainers.jpg",
+    "id": "trainers",
+    "caption": "Lista de treinadores. As fotos (randomuser.me) estão bloqueadas no ambiente, então aparecem as iniciais."
+   },
+   {
+    "screen": "trainer",
+    "file": "screens/trainer.jpg",
+    "id": "trainer",
+    "caption": "Perfil do treinador com números fixos e pacotes."
+   },
+   {
+    "screen": "package",
+    "file": "screens/package.jpg",
+    "id": "package",
+    "caption": "Pacote com treinos, comentários fixos e botão de aderir."
+   },
+   {
+    "screen": "package-workout",
+    "file": "screens/package-workout.jpg",
+    "id": "package-workout",
+    "caption": "Treino do pacote com notas do treinador."
+   },
+   {
+    "screen": "chat",
+    "file": "screens/chat.jpg",
+    "id": "chat",
+    "caption": "Mensagem enviada ao treinador; nunca haverá resposta (I-14)."
+   },
+   {
+    "screen": "tasks",
+    "file": "screens/tasks.jpg",
+    "id": "tasks",
+    "caption": "Tarefa diária com subtarefas e uma tarefa avulsa."
+   },
+   {
+    "screen": "add-task",
+    "file": "screens/add-task.jpg",
+    "id": "add-task",
+    "caption": "Nova tarefa com repetição diária e duas subtarefas."
+   },
+   {
+    "screen": "profile",
+    "file": "screens/profile.jpg",
+    "id": "profile",
+    "caption": "Perfil da conta criada no cadastro."
+   },
+   {
+    "screen": "profile",
+    "file": "screens/dialog-weight.jpg",
+    "id": "dialog-weight",
+    "caption": "Diálogo de registrar peso."
+   }
+  ]
+ },
  "screens": [
   {
    "id": "login",
@@ -2682,6 +2849,9 @@ window.AUDIT = {
     "I-08",
     "I-09",
     "I-10"
+   ],
+   "images": [
+    "login"
    ]
   },
   {
@@ -2703,6 +2873,10 @@ window.AUDIT = {
    ],
    "issues": [
     "I-04"
+   ],
+   "images": [
+    "signup-account",
+    "signup-details"
    ]
   },
   {
@@ -2721,7 +2895,9 @@ window.AUDIT = {
    "screens": [
     "bootstrap"
    ],
-   "issues": []
+   "issues": [],
+   "images": [],
+   "noImage": "Sem captura: a tela de carregamento dura um quadro (prepareMainFlow resolve na hora)."
   },
   {
    "id": "F-04",
@@ -2743,6 +2919,9 @@ window.AUDIT = {
     "I-03",
     "I-04",
     "I-05"
+   ],
+   "images": [
+    "home"
    ]
   },
   {
@@ -2764,6 +2943,9 @@ window.AUDIT = {
    "issues": [
     "I-29",
     "I-01"
+   ],
+   "images": [
+    "home-edit"
    ]
   },
   {
@@ -2786,6 +2968,10 @@ window.AUDIT = {
    "issues": [
     "I-12",
     "I-11"
+   ],
+   "images": [
+    "diary",
+    "food-details"
    ]
   },
   {
@@ -2804,7 +2990,10 @@ window.AUDIT = {
    "screens": [
     "log-food"
    ],
-   "issues": []
+   "issues": [],
+   "images": [
+    "log-food"
+   ]
   },
   {
    "id": "F-08",
@@ -2822,7 +3011,10 @@ window.AUDIT = {
    "screens": [
     "meals"
    ],
-   "issues": []
+   "issues": [],
+   "images": [
+    "meals"
+   ]
   },
   {
    "id": "F-09",
@@ -2845,6 +3037,10 @@ window.AUDIT = {
    "issues": [
     "I-25",
     "I-28"
+   ],
+   "images": [
+    "exercise-details",
+    "log-exercise"
    ]
   },
   {
@@ -2867,6 +3063,10 @@ window.AUDIT = {
    "issues": [
     "I-07",
     "I-12"
+   ],
+   "images": [
+    "workouts",
+    "workout"
    ]
   },
   {
@@ -2887,6 +3087,10 @@ window.AUDIT = {
    ],
    "issues": [
     "I-32"
+   ],
+   "images": [
+    "session",
+    "dialog-leave-session"
    ]
   },
   {
@@ -2907,6 +3111,9 @@ window.AUDIT = {
    ],
    "issues": [
     "I-07"
+   ],
+   "images": [
+    "exercise"
    ]
   },
   {
@@ -2928,6 +3135,10 @@ window.AUDIT = {
    ],
    "issues": [
     "I-22"
+   ],
+   "images": [
+    "trainers",
+    "trainer"
    ]
   },
   {
@@ -2950,6 +3161,10 @@ window.AUDIT = {
    "issues": [
     "I-06",
     "I-33"
+   ],
+   "images": [
+    "package",
+    "package-workout"
    ]
   },
   {
@@ -2968,7 +3183,10 @@ window.AUDIT = {
    "screens": [
     "package"
    ],
-   "issues": []
+   "issues": [],
+   "images": [
+    "package"
+   ]
   },
   {
    "id": "F-16",
@@ -2988,6 +3206,9 @@ window.AUDIT = {
    ],
    "issues": [
     "I-14"
+   ],
+   "images": [
+    "chat"
    ]
   },
   {
@@ -3011,6 +3232,10 @@ window.AUDIT = {
     "I-11",
     "I-12",
     "I-24"
+   ],
+   "images": [
+    "tasks",
+    "add-task"
    ]
   },
   {
@@ -3033,6 +3258,11 @@ window.AUDIT = {
    "issues": [
     "I-03",
     "I-15"
+   ],
+   "images": [
+    "profile",
+    "dialog-weight",
+    "home"
    ]
   },
   {
@@ -3053,6 +3283,9 @@ window.AUDIT = {
    ],
    "issues": [
     "I-13"
+   ],
+   "images": [
+    "profile"
    ]
   },
   {
@@ -3069,7 +3302,11 @@ window.AUDIT = {
    "missingStep": "Documentar os componentes.",
    "absence": "Telas inconsistentes.",
    "screens": [],
-   "issues": []
+   "issues": [],
+   "images": [
+    "home",
+    "home-dark"
+   ]
   },
   {
    "id": "F-21",
@@ -3087,6 +3324,10 @@ window.AUDIT = {
    "screens": [],
    "issues": [
     "I-24"
+   ],
+   "images": [
+    "home",
+    "exercise"
    ]
   },
   {
@@ -3106,7 +3347,9 @@ window.AUDIT = {
    "issues": [
     "I-23",
     "I-31"
-   ]
+   ],
+   "images": [],
+   "noImage": "Sem interface: é configuração de build e atualização (eas.json, .eas/workflows/preview.yml)."
   }
  ],
  "roadmap": [
