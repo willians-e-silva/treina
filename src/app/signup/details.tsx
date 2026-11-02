@@ -10,6 +10,7 @@ import { SegmentedButtons } from '@/components/ui/segmented-buttons';
 import { Spacing } from '@/constants/theme';
 import { useSession } from '@/context/session';
 import { useSignup } from '@/context/signup';
+import { AuthError } from '@/lib/auth';
 import {
   AGE_OPTIONS,
   HEIGHT_OPTIONS,
@@ -69,8 +70,10 @@ export default function SignupDetailsScreen() {
         heightCm: height,
         weightKg: Math.round(weightValue * 10) / 10,
       });
-    } catch {
-      setError('Não foi possível criar a conta. Tente novamente.');
+    } catch (e) {
+      setError(
+        e instanceof AuthError ? e.message : 'Não foi possível criar a conta. Tente novamente.',
+      );
       setSubmitting(false);
     }
   }
