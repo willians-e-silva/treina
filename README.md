@@ -25,6 +25,46 @@ In the output, you'll find options to open the app in a
 
 You can start developing by editing the files inside the **src/app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
 
+## Supabase
+
+The database lives in [`supabase/`](supabase/): versioned migrations in `migrations/`, the
+trainer catalog in `seed.sql` and Row Level Security checks in `tests/rls.sql`.
+
+1. Copy `.env.example` to `.env.local` and fill in `EXPO_PUBLIC_SUPABASE_URL` and
+   `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (Project Settings → API Keys). Only the publishable
+   key goes in the app; the service role key bypasses RLS and must never be used here.
+2. Log in and link the project once:
+
+   ```bash
+   npx supabase@latest login
+   npx supabase@latest link --project-ref <project-ref>
+   ```
+
+3. Apply the migrations and the catalog:
+
+   ```bash
+   npx supabase@latest db push --remote --include-seed
+   ```
+
+4. Check the policies. The script creates two throwaway accounts inside a transaction that is
+   rolled back, and stops at the first `FAIL: …`:
+
+   ```bash
+   npx supabase@latest db query --remote --file supabase/tests/rls.sql
+   ```
+
+   It checks that each account reads and writes only its own rows, cannot write rows in another
+   account's name or attach rows to another account's workout, cannot send chat messages as the
+   trainer or change the catalog, and that signed out only the catalog is readable.
+
+5. Regenerate the app's types after changing the schema:
+
+   ```bash
+   npx supabase@latest gen types --remote > src/data/database.types.ts
+   ```
+
+To change the catalog, edit `src/lib/trainers.ts` and run `npx tsx scripts/generate-seed.ts`.
+
 ## Other setup steps
 
 - To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)

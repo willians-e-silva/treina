@@ -16,5 +16,10 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
+  ],
+  // Node scripts run with tsx; Node's types would clash with React Native's.
+  "exclude": [
+    "node_modules",
+    "scripts"
   ]
 }
