@@ -18,6 +18,9 @@ import { useNavigationTheme, useTopAppBarOptions } from '@/theme/navigation';
 
 SplashScreen.preventAutoHideAsync();
 
+// A render error shows what went wrong instead of closing the app.
+export { AppErrorBoundary as ErrorBoundary } from '@/components/app-error-boundary';
+
 export default function RootLayout() {
   return (
     // Required by react-native-gesture-handler (used by the tab swipe).
