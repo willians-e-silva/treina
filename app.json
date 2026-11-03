@@ -21,7 +21,7 @@
       "package": "com.willians9620.treina"
     },
     "web": {
-      "output": "static",
+      "output": "single",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
