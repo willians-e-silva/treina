@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HeaderBackButton } from '@/components/ui/header-back-button';
 import { ListRow } from '@/components/ui/list-row';
 import { SearchBar } from '@/components/ui/search-bar';
+import { SegmentedButtons } from '@/components/ui/segmented-buttons';
 import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
@@ -29,7 +30,19 @@ type RemoteState =
   | { status: 'done'; query: string; results: Exercise[] }
   | { status: 'error'; message: string };
 
+/** Exercises shown: both categories, or only one. */
+type Filter = 'all' | ExerciseCategory;
+
+const FILTERS: { value: Filter; label: string }[] = [
+  { value: 'all', label: 'Todos' },
+  { value: 'cardio', label: CATEGORY_LABELS.cardio },
+  { value: 'strength', label: CATEGORY_LABELS.strength },
+];
+
+const categoryOf = (filter: Filter) => (filter === 'all' ? undefined : filter);
+
 type CatalogState = {
+  filter: Filter;
   exercises: Exercise[];
   /** Whether the first page arrived. */
   loaded: boolean;
@@ -40,35 +53,55 @@ type CatalogState = {
   error?: string;
 };
 
-/** ExerciseDB catalog for one category, one page at a time. */
-function useCatalog(category: ExerciseCategory) {
-  const [catalog, setCatalog] = useState<CatalogState>({
-    exercises: [],
-    loaded: false,
-    hasMore: true,
-    loading: true,
-  });
+const firstPage = (filter: Filter): CatalogState => ({
+  filter,
+  exercises: [],
+  loaded: false,
+  hasMore: true,
+  loading: true,
+});
 
-  function load(cursor?: string) {
-    listExercises(category, cursor).then(
+/** ExerciseDB catalog for the filter, one page at a time. */
+function useCatalog(initialFilter: Filter) {
+  const [catalog, setCatalog] = useState(() => firstPage(initialFilter));
+
+  function load(filter: Filter, cursor?: string) {
+    listExercises(categoryOf(filter), cursor).then(
       ({ exercises, nextCursor }) =>
-        setCatalog((current) => ({
-          exercises: cursor ? [...current.exercises, ...exercises] : exercises,
-          loaded: true,
-          nextCursor,
-          hasMore: !!nextCursor,
-          loading: false,
-        })),
+        setCatalog((current) =>
+          // Pages of a filter that was changed meanwhile are dropped.
+          current.filter !== filter
+            ? current
+            : {
+                filter,
+                exercises: cursor ? [...current.exercises, ...exercises] : exercises,
+                loaded: true,
+                nextCursor,
+                hasMore: !!nextCursor,
+                loading: false,
+              },
+        ),
       (error: Error) =>
-        setCatalog((current) => ({ ...current, loading: false, error: error.message })),
+        setCatalog((current) =>
+          current.filter !== filter
+            ? current
+            : { ...current, loading: false, error: error.message },
+        ),
     );
   }
 
   useEffect(() => {
-    load();
-    // Loads once per modal; `category` comes from the route and never changes.
+    load(initialFilter);
+    // Loads the first page once; changing the filter loads through `setFilter`.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  /** Starts the catalog over for another filter. */
+  function setFilter(filter: Filter) {
+    if (filter === catalog.filter) return;
+    setCatalog(firstPage(filter));
+    load(filter);
+  }
 
   /**
    * Loads the next page. After an error only an explicit `retry` loads again,
@@ -77,10 +110,10 @@ function useCatalog(category: ExerciseCategory) {
   function loadMore({ retry = false } = {}) {
     if (catalog.loading || !catalog.hasMore || (catalog.error && !retry)) return;
     setCatalog((current) => ({ ...current, loading: true, error: undefined }));
-    load(catalog.nextCursor);
+    load(catalog.filter, catalog.nextCursor);
   }
 
-  return { catalog, loadMore };
+  return { catalog, loadMore, setFilter };
 }
 
 export default function SearchExerciseScreen() {
@@ -92,7 +125,6 @@ export default function SearchExerciseScreen() {
     /** Set when choosing an exercise for a workout instead of logging it. */
     workoutId?: string;
   }>();
-  const category = params.category === 'strength' ? 'strength' : 'cardio';
   const date = params.date ?? toDateKey(new Date());
   const { workoutId } = params;
   const [query, setQuery] = useState('');
@@ -100,7 +132,10 @@ export default function SearchExerciseScreen() {
   // Ignores responses of searches that were superseded by a newer one.
   const latestSearch = useRef(0);
 
-  const { catalog, loadMore } = useCatalog(category);
+  const { catalog, loadMore, setFilter } = useCatalog(
+    params.category === 'cardio' || params.category === 'strength' ? params.category : 'all',
+  );
+  const { filter } = catalog;
 
   const customName = query.trim();
   // Typing a new term goes back to the catalog until the search is submitted.
@@ -111,18 +146,24 @@ export default function SearchExerciseScreen() {
   const listReady = showSearch ? remote.status === 'done' : catalog.loaded;
 
   // Searches ExerciseDB on submit only: the API throttles bursts of requests.
-  async function searchRemote() {
+  async function searchRemote(searchFilter = filter) {
     if (!customName) return;
     const id = ++latestSearch.current;
     setRemote({ status: 'loading' });
     try {
-      const results = await searchExercises(customName, category);
+      const results = await searchExercises(customName, categoryOf(searchFilter));
       if (id === latestSearch.current) setRemote({ status: 'done', query: customName, results });
     } catch (error) {
       if (id === latestSearch.current) {
         setRemote({ status: 'error', message: (error as Error).message });
       }
     }
+  }
+
+  function changeFilter(next: Filter) {
+    setFilter(next);
+    // A search on screen is run again for the new filter.
+    if (showSearch) void searchRemote(next);
   }
 
   function openExercise(exercise: Exercise) {
@@ -133,7 +174,6 @@ export default function SearchExerciseScreen() {
     <>
       <Stack.Screen
         options={{
-          title: CATEGORY_LABELS[category],
           headerLeft: () => <HeaderBackButton />,
         }}
       />
@@ -143,6 +183,7 @@ export default function SearchExerciseScreen() {
         renderItem={({ item, index }) => (
           <ExerciseRow
             exercise={item}
+            showCategory={filter === 'all'}
             first={index === 0}
             last={index === data.length - 1}
             onPress={() => openExercise(item)}
@@ -160,11 +201,17 @@ export default function SearchExerciseScreen() {
             <SearchBar
               value={query}
               onChangeText={setQuery}
-              onSubmitEditing={searchRemote}
+              onSubmitEditing={() => searchRemote()}
               placeholder="Buscar exercício"
               autoFocus
               autoCorrect={false}
               accessibilityLabel="Buscar exercício"
+            />
+            <SegmentedButtons
+              options={FILTERS}
+              value={filter}
+              onChange={changeFilter}
+              borderWidth={3}
             />
 
             {customName.length > 0 && (
@@ -172,7 +219,7 @@ export default function SearchExerciseScreen() {
                 <TextAction
                   icon={Search}
                   label={`Buscar “${customName}” na ExerciseDB`}
-                  onPress={searchRemote}
+                  onPress={() => searchRemote()}
                 />
                 <TextAction
                   icon={Plus}
@@ -180,7 +227,13 @@ export default function SearchExerciseScreen() {
                   onPress={() =>
                     router.push({
                       pathname: '/log-exercise/[id]',
-                      params: { id: CUSTOM_EXERCISE_ID, name: customName, category, date, workoutId },
+                      params: {
+                        id: CUSTOM_EXERCISE_ID,
+                        name: customName,
+                        category: categoryOf(filter),
+                        date,
+                        workoutId,
+                      },
                     })
                   }
                 />
@@ -243,22 +296,25 @@ function TextAction({ icon, label, onPress }: TextActionProps) {
 
 type ExerciseRowProps = {
   exercise: Exercise;
+  /** Names the category, when the list mixes both. */
+  showCategory: boolean;
   first: boolean;
   last: boolean;
   onPress: () => void;
 };
 
-function ExerciseRow({ exercise, first, last, onPress }: ExerciseRowProps) {
+function ExerciseRow({ exercise, showCategory, first, last, onPress }: ExerciseRowProps) {
   const { colors } = useAppTheme();
+  const supporting = [
+    showCategory && CATEGORY_LABELS[exercise.category],
+    exercise.target,
+    exercise.target && exercise.equipment,
+  ].filter(Boolean);
 
   return (
     <ListRow
       title={exercise.name}
-      supporting={
-        exercise.target
-          ? [exercise.target, exercise.equipment].filter(Boolean).join(' · ')
-          : undefined
-      }
+      supporting={supporting.length > 0 ? supporting.join(' · ') : undefined}
       first={first}
       last={last}
       onPress={onPress}

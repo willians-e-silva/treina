@@ -24,13 +24,18 @@ export function Dialog({ visible, title, onDismiss, actions, children }: DialogP
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onDismiss}>
-      <Pressable
-        style={[styles.scrim, { backgroundColor: withAlpha(colors.scrim, SCRIM_OPACITY) }]}
-        onPress={onDismiss}
-        accessibilityRole="button"
-        accessibilityLabel="Fechar">
-        {/* Stops taps on the dialog from reaching the scrim. */}
+      <View style={[styles.scrim, { backgroundColor: withAlpha(colors.scrim, SCRIM_OPACITY) }]}>
+        {/*
+          Behind the dialog rather than around it: on the web a button role is
+          a <button>, and the dialog's own buttons cannot sit inside one.
+        */}
         <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={onDismiss}
+          accessibilityRole="button"
+          accessibilityLabel="Fechar"
+        />
+        <View
           style={[
             styles.dialog,
             {
@@ -38,15 +43,14 @@ export function Dialog({ visible, title, onDismiss, actions, children }: DialogP
               boxShadow: shadowFor(ComponentElevation.dialog, colors),
             },
           ]}
-          onPress={() => {}}
           accessibilityViewIsModal>
           <ThemedText type="headlineSmall" accessibilityRole="header">
             {title}
           </ThemedText>
           {children}
           {actions && <View style={styles.actions}>{actions}</View>}
-        </Pressable>
-      </Pressable>
+        </View>
+      </View>
     </Modal>
   );
 }

@@ -8,9 +8,12 @@ import { Dialog } from '@/components/ui/dialog';
 import { FormField } from '@/components/ui/form-field';
 import { useSession } from '@/context/session';
 import { useWeightLog } from '@/context/weight-log';
+import { toDateKey } from '@/lib/exercises';
 import {
   isValidWeight,
+  maskDate,
   MOCK_PROFILE,
+  parseDate,
   parseDecimal,
   WEIGHT_MAX_KG,
   WEIGHT_MIN_KG,
@@ -38,6 +41,8 @@ export function WeightDialog({ mode, onDismiss }: WeightDialogProps) {
   const currentKg = useSession().profile?.weightKg ?? MOCK_PROFILE.weightKg;
   const initial = mode === 'current' ? currentKg : goalKg;
   const [text, setText] = useState(initial === undefined ? '' : formatDecimal(initial));
+  // Required: starts empty so the user always says when they weighed themselves.
+  const [dateText, setDateText] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   function save() {
@@ -47,8 +52,21 @@ export function WeightDialog({ mode, onDismiss }: WeightDialogProps) {
       return;
     }
     const rounded = Math.round(kg * 10) / 10;
-    if (mode === 'current') logWeight(rounded);
-    else setGoal(rounded);
+    if (mode === 'goal') {
+      setGoal(rounded);
+      onDismiss();
+      return;
+    }
+    const date = parseDate(dateText);
+    if (!date) {
+      setError('Informe a data da medição no formato DD/MM/AAAA.');
+      return;
+    }
+    if (date > toDateKey(new Date())) {
+      setError('A data da medição não pode ser no futuro.');
+      return;
+    }
+    logWeight(rounded, date);
     onDismiss();
   }
 
@@ -78,7 +96,7 @@ export function WeightDialog({ mode, onDismiss }: WeightDialogProps) {
       }>
       <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
         {mode === 'current'
-          ? 'O peso fica registrado com a data de hoje e passa a ser o seu peso atual.'
+          ? 'O peso fica registrado na data da medição. A medição mais recente é o seu peso atual.'
           : `Seu peso atual é ${formatDecimal(currentKg)} kg.`}
       </ThemedText>
       <FormField
@@ -95,6 +113,21 @@ export function WeightDialog({ mode, onDismiss }: WeightDialogProps) {
         autoFocus
         selectTextOnFocus
       />
+      {mode === 'current' && (
+        <FormField
+          label="Data da medição"
+          value={dateText}
+          onChangeText={(value) => {
+            setDateText(maskDate(value));
+            setError(null);
+          }}
+          placeholder="DD/MM/AAAA"
+          keyboardType="number-pad"
+          maxLength={10}
+          returnKeyType="done"
+          onSubmitEditing={save}
+        />
+      )}
       {error && (
         <ThemedText type="bodyMedium" themeColor="error" accessibilityLiveRegion="polite">
           {error}

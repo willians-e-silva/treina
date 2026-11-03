@@ -54,13 +54,13 @@ export function ageOn(birthDate: string, today: string) {
 }
 
 /** Typed digits as `DD/MM/AAAA`, adding the slashes: `"1004199"` → `"10/04/199"`. */
-export function maskBirthDate(text: string) {
+export function maskDate(text: string) {
   const digits = text.replace(/\D/g, '').slice(0, 8);
   return [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4)].filter(Boolean).join('/');
 }
 
-/** `"10/04/1995"` → `"1995-04-10"`; `null` when it is not a real date. */
-export function parseBirthDate(text: string) {
+/** `"10/04/1995"` → `"1995-04-10"` (`YYYY-MM-DD`); `null` when it is not a real date. */
+export function parseDate(text: string) {
   const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(text.trim());
   if (!match) return null;
   const [, day, month, year] = match.map(Number);

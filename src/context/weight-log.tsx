@@ -4,7 +4,6 @@ import { useSession } from './session';
 
 import type { Repositories, WeightLogData } from '@/data/types';
 import { useUserStore, type StoreStatus } from '@/data/use-user-store';
-import { toDateKey } from '@/lib/exercises';
 import { upsertWeighIn, type WeighIn } from '@/lib/weight';
 
 export type { WeighIn } from '@/lib/weight';
@@ -19,8 +18,11 @@ type WeightLogContextValue = {
   entries: WeighIn[];
   /** Target weight; `undefined` until the user sets one. */
   goalKg: number | undefined;
-  /** Records today's weight (replacing today's earlier one) as the profile's current weight. */
-  logWeight: (kg: number) => void;
+  /**
+   * Records the weight measured on `date` (`YYYY-MM-DD`), replacing that day's
+   * earlier one. The latest weigh-in is the profile's current weight.
+   */
+  logWeight: (kg: number, date: string) => void;
   /** `undefined` removes the goal. */
   setGoal: (kg: number | undefined) => void;
 };
@@ -43,11 +45,13 @@ export function WeightLogProvider({ children }: PropsWithChildren) {
   const { session, setWeight } = useSession();
   const store = useUserStore(session, EMPTY, load);
 
-  function logWeight(kg: number) {
-    const weighIn = { date: toDateKey(new Date()), kg };
+  function logWeight(kg: number, date: string) {
+    const weighIn = { date, kg };
+    const entries = upsertWeighIn(store.data.entries, weighIn);
     store.update((data) => ({ ...data, entries: upsertWeighIn(data.entries, weighIn) }));
     store.write((repositories) => repositories.weight.saveWeighIn(weighIn));
-    setWeight(kg);
+    // An older measurement goes into the history without changing the current weight.
+    setWeight(entries[entries.length - 1].kg);
   }
 
   function setGoal(kg: number | undefined) {

@@ -36,6 +36,7 @@ export function useExerciseDay(date: string) {
   const strength = day.filter((entry) => entry.category === 'strength');
 
   return {
+    entries: day,
     cardio,
     strength,
     calories: cardio.reduce((sum, entry) => sum + entry.calories, 0),

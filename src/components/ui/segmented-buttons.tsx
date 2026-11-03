@@ -10,6 +10,8 @@ type SegmentedButtonsProps<T extends string> = {
   value: T | null;
   onChange: (value: T) => void;
   disabled?: boolean;
+  /** Width of the outline and of the dividers between segments. */
+  borderWidth?: number;
   style?: StyleProp<ViewStyle>;
 };
 
@@ -22,13 +24,14 @@ export function SegmentedButtons<T extends string>({
   value,
   onChange,
   disabled,
+  borderWidth = 1,
   style,
 }: SegmentedButtonsProps<T>) {
   const { colors } = useAppTheme();
 
   return (
     <View
-      style={[styles.group, { borderColor: colors.outline }, style]}
+      style={[styles.group, { borderColor: colors.outline, borderWidth }, style]}
       accessibilityRole="radiogroup">
       {options.map((option, index) => {
         const selected = option.value === value;
@@ -41,7 +44,7 @@ export function SegmentedButtons<T extends string>({
             accessibilityState={{ checked: selected }}
             style={[
               styles.segment,
-              index > 0 && { borderLeftWidth: 1, borderLeftColor: colors.outline },
+              index > 0 && { borderLeftWidth: borderWidth, borderLeftColor: colors.outline },
               selected && { backgroundColor: colors.secondaryContainer },
             ]}>
             {({ pressed }) => (
@@ -68,7 +71,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     height: MinTouchTarget,
     borderRadius: Shape.full,
-    borderWidth: 1,
     overflow: 'hidden',
   },
   segment: {

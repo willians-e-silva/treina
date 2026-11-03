@@ -18,8 +18,8 @@ import {
   ageOn,
   HEIGHT_OPTIONS,
   isValidWeight,
-  maskBirthDate,
-  parseBirthDate,
+  maskDate,
+  parseDate,
   parseDecimal,
   SEX_LABELS,
   WEIGHT_MAX_KG,
@@ -47,7 +47,7 @@ export default function SignupDetailsScreen() {
   async function submit() {
     if (!account) return;
     const weightValue = parseDecimal(weight);
-    const birthDateKey = parseBirthDate(birthDate);
+    const birthDateKey = parseDate(birthDate);
     if (!birthDateKey) {
       setError('Informe sua data de nascimento no formato DD/MM/AAAA.');
       return;
@@ -107,7 +107,7 @@ export default function SignupDetailsScreen() {
       <FormField
         label="Data de nascimento"
         value={birthDate}
-        onChangeText={(value) => setBirthDate(maskBirthDate(value))}
+        onChangeText={(value) => setBirthDate(maskDate(value))}
         placeholder="DD/MM/AAAA"
         keyboardType="number-pad"
         autoComplete="birthdate-full"

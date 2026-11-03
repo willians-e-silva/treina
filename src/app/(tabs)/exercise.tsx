@@ -1,52 +1,44 @@
-import Dumbbell from 'lucide-react-native/icons/dumbbell';
-import HeartPulse from 'lucide-react-native/icons/heart-pulse';
+import { router } from 'expo-router';
+import Plus from 'lucide-react-native/icons/plus';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { formatInt } from '@/components/dashboard/format';
 import { DaySelector } from '@/components/exercise/day-selector';
-import { ExerciseSection } from '@/components/exercise/exercise-section';
+import { ExerciseList } from '@/components/exercise/exercise-list';
 import { WorkoutCard } from '@/components/exercise/workout-card';
 import { TabScreen } from '@/components/tab-screen';
 import { ThemedText } from '@/components/themed-text';
+import { Fab } from '@/components/ui/fab';
 import { Surface } from '@/components/ui/surface';
 import { Spacing } from '@/constants/theme';
 import { useExerciseDay } from '@/context/exercise-log';
 import { toDateKey } from '@/lib/exercises';
-import { useAppTheme } from '@/theme';
 
 export default function ExerciseScreen() {
   const [date, setDate] = useState(() => toDateKey(new Date()));
   const day = useExerciseDay(date);
-  const { custom } = useAppTheme();
 
   return (
-    <TabScreen>
+    <TabScreen
+      fab={
+        <Fab
+          icon={Plus}
+          accessibilityLabel="Adicionar exercício"
+          onPress={() => router.push({ pathname: '/log-exercise', params: { date } })}
+        />
+      }>
       <DaySelector date={date} onChange={setDate} />
 
       <Surface style={styles.totals}>
         <Total label="Calorias queimadas" value={`${formatInt(day.calories)} kcal`} />
         <Total label="Minutos" value={formatInt(day.minutes)} />
-        <Total label="Exercícios" value={formatInt(day.cardio.length + day.strength.length)} />
+        <Total label="Exercícios" value={formatInt(day.entries.length)} />
       </Surface>
 
       <WorkoutCard date={date} />
 
-      <ExerciseSection
-        category="cardio"
-        icon={HeartPulse}
-        color={custom.exercise.color}
-        date={date}
-        entries={day.cardio}
-        summary={`${formatInt(day.calories)} kcal`}
-      />
-      <ExerciseSection
-        category="strength"
-        icon={Dumbbell}
-        color={custom.protein.color}
-        date={date}
-        entries={day.strength}
-      />
+      <ExerciseList entries={day.entries} />
     </TabScreen>
   );
 }
