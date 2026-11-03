@@ -1,0 +1,44 @@
+name: EAS Update
+
+# A cada push na main, publica uma atualização OTA no canal "preview".
+# O app instalado no celular (build "preview") baixa a versão nova ao ser reaberto.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: eas-update
+  cancel-in-progress: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verificar EXPO_TOKEN
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "::error::Crie o secret EXPO_TOKEN em Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - run: npm ci
+
+      - name: Publicar atualização
+        env:
+          COMMIT_MSG: ${{ github.event.head_commit.message || 'manual' }}
+        run: eas update --channel preview --environment preview --message "$COMMIT_MSG" --non-interactive
