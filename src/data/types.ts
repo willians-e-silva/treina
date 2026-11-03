@@ -94,7 +94,18 @@ export interface CoachingRepository {
 
 export interface ChatRepository {
   load(): Promise<ChatThreads>;
+  /** Messages of one conversation, oldest first. */
+  loadThread(trainerId: string): Promise<ChatMessage[]>;
   send(trainerId: string, message: ChatMessage): Promise<void>;
+  /**
+   * Calls `onMessage` with each message added to the conversation from now on,
+   * and `onConnected` every time the connection (re)starts, when messages may
+   * have been missed. Returns the function that stops watching.
+   */
+  watch(
+    trainerId: string,
+    handlers: { onMessage: (message: ChatMessage) => void; onConnected: () => void },
+  ): () => void;
 }
 
 /** The trainers and their packages; the same for every account, read-only. */

@@ -1,9 +1,13 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
+import CircleAlert from 'lucide-react-native/icons/circle-alert';
+import Clock from 'lucide-react-native/icons/clock';
+import Info from 'lucide-react-native/icons/info';
 import MessageCircle from 'lucide-react-native/icons/message-circle';
 import SendHorizontal from 'lucide-react-native/icons/send-horizontal';
-import { useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import {
   FlatList,
+  Pressable,
   ScrollView,
   StyleSheet,
   TextInput,
@@ -36,7 +40,7 @@ export default function ChatScreen() {
   const insets = useSafeAreaInsets();
   const { trainerId } = useLocalSearchParams<{ trainerId: string }>();
   const trainer = useCatalog().getTrainer(trainerId);
-  const { messagesWith, sendMessage } = useChat();
+  const { messagesWith, sendMessage, resendMessage, watchConversation } = useChat();
   const [draft, setDraft] = useState('');
   // Height of the whole text (the padding is on the pill), at least one line.
   const [inputHeight, setInputHeight] = useState(INPUT_LINE);
@@ -53,6 +57,14 @@ export default function ChatScreen() {
   const keyboardSpacer = useAnimatedStyle(() => ({
     height: Math.max(keyboard.height.get(), insets.bottom),
   }));
+
+  // New messages arrive while the conversation is open.
+  const watch = useEffectEvent((id: string) => watchConversation(id));
+  const watchedId = trainer?.id;
+  useEffect(() => {
+    if (!watchedId) return;
+    return watch(watchedId);
+  }, [watchedId]);
 
   if (!trainer) {
     return (
@@ -94,11 +106,24 @@ export default function ChatScreen() {
         }}
       />
 
+      {/* TEMPORARY: until trainers have an app of their own. */}
+      <View
+        style={[styles.notice, { backgroundColor: colors.surfaceContainerHigh }]}
+        accessibilityRole="alert">
+        <Info color={colors.onSurfaceVariant} size={18} aria-hidden />
+        <ThemedText type="bodySmall" themeColor="onSurfaceVariant" style={styles.flex}>
+          {trainer.name.split(' ')[0]} ainda não responde por aqui: as respostas pelo app chegam em
+          breve. Suas mensagens ficam salvas.
+        </ThemedText>
+      </View>
+
       <FlatList
         inverted
         data={data}
         keyExtractor={(message) => message.id}
-        renderItem={({ item }) => <Bubble message={item} />}
+        renderItem={({ item }) => (
+          <Bubble message={item} onResend={() => resendMessage(trainer.id, item.id)} />
+        )}
         style={styles.flex}
         contentContainerStyle={[styles.list, data.length === 0 && styles.listEmpty]}
         keyboardDismissMode="on-drag"
@@ -172,15 +197,25 @@ export default function ChatScreen() {
   );
 }
 
-function Bubble({ message }: { message: ChatMessage }) {
+function Bubble({ message, onResend }: { message: ChatMessage; onResend: () => void }) {
   const { colors } = useAppTheme();
   const mine = message.from === 'me';
+  const failed = message.status === 'failed';
+  const state =
+    message.status === 'sending'
+      ? 'Enviando…'
+      : failed
+        ? 'Não enviada. Toque para reenviar.'
+        : undefined;
 
   return (
-    <View
+    <Pressable
       style={[styles.bubbleRow, mine ? styles.mine : styles.theirs]}
+      onPress={failed ? onResend : undefined}
+      disabled={!failed}
       accessible
-      accessibilityLabel={`${mine ? 'Você' : 'Treinador'}, ${time.format(message.sentAt)}: ${message.text}`}>
+      accessibilityRole={failed ? 'button' : undefined}
+      accessibilityLabel={`${mine ? 'Você' : 'Treinador'}, ${time.format(message.sentAt)}: ${message.text}${state ? `. ${state}` : ''}`}>
       <View
         style={[
           styles.bubble,
@@ -193,18 +228,26 @@ function Bubble({ message }: { message: ChatMessage }) {
                 backgroundColor: colors.surfaceContainerHigh,
                 borderBottomLeftRadius: Shape.extraSmall,
               },
+          message.status === 'sending' && styles.sending,
+          failed && { borderWidth: 1, borderColor: colors.error },
         ]}>
         <ThemedText themeColor={mine ? 'onSecondaryContainer' : 'onSurface'}>
           {message.text}
         </ThemedText>
-        <ThemedText
-          type="labelSmall"
-          themeColor={mine ? 'onSecondaryContainer' : 'onSurfaceVariant'}
-          style={styles.time}>
-          {time.format(message.sentAt)}
-        </ThemedText>
+        <View style={styles.meta}>
+          {message.status === 'sending' && (
+            <Clock color={colors.onSecondaryContainer} size={12} aria-hidden />
+          )}
+          {failed && <CircleAlert color={colors.error} size={12} aria-hidden />}
+          <ThemedText
+            type="labelSmall"
+            themeColor={failed ? 'error' : mine ? 'onSecondaryContainer' : 'onSurfaceVariant'}
+            style={styles.time}>
+            {failed ? 'Não enviada · Toque para reenviar' : time.format(message.sentAt)}
+          </ThemedText>
+        </View>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -266,10 +309,25 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.two,
     borderRadius: Shape.large,
   },
-  time: {
+  meta: {
+    flexDirection: 'row',
+    alignItems: 'center',
     alignSelf: 'flex-end',
+    gap: Spacing.one,
     marginTop: 2,
+  },
+  time: {
     opacity: 0.8,
+  },
+  sending: {
+    opacity: 0.7,
+  },
+  notice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
   },
   composer: {
     borderTopWidth: StyleSheet.hairlineWidth,

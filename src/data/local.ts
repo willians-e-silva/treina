@@ -164,8 +164,16 @@ export function localRepositories(userId: string): Repositories {
       async load() {
         return data.chat;
       },
+      async loadThread(trainerId) {
+        return data.chat[trainerId] ?? [];
+      },
       async send(trainerId, message) {
-        data.chat = { ...data.chat, [trainerId]: [...(data.chat[trainerId] ?? []), message] };
+        const sent = { ...message, status: undefined };
+        data.chat = { ...data.chat, [trainerId]: [...(data.chat[trainerId] ?? []), sent] };
+      },
+      // Nothing arrives from elsewhere in memory.
+      watch() {
+        return () => {};
       },
     },
   };
