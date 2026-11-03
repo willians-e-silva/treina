@@ -9,6 +9,7 @@ import Animated, {
   useAnimatedReaction,
   useAnimatedRef,
   useAnimatedStyle,
+  useDerivedValue,
   useFrameCallback,
   useScrollOffset,
   useSharedValue,
@@ -411,14 +412,17 @@ export function DashboardTrashTarget({
     opacity: withTiming(visible ? 1 : 0, { duration: 150 }),
     transform: [{ translateY: withTiming(visible ? 0 : TRASH_SIZE, { duration: 200 }) }],
   }));
+  // Animated as its own value: `withTiming` returns an animation, not a
+  // number, so it cannot be used in the arithmetic below directly.
+  const progress = useDerivedValue(() => withTiming(over.get() ? 1 : 0, { duration: 150 }));
   const circleStyle = useAnimatedStyle(() => {
-    const progress = withTiming(over.get() ? 1 : 0, { duration: 150 });
+    const value = progress.get();
     // The real size grows (not only drawn bigger): the hit test measures it.
-    const size = TRASH_SIZE * (1 + (TRASH_GROW - 1) * progress);
+    const size = TRASH_SIZE * (1 + (TRASH_GROW - 1) * value);
     return {
       width: size,
       height: size,
-      backgroundColor: interpolateColor(progress, [0, 1], [idle, danger]),
+      backgroundColor: interpolateColor(value, [0, 1], [idle, danger]),
     };
   });
   const iconStyle = useAnimatedStyle(() => ({
