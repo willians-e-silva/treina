@@ -1,5 +1,3 @@
-import { MOCK_DASHBOARD } from './dashboard-data';
-
 /** `unspecified`: the user preferred not to say. */
 export type Sex = 'female' | 'male' | 'unspecified';
 
@@ -9,36 +7,69 @@ export const SEX_LABELS: Record<Sex, string> = {
   unspecified: 'Não informar',
 };
 
-/** Pickable ages and heights (cm) in the sign-up. */
-export const AGE_OPTIONS = range(13, 120);
+/** Pickable heights (cm) in the sign-up. */
 export const HEIGHT_OPTIONS = range(100, 250);
+
+/** Accepted ages in the sign-up. */
+export const AGE_MIN = 13;
+export const AGE_MAX = 120;
 
 function range(from: number, to: number) {
   return Array.from({ length: to - from + 1 }, (_, index) => from + index);
 }
 
+/**
+ * The signed-in user. Accounts created with Google start with only the name
+ * and email, so the other fields can be missing (`null`).
+ */
 export type Profile = {
   name: string;
   email: string;
-  age: number;
-  sex: Sex;
-  heightCm: number;
-  /** Current weight. */
-  weightKg: number;
+  /** `YYYY-MM-DD`. */
+  birthDate: string | null;
+  sex: Sex | null;
+  heightCm: number | null;
+  /** Latest weigh-in. */
+  weightKg: number | null;
 };
 
 /**
- * TEMPORARY: profile shown for accounts that signed in without signing up in
- * this session, until there is a backend. The weight follows the latest mock
- * weigh-in, so it matches the home dashboard.
+ * Profile of the demo mode, and the body data used for estimates (e.g.
+ * calories) while the user's own is missing.
  */
-export const MOCK_PROFILE: Omit<Profile, 'email'> = {
+export const MOCK_PROFILE: Omit<Profile, 'email'> & { weightKg: number } = {
   name: 'Usuário Treina',
-  age: 30,
+  birthDate: '1996-01-01',
   sex: 'male',
   heightCm: 178,
-  weightKg: MOCK_DASHBOARD.weight[MOCK_DASHBOARD.weight.length - 1].kg,
+  weightKg: 82,
 };
+
+/** Full years on `today` of someone born on `birthDate` (both `YYYY-MM-DD`). */
+export function ageOn(birthDate: string, today: string) {
+  const [year, month, day] = birthDate.split('-').map(Number);
+  const [todayYear, todayMonth, todayDay] = today.split('-').map(Number);
+  const hadBirthday = todayMonth > month || (todayMonth === month && todayDay >= day);
+  return todayYear - year - (hadBirthday ? 0 : 1);
+}
+
+/** Typed digits as `DD/MM/AAAA`, adding the slashes: `"1004199"` → `"10/04/199"`. */
+export function maskDate(text: string) {
+  const digits = text.replace(/\D/g, '').slice(0, 8);
+  return [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4)].filter(Boolean).join('/');
+}
+
+/** `"10/04/1995"` → `"1995-04-10"` (`YYYY-MM-DD`); `null` when it is not a real date. */
+export function parseDate(text: string) {
+  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(text.trim());
+  if (!match) return null;
+  const [, day, month, year] = match.map(Number);
+  const date = new Date(year, month - 1, day);
+  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+    return null;
+  }
+  return `${match[3]}-${match[2]}-${match[1]}`;
+}
 
 const meters = new Intl.NumberFormat('pt-BR', {
   minimumFractionDigits: 2,

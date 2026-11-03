@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatDecimal } from '@/components/dashboard/format';
 import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
+import { SegmentedButtons } from '@/components/ui/segmented-buttons';
 import { Surface } from '@/components/ui/surface';
 import { ThemedTextInput } from '@/components/ui/text-input';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
@@ -22,6 +23,11 @@ import {
   type ExerciseCategory,
 } from '@/lib/exercises';
 import { ComponentShape, MediaColors } from '@/theme';
+
+const CATEGORY_OPTIONS = (['cardio', 'strength'] as const).map((value) => ({
+  value,
+  label: CATEGORY_LABELS[value],
+}));
 
 /** Parses user input like "12", "12,5" or "12.5"; `NaN` when invalid. */
 function parseNumber(text: string) {
@@ -45,7 +51,11 @@ export default function ExerciseDetailsScreen() {
   const { workoutId } = params;
   const exercise = getExercise(params.id);
   const name = exercise?.name ?? params.name ?? 'Exercício';
-  const category = exercise?.category ?? (params.category === 'strength' ? 'strength' : 'cardio');
+  // A manual exercise has no category of its own: the user picks it.
+  const [customCategory, setCustomCategory] = useState<ExerciseCategory>(
+    params.category === 'strength' ? 'strength' : 'cardio',
+  );
+  const category = exercise?.category ?? customCategory;
   const date = params.date ?? toDateKey(new Date());
   const details = [
     exercise?.target,
@@ -115,9 +125,11 @@ export default function ExerciseDetailsScreen() {
       )}
 
       <View>
-        <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
-          {CATEGORY_LABELS[category]}
-        </ThemedText>
+        {exercise && (
+          <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
+            {CATEGORY_LABELS[category]}
+          </ThemedText>
+        )}
         <ThemedText type="headlineSmall" emphasized accessibilityRole="header">
           {name}
         </ThemedText>
@@ -127,6 +139,14 @@ export default function ExerciseDetailsScreen() {
           </ThemedText>
         )}
       </View>
+
+      {!exercise && (
+        <SegmentedButtons
+          options={CATEGORY_OPTIONS}
+          value={customCategory}
+          onChange={setCustomCategory}
+        />
+      )}
 
       <Surface style={styles.form}>
         {category === 'cardio' ? (

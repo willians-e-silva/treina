@@ -20,8 +20,8 @@ import { SegmentedButtons } from '@/components/ui/segmented-buttons';
 import { StateLayer } from '@/components/ui/state-layer';
 import { Surface } from '@/components/ui/surface';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { useCatalog } from '@/context/catalog';
 import { useWorkoutPlan } from '@/context/workout-plan';
-import { getTrainer } from '@/lib/trainers';
 import {
   PLAN_MODE_LABELS,
   WEEKDAY_LABELS,
@@ -40,6 +40,7 @@ const MODES: { value: PlanMode; label: string }[] = [
 export default function WorkoutPlanScreen() {
   const insets = useSafeAreaInsets();
   const { workouts, plan, addWorkout, setMode } = useWorkoutPlan();
+  const { getTrainer } = useCatalog();
 
   function createWorkout() {
     // "Treino A", "Treino B", …: the first letter not taken yet.

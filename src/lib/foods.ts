@@ -87,7 +87,7 @@ export function scaleNutrients(per100g: Nutrients, grams: number): Nutrients {
   };
 }
 
-export const EMPTY_NUTRIENTS: Nutrients = { kcal: 0, carbs: 0, protein: 0, fat: 0 };
+const EMPTY_NUTRIENTS: Nutrients = { kcal: 0, carbs: 0, protein: 0, fat: 0 };
 
 export function sumNutrients(list: Nutrients[]): Nutrients {
   return list.reduce(

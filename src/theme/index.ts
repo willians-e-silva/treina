@@ -100,7 +100,7 @@ export const MinTouchTarget = 48;
  * (`surface` → `surfaceContainerHighest`); a shadow is added only where the
  * element floats over content (FAB, menus, dialogs).
  */
-export const Elevation = {
+const Elevation = {
   level0: { dp: 0, surface: 'surface', shadow: false },
   level1: { dp: 1, surface: 'surfaceContainerLow', shadow: false },
   level2: { dp: 3, surface: 'surfaceContainer', shadow: false },
@@ -142,7 +142,7 @@ export type AppTheme = {
   elevation: typeof Elevation;
 };
 
-export const LightTheme: AppTheme = {
+const LightTheme: AppTheme = {
   dark: false,
   colors: LightColors,
   custom: LightCustomColors,
@@ -152,7 +152,7 @@ export const LightTheme: AppTheme = {
   elevation: Elevation,
 };
 
-export const DarkTheme: AppTheme = {
+const DarkTheme: AppTheme = {
   ...LightTheme,
   dark: true,
   colors: DarkColors,

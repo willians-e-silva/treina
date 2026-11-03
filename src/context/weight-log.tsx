@@ -1,23 +1,28 @@
-import { createContext, use, useState, type PropsWithChildren } from 'react';
+import { createContext, use, type PropsWithChildren } from 'react';
 
 import { useSession } from './session';
 
-import { MOCK_DASHBOARD } from '@/lib/dashboard-data';
-import { toDateKey } from '@/lib/exercises';
+import type { Repositories, WeightLogData } from '@/data/types';
+import { useUserStore, type StoreStatus } from '@/data/use-user-store';
+import { upsertWeighIn, type WeighIn } from '@/lib/weight';
 
-export type WeighIn = {
-  /** `YYYY-MM-DD` (local time). */
-  date: string;
-  kg: number;
-};
+export type { WeighIn } from '@/lib/weight';
 
 type WeightLogContextValue = {
+  status: StoreStatus;
+  retry: () => void;
+  /** A change could not be saved; `retrySave` sends it again. */
+  saveFailed: boolean;
+  retrySave: () => void;
   /** Weigh-ins, oldest first; at most one per day. */
   entries: WeighIn[];
   /** Target weight; `undefined` until the user sets one. */
   goalKg: number | undefined;
-  /** Records today's weight (replacing today's earlier one) as the profile's current weight. */
-  logWeight: (kg: number) => void;
+  /**
+   * Records the weight measured on `date` (`YYYY-MM-DD`), replacing that day's
+   * earlier one. The latest weigh-in is the profile's current weight.
+   */
+  logWeight: (kg: number, date: string) => void;
   /** `undefined` removes the goal. */
   setGoal: (kg: number | undefined) => void;
 };
@@ -32,27 +37,40 @@ export function useWeightLog() {
   return value;
 }
 
-/**
- * TEMPORARY: in-memory weigh-ins and goal until there is a backend; the
- * history starts from the mock dashboard data. Must sit inside `SessionProvider`.
- */
-export function WeightLogProvider({ children }: PropsWithChildren) {
-  const { setWeight } = useSession();
-  const [entries, setEntries] = useState<WeighIn[]>(MOCK_DASHBOARD.weight);
-  const [goalKg, setGoalKg] = useState<number | undefined>();
+const EMPTY: WeightLogData = { entries: [], goalKg: undefined };
+const load = (repositories: Repositories) => repositories.weight.load();
 
-  function logWeight(kg: number) {
-    const date = toDateKey(new Date());
-    setEntries((current) =>
-      [...current.filter((entry) => entry.date !== date), { date, kg }].sort((a, b) =>
-        a.date.localeCompare(b.date),
-      ),
-    );
-    setWeight(kg);
+/** Weigh-ins and goal of the signed-in account. Must sit inside `SessionProvider`. */
+export function WeightLogProvider({ children }: PropsWithChildren) {
+  const { session, setWeight } = useSession();
+  const store = useUserStore(session, EMPTY, load);
+
+  function logWeight(kg: number, date: string) {
+    const weighIn = { date, kg };
+    const entries = upsertWeighIn(store.data.entries, weighIn);
+    store.update((data) => ({ ...data, entries: upsertWeighIn(data.entries, weighIn) }));
+    store.write((repositories) => repositories.weight.saveWeighIn(weighIn));
+    // An older measurement goes into the history without changing the current weight.
+    setWeight(entries[entries.length - 1].kg);
+  }
+
+  function setGoal(kg: number | undefined) {
+    store.update((data) => ({ ...data, goalKg: kg }));
+    store.write((repositories) => repositories.weight.setGoal(kg));
   }
 
   return (
-    <WeightLogContext value={{ entries, goalKg, logWeight, setGoal: setGoalKg }}>
+    <WeightLogContext
+      value={{
+        status: store.status,
+        retry: store.retry,
+        saveFailed: store.saveFailed,
+        retrySave: store.retrySave,
+        entries: store.data.entries,
+        goalKg: store.data.goalKg,
+        logWeight,
+        setGoal,
+      }}>
       {children}
     </WeightLogContext>
   );

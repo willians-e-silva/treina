@@ -12,11 +12,11 @@ import { TrainerAvatar } from '@/components/trainers/trainer-avatar';
 import { StateLayer } from '@/components/ui/state-layer';
 import { Surface } from '@/components/ui/surface';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { useCatalog } from '@/context/catalog';
 import { useCoaching } from '@/context/coaching';
 import {
   formatCompact,
   formatRating,
-  getTrainer,
   instagramUrl,
   LEVEL_LABELS,
   type TrainingPackage,
@@ -27,7 +27,7 @@ import { ComponentShape, useAppTheme } from '@/theme';
 export default function TrainerScreen() {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const trainer = getTrainer(id);
+  const trainer = useCatalog().getTrainer(id);
 
   if (!trainer) {
     return (

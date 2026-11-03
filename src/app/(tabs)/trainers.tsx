@@ -8,13 +8,13 @@ import { ThemedText } from '@/components/themed-text';
 import { TrainerCard } from '@/components/trainers/trainer-card';
 import { SearchBar } from '@/components/ui/search-bar';
 import { Spacing } from '@/constants/theme';
-import { searchTrainers } from '@/lib/trainers';
+import { useCatalog } from '@/context/catalog';
 import { useAppTheme } from '@/theme';
 
 export default function TrainersScreen() {
   const { colors } = useAppTheme();
   const [query, setQuery] = useState('');
-  const trainers = searchTrainers(query);
+  const trainers = useCatalog().searchTrainers(query);
 
   return (
     <TabScreen>

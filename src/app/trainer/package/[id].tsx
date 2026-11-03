@@ -15,11 +15,11 @@ import { Dialog } from '@/components/ui/dialog';
 import { StateLayer } from '@/components/ui/state-layer';
 import { Surface } from '@/components/ui/surface';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { useCatalog } from '@/context/catalog';
 import { useCoaching } from '@/context/coaching';
 import { fromDateKey } from '@/lib/exercises';
 import {
   formatRating,
-  getPackage,
   LEVEL_LABELS,
   type PackageComment,
   type PackageWorkout,
@@ -39,6 +39,7 @@ export default function PackageScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { joinedPackageId, isJoined, joinPackage, leavePackage } = useCoaching();
   const [confirmReplace, setConfirmReplace] = useState(false);
+  const { getPackage } = useCatalog();
   const found = getPackage(id);
   const current = joinedPackageId ? getPackage(joinedPackageId) : undefined;
 

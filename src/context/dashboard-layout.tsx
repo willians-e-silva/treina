@@ -1,5 +1,9 @@
-import { createContext, use, useState, type PropsWithChildren } from 'react';
+import { createContext, use, type PropsWithChildren } from 'react';
 
+import { useSession } from './session';
+
+import type { Repositories } from '@/data/types';
+import { useUserStore, type StoreStatus } from '@/data/use-user-store';
 import {
   DEFAULT_DASHBOARD,
   moveWidget as applyMove,
@@ -9,6 +13,11 @@ import {
 } from '@/lib/dashboard-widgets';
 
 type DashboardLayoutContextValue = {
+  status: StoreStatus;
+  retry: () => void;
+  /** A change could not be saved; `retrySave` sends it again. */
+  saveFailed: boolean;
+  retrySave: () => void;
   /** Rows of items shown on the home dashboard, top to bottom. */
   rows: DashboardRows;
   /** Items currently shown, in reading order. */
@@ -29,30 +38,46 @@ export function useDashboardLayout() {
   return value;
 }
 
-/**
- * TEMPORARY: in-memory layout until there is a backend. The dashboard goes
- * back to the default layout when the app restarts.
- */
+const load = (repositories: Repositories) => repositories.dashboardLayout.load();
+
+/** Home dashboard layout of the signed-in account. Must sit inside `SessionProvider`. */
 export function DashboardLayoutProvider({ children }: PropsWithChildren) {
-  const [rows, setRows] = useState<DashboardRows>(DEFAULT_DASHBOARD);
+  const { session } = useSession();
+  const store = useUserStore(session, DEFAULT_DASHBOARD, load);
+
+  function change(update: (rows: DashboardRows) => DashboardRows) {
+    const rows = store.update(update);
+    store.write((repositories) => repositories.dashboardLayout.save(rows));
+  }
 
   function addWidget(id: DashboardWidget) {
-    setRows((current) => (current.flat().includes(id) ? current : [...current, [id]]));
+    change((current) => (current.flat().includes(id) ? current : [...current, [id]]));
   }
 
   function removeWidget(id: DashboardWidget) {
-    setRows((current) =>
+    change((current) =>
       current.map((row) => row.filter((widget) => widget !== id)).filter((row) => row.length > 0),
     );
   }
 
   function moveWidget(id: DashboardWidget, target: DropTarget) {
-    setRows((current) => applyMove(current, id, target));
+    change((current) => applyMove(current, id, target));
   }
 
+  const rows = store.data;
   return (
     <DashboardLayoutContext
-      value={{ rows, widgets: rows.flat(), addWidget, removeWidget, moveWidget }}>
+      value={{
+        status: store.status,
+        retry: store.retry,
+        saveFailed: store.saveFailed,
+        retrySave: store.retrySave,
+        rows,
+        widgets: rows.flat(),
+        addWidget,
+        removeWidget,
+        moveWidget,
+      }}>
       {children}
     </DashboardLayoutContext>
   );

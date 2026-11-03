@@ -29,7 +29,7 @@ type ApiList<T> = {
   meta: { total: number; hasNextPage: boolean; nextCursor?: string };
 };
 
-export class ExerciseDBError extends Error {
+class ExerciseDBError extends Error {
   constructor(
     message: string,
     readonly status?: number,
@@ -50,22 +50,26 @@ const listCache = new Map<string, Promise<ExercisePage>>();
 export type ExercisePage = { exercises: Exercise[]; nextCursor?: string };
 
 /**
- * One page of the catalog for a diary section, starting after `cursor`.
- * Cardio filters by the `cardio` body part; strength lists everything and
- * drops the cardio ones.
+ * One page of the catalog, starting after `cursor`; every exercise when
+ * `category` is missing. Cardio filters by the `cardio` body part; strength
+ * lists everything and drops the cardio ones.
  */
-export function listExercises(category: ExerciseCategory, cursor?: string): Promise<ExercisePage> {
-  const key = `${category}:${cursor ?? ''}`;
+export function listExercises(category?: ExerciseCategory, cursor?: string): Promise<ExercisePage> {
+  const key = `${category ?? 'all'}:${cursor ?? ''}`;
   const cached = listCache.get(key);
   if (cached) return cached;
 
   const params = new URLSearchParams({ limit: String(PAGE_SIZE) });
   if (category === 'cardio') params.set('bodyParts', 'cardio');
   if (cursor) params.set('after', cursor);
-  const request = fetchJson<ApiList<ApiExercise>>(`/exercises?${params}`).then(({ data, meta }) => ({
-    exercises: cacheExercises(data).filter((exercise) => exercise.category === category),
-    nextCursor: meta.hasNextPage ? meta.nextCursor : undefined,
-  }));
+  const request = fetchJson<ApiList<ApiExercise>>(`/exercises?${params}`).then(
+    ({ data, meta }) => ({
+      exercises: cacheExercises(data).filter(
+        (exercise) => !category || exercise.category === category,
+      ),
+      nextCursor: meta.hasNextPage ? meta.nextCursor : undefined,
+    }),
+  );
   request.catch(() => listCache.delete(key));
   listCache.set(key, request);
   return request;
@@ -83,13 +87,14 @@ export function getCachedExercise(id: string) {
 }
 
 /**
- * Searches exercises of a diary section by name. The API only matches English
- * words, so common Portuguese terms are translated. It matches any of the
- * words, so results with the most of them come first.
+ * Searches exercises by name, of one category or (when it is missing) of
+ * both. The API only matches English words, so common Portuguese terms are
+ * translated. It matches any of the words, so results with the most of them
+ * come first.
  */
-export function searchExercises(query: string, category: ExerciseCategory): Promise<Exercise[]> {
+export function searchExercises(query: string, category?: ExerciseCategory): Promise<Exercise[]> {
   const q = translateQuery(query);
-  const key = `${category}:${q}`;
+  const key = `${category ?? 'all'}:${q}`;
   const cached = searchCache.get(key);
   if (cached) return cached;
 
@@ -102,7 +107,7 @@ export function searchExercises(query: string, category: ExerciseCategory): Prom
   };
   const request = fetchJson<ApiList<ApiExercise>>(`/exercises?${params}`).then(({ data }) =>
     cacheExercises(data)
-      .filter((exercise) => exercise.category === category)
+      .filter((exercise) => !category || exercise.category === category)
       .sort((a, b) => score(b) - score(a)),
   );
   // Failed requests are not cached, so the user can retry.

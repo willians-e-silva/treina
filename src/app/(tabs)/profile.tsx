@@ -21,8 +21,12 @@ import {
 import { Spacing } from '@/constants/theme';
 import { useSession } from '@/context/session';
 import { useWeightLog } from '@/context/weight-log';
-import { formatHeight, getInitials, MOCK_PROFILE, SEX_LABELS } from '@/lib/profile';
+import { toDateKey } from '@/lib/exercises';
+import { ageOn, formatHeight, getInitials, MOCK_PROFILE, SEX_LABELS } from '@/lib/profile';
 import { Shape, useAppTheme } from '@/theme';
+
+/** Shown for profile data the user did not give yet (e.g. accounts from Google). */
+const MISSING = '—';
 
 export default function ProfileScreen() {
   const { colors, custom } = useAppTheme();
@@ -35,9 +39,7 @@ export default function ProfileScreen() {
   return (
     <TabScreen>
       <Surface style={styles.card}>
-        <View
-          style={[styles.avatar, { backgroundColor: colors.tertiaryContainer }]}
-          aria-hidden>
+        <View style={[styles.avatar, { backgroundColor: colors.tertiaryContainer }]} aria-hidden>
           <ThemedText type="headlineLarge" emphasized themeColor="onTertiaryContainer">
             {getInitials(profile.name)}
           </ThemedText>
@@ -50,7 +52,7 @@ export default function ProfileScreen() {
             {profile.email}
           </ThemedText>
         )}
-        {profile.sex !== 'unspecified' && (
+        {!!profile.sex && profile.sex !== 'unspecified' && (
           <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
             {SEX_LABELS[profile.sex]}
           </ThemedText>
@@ -58,18 +60,27 @@ export default function ProfileScreen() {
       </Surface>
 
       <View style={styles.stats}>
-        <Stat icon={Cake} color={custom.fat.color} label="Idade" value={`${formatInt(profile.age)} anos`} />
+        <Stat
+          icon={Cake}
+          color={custom.fat.color}
+          label="Idade"
+          value={
+            profile.birthDate
+              ? `${formatInt(ageOn(profile.birthDate, toDateKey(new Date())))} anos`
+              : MISSING
+          }
+        />
         <Stat
           icon={Scale}
           color={custom.carbs.color}
           label="Peso"
-          value={`${formatDecimal(profile.weightKg)} kg`}
+          value={profile.weightKg === null ? MISSING : `${formatDecimal(profile.weightKg)} kg`}
         />
         <Stat
           icon={Ruler}
           color={custom.steps.color}
           label="Altura"
-          value={formatHeight(profile.heightCm)}
+          value={profile.heightCm === null ? MISSING : formatHeight(profile.heightCm)}
         />
       </View>
 
@@ -78,13 +89,19 @@ export default function ProfileScreen() {
           Meta de peso
         </CardTitle>
         <View style={styles.weightValues}>
-          <WeightValue label="Peso atual" kg={profile.weightKg} />
-          <WeightValue label="Meta" kg={goalKg} />
+          <WeightValue
+            label="Peso atual"
+            kg={profile.weightKg ?? undefined}
+            empty="Não registrado"
+          />
+          <WeightValue label="Meta" kg={goalKg} empty="Não definida" />
         </View>
         <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
           {goalKg === undefined
             ? 'Defina o peso que você quer alcançar para acompanhar o progresso.'
-            : describeGoalProgress(profile.weightKg, goalKg)}
+            : profile.weightKg === null
+              ? 'Registre seu peso para acompanhar o progresso.'
+              : describeGoalProgress(profile.weightKg, goalKg)}
         </ThemedText>
         <View style={styles.weightActions}>
           <Button
@@ -119,8 +136,17 @@ export default function ProfileScreen() {
   );
 }
 
-function WeightValue({ label, kg }: { label: string; kg: number | undefined }) {
-  const value = kg === undefined ? 'Não definida' : `${formatDecimal(kg)} kg`;
+function WeightValue({
+  label,
+  kg,
+  empty,
+}: {
+  label: string;
+  kg: number | undefined;
+  /** Shown while there is no value. */
+  empty: string;
+}) {
+  const value = kg === undefined ? empty : `${formatDecimal(kg)} kg`;
   return (
     <View style={styles.flex} accessible accessibilityLabel={`${label}: ${value}`}>
       <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">

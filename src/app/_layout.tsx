@@ -3,6 +3,8 @@ import * as SplashScreen from 'expo-splash-screen';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
+import { SaveErrorBanner } from '@/components/save-error-banner';
+import { CatalogProvider } from '@/context/catalog';
 import { ChatProvider } from '@/context/chat';
 import { CoachingProvider } from '@/context/coaching';
 import { DashboardLayoutProvider } from '@/context/dashboard-layout';
@@ -22,24 +24,25 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider value={useNavigationTheme()}>
         <SessionProvider>
-          <WeightLogProvider>
-            <FoodLogProvider>
-              <ExerciseLogProvider>
-                <WorkoutPlanProvider>
-                  <CoachingProvider>
-                    <ChatProvider>
-                      <TasksProvider>
-                        <DashboardLayoutProvider>
-                          <AnimatedSplashOverlay />
-                          <RootNavigator />
-                        </DashboardLayoutProvider>
-                      </TasksProvider>
-                    </ChatProvider>
-                  </CoachingProvider>
-                </WorkoutPlanProvider>
-              </ExerciseLogProvider>
-            </FoodLogProvider>
-          </WeightLogProvider>
+          <CatalogProvider>
+            <WeightLogProvider>
+              <FoodLogProvider>
+                <ExerciseLogProvider>
+                  <WorkoutPlanProvider>
+                    <CoachingProvider>
+                      <ChatProvider>
+                        <TasksProvider>
+                          <DashboardLayoutProvider>
+                            <RootNavigator />
+                          </DashboardLayoutProvider>
+                        </TasksProvider>
+                      </ChatProvider>
+                    </CoachingProvider>
+                  </WorkoutPlanProvider>
+                </ExerciseLogProvider>
+              </FoodLogProvider>
+            </WeightLogProvider>
+          </CatalogProvider>
         </SessionProvider>
       </ThemeProvider>
     </GestureHandlerRootView>
@@ -47,28 +50,38 @@ export default function RootLayout() {
 }
 
 function RootNavigator() {
-  const { session } = useSession();
+  const { session, restoring } = useSession();
   const topAppBar = useTopAppBarOptions();
 
   return (
-    // Modals that show a header (add-task, meals) get the M3 top app bar.
-    <Stack screenOptions={{ ...topAppBar, headerShown: false }}>
-      <Stack.Protected guard={!!session}>
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="log-food" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="meals" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="log-exercise" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="workouts" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="workout-session" options={{ presentation: 'fullScreenModal' }} />
-        <Stack.Screen name="add-task" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="trainer" />
-        <Stack.Screen name="chat/[trainerId]" />
-      </Stack.Protected>
+    <>
+      {/* Stays up while the saved session is read, so the login never flashes. */}
+      <AnimatedSplashOverlay ready={!restoring} />
+      {/* Modals that show a header (add-task, meals) get the M3 top app bar. */}
+      <Stack screenOptions={{ ...topAppBar, headerShown: false }}>
+        <Stack.Protected guard={!!session}>
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="log-food" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="meals" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="log-exercise" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="workouts" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="workout-session" options={{ presentation: 'fullScreenModal' }} />
+          <Stack.Screen name="add-task" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="trainer" />
+          <Stack.Screen name="chat/[trainerId]" />
+        </Stack.Protected>
 
-      <Stack.Protected guard={!session}>
-        <Stack.Screen name="login" />
-        <Stack.Screen name="signup" />
-      </Stack.Protected>
-    </Stack>
+        <Stack.Protected guard={!session}>
+          <Stack.Screen name="login" />
+          <Stack.Screen name="signup" />
+          <Stack.Screen name="forgot-password" />
+        </Stack.Protected>
+
+        {/* Opened by the link in the confirmation email, signed in or not. Last,
+            so the guards above never fall back to it. */}
+        <Stack.Screen name="auth/callback" />
+      </Stack>
+      <SaveErrorBanner />
+    </>
   );
 }

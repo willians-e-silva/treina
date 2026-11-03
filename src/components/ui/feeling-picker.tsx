@@ -41,7 +41,7 @@ function FaceTired({ color, size }: { color: string; size: number }) {
 }
 
 /** From the happiest face (5) down to the tired one (0). */
-export const FEELING_ICONS: Record<Feeling, FaceIcon> = {
+const FEELING_ICONS: Record<Feeling, FaceIcon> = {
   5: FaceGrinning,
   4: FaceSlightlySmiling,
   3: FaceNeutral,

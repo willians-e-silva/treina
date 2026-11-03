@@ -48,7 +48,7 @@ type ApiProduct = {
 
 type ApiSearch = { hits: ApiProduct[] };
 
-export class OpenFoodFactsError extends Error {
+class OpenFoodFactsError extends Error {
   constructor(
     message: string,
     readonly status?: number,

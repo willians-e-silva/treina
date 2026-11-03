@@ -1,4 +1,4 @@
-import { Redirect } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -10,10 +10,16 @@ import { SegmentedButtons } from '@/components/ui/segmented-buttons';
 import { Spacing } from '@/constants/theme';
 import { useSession } from '@/context/session';
 import { useSignup } from '@/context/signup';
+import { AuthError } from '@/lib/auth';
+import { toDateKey } from '@/lib/exercises';
 import {
-  AGE_OPTIONS,
+  AGE_MAX,
+  AGE_MIN,
+  ageOn,
   HEIGHT_OPTIONS,
   isValidWeight,
+  maskDate,
+  parseDate,
   parseDecimal,
   SEX_LABELS,
   WEIGHT_MAX_KG,
@@ -23,12 +29,12 @@ import {
 
 const SEXES: Sex[] = ['female', 'male', 'unspecified'];
 
-/** Step 2: age, sex, height and current weight. */
+/** Step 2: birth date, sex, height and current weight. */
 export default function SignupDetailsScreen() {
   const { signUp } = useSession();
   const { account } = useSignup();
 
-  const [age, setAge] = useState<number | null>(null);
+  const [birthDate, setBirthDate] = useState('');
   const [sex, setSex] = useState<Sex | null>(null);
   const [height, setHeight] = useState<number | null>(null);
   const [weight, setWeight] = useState('');
@@ -41,8 +47,14 @@ export default function SignupDetailsScreen() {
   async function submit() {
     if (!account) return;
     const weightValue = parseDecimal(weight);
-    if (age === null) {
-      setError('Selecione sua idade.');
+    const birthDateKey = parseDate(birthDate);
+    if (!birthDateKey) {
+      setError('Informe sua data de nascimento no formato DD/MM/AAAA.');
+      return;
+    }
+    const age = ageOn(birthDateKey, toDateKey(new Date()));
+    if (age < AGE_MIN || age > AGE_MAX) {
+      setError(`É preciso ter entre ${AGE_MIN} e ${AGE_MAX} anos para usar o Treina.`);
       return;
     }
     if (!sex) {
@@ -61,16 +73,23 @@ export default function SignupDetailsScreen() {
     setError(null);
     setSubmitting(true);
     try {
-      // On success the root layout's guard swaps the sign-up for the tabs.
-      await signUp({
+      const { needsConfirmation } = await signUp({
         ...account,
-        age,
+        birthDate: birthDateKey,
         sex,
         heightCm: height,
         weightKg: Math.round(weightValue * 10) / 10,
       });
-    } catch {
-      setError('Não foi possível criar a conta. Tente novamente.');
+      if (needsConfirmation) {
+        setSubmitting(false);
+        router.push({ pathname: '/signup/confirm', params: { email: account.email } });
+      }
+      // Otherwise the user is signed in, and the root layout's guard swaps the
+      // sign-up for the tabs.
+    } catch (e) {
+      setError(
+        e instanceof AuthError ? e.message : 'Não foi possível criar a conta. Tente novamente.',
+      );
       setSubmitting(false);
     }
   }
@@ -78,21 +97,22 @@ export default function SignupDetailsScreen() {
   return (
     <StepScreen
       step={2}
-      steps={2}
+      steps={3}
       title="Sobre você"
       description="Usamos esses dados para estimar suas calorias e acompanhar seu progresso."
       error={error}
       submitLabel="Criar conta"
       submitting={submitting}
       onSubmit={submit}>
-      <PickerField
-        label="Idade"
-        options={AGE_OPTIONS}
-        value={age}
-        onChange={setAge}
-        unit="anos"
-        initialValue={25}
-        disabled={submitting}
+      <FormField
+        label="Data de nascimento"
+        value={birthDate}
+        onChangeText={(value) => setBirthDate(maskDate(value))}
+        placeholder="DD/MM/AAAA"
+        keyboardType="number-pad"
+        autoComplete="birthdate-full"
+        maxLength={10}
+        editable={!submitting}
       />
 
       <View style={styles.field}>

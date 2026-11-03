@@ -1,5 +1,6 @@
-import { router } from "expo-router";
-import { useRef, useState } from "react";
+import { router } from 'expo-router';
+import CircleCheck from 'lucide-react-native/icons/circle-check';
+import { useRef, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -9,30 +10,36 @@ import {
   StyleSheet,
   type TextInputInstance,
   View,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
-import { Button } from "@/components/ui/button";
-import { FormField } from "@/components/ui/form-field";
-import { StateLayer } from "@/components/ui/state-layer";
-import { Spacing } from "@/constants/theme";
-import { IS_AUTH_MOCKED, useSession } from "@/context/session";
-import { GoogleSignInError, isGoogleSignInAvailable } from "@/lib/google-auth";
-import { BrandColors, ComponentShape, Disabled, useAppTheme } from "@/theme";
-
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
+import { Button } from '@/components/ui/button';
+import { FormField } from '@/components/ui/form-field';
+import { PasswordField } from '@/components/ui/password-field';
+import { StateLayer } from '@/components/ui/state-layer';
+import { Spacing } from '@/constants/theme';
+import { IS_AUTH_MOCKED, useSession } from '@/context/session';
+import { AuthError, normalizeEmail } from '@/lib/auth';
+import { GoogleSignInError, isGoogleSignInAvailable } from '@/lib/google-auth';
+import { EMAIL_PATTERN } from '@/lib/profile';
+import { BrandColors, ComponentShape, Disabled, Shape, useAppTheme } from '@/theme';
 
 export default function LoginScreen() {
+  const { passwordResetEmail } = useSession();
+  // A new form after a password reset: starts with that email and the notice.
+  return <LoginForm key={passwordResetEmail ?? ''} resetEmail={passwordResetEmail} />;
+}
+
+function LoginForm({ resetEmail }: { resetEmail: string | null }) {
   const { dark, colors } = useAppTheme();
-  const google = BrandColors.google[dark ? "dark" : "light"];
+  const google = BrandColors.google[dark ? 'dark' : 'light'];
   const { signIn, signInWithGoogle } = useSession();
   const passwordRef = useRef<TextInputInstance>(null);
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState(resetEmail ?? '');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
@@ -49,23 +56,23 @@ export default function LoginScreen() {
       }
     } catch (e) {
       setError(
-        e instanceof GoogleSignInError
+        e instanceof GoogleSignInError || e instanceof AuthError
           ? e.message
-          : "Não foi possível entrar com o Google.",
+          : 'Não foi possível entrar com o Google.',
       );
       setIsGoogleSubmitting(false);
     }
   }
 
   async function handleSubmit() {
-    const trimmedEmail = email.trim();
-    if (!IS_AUTH_MOCKED) {
+    const trimmedEmail = normalizeEmail(email);
+    if (!IS_AUTH_MOCKED || trimmedEmail) {
       if (!EMAIL_PATTERN.test(trimmedEmail)) {
-        setError("Enter a valid email address.");
+        setError('Informe um email válido.');
         return;
       }
-      if (password.length < 6) {
-        setError("Password must be at least 6 characters.");
+      if (!password) {
+        setError('Informe sua senha.');
         return;
       }
     }
@@ -75,9 +82,13 @@ export default function LoginScreen() {
     try {
       // On success the root layout's guard swaps this screen for the tabs.
       await signIn(trimmedEmail, password);
-    } catch {
-      setError("Could not sign in. Check your credentials and try again.");
+    } catch (e) {
       setIsSubmitting(false);
+      if (e instanceof AuthError && e.reason === 'email_not_confirmed') {
+        router.push({ pathname: '/signup/confirm', params: { email: trimmedEmail, sent: '0' } });
+        return;
+      }
+      setError(e instanceof AuthError ? e.message : 'Não foi possível entrar. Tente novamente.');
     }
   }
 
@@ -86,100 +97,99 @@ export default function LoginScreen() {
       <SafeAreaView style={styles.safeArea}>
         <KeyboardAvoidingView
           style={styles.flex}
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-        >
-          <ScrollView
-            contentContainerStyle={styles.content}
-            keyboardShouldPersistTaps="handled"
-          >
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
             <View style={styles.header}>
-              <ThemedText type="headlineMedium">Bem vindo</ThemedText>
-              <ThemedText themeColor="onSurfaceVariant">
-                Faca login para continuar
+              <ThemedText type="headlineMedium" accessibilityRole="header">
+                Bem-vindo
               </ThemedText>
+              <ThemedText themeColor="onSurfaceVariant">Faça login para continuar</ThemedText>
             </View>
 
             <View style={styles.form}>
+              {resetEmail && (
+                <View
+                  style={[styles.notice, { backgroundColor: colors.secondaryContainer }]}
+                  accessibilityRole="alert">
+                  <CircleCheck color={colors.onSecondaryContainer} size={20} />
+                  <ThemedText
+                    type="bodyMedium"
+                    themeColor="onSecondaryContainer"
+                    style={styles.flex}>
+                    Senha alterada. Entre com a nova senha.
+                  </ThemedText>
+                </View>
+              )}
+
               <FormField
                 label="Email"
                 value={email}
                 onChangeText={setEmail}
-                placeholder="you@example.com"
+                placeholder="voce@exemplo.com"
                 autoCapitalize="none"
                 autoComplete="email"
                 autoCorrect={false}
                 keyboardType="email-address"
                 textContentType="emailAddress"
                 returnKeyType="next"
+                submitBehavior="submit"
                 onSubmitEditing={() => passwordRef.current?.focus()}
                 editable={!isBusy}
               />
 
               <View>
-                <FormField
+                <PasswordField
                   ref={passwordRef}
                   label="Senha"
-                  style={styles.passwordInput}
                   value={password}
                   onChangeText={setPassword}
-                  placeholder="Your password"
-                  secureTextEntry={!showPassword}
-                  autoCapitalize="none"
+                  placeholder="Sua senha"
                   autoComplete="current-password"
                   textContentType="password"
                   returnKeyType="go"
                   onSubmitEditing={handleSubmit}
                   editable={!isBusy}
+                  autoFocus={!!resetEmail}
                 />
                 <Button
-                  label={showPassword ? "Hide" : "Show"}
+                  label="Esqueci minha senha"
                   variant="text"
                   tone="secondary"
-                  onPress={() => setShowPassword((value) => !value)}
-                  accessibilityLabel={
-                    showPassword ? "Hide password" : "Show password"
+                  onPress={() =>
+                    router.push({ pathname: '/forgot-password', params: { email: email.trim() } })
                   }
-                  style={styles.togglePassword}
+                  disabled={isBusy}
+                  accessibilityRole="link"
+                  style={styles.forgot}
                 />
               </View>
 
               {error && (
-                <ThemedText
-                  type="bodyMedium"
-                  themeColor="error"
-                  accessibilityRole="alert"
-                >
+                <ThemedText type="bodyMedium" themeColor="error" accessibilityRole="alert">
                   {error}
                 </ThemedText>
               )}
 
               <Button
-                label="Sign in"
+                label="Entrar"
                 size="medium"
                 fullWidth
                 loading={isSubmitting}
                 disabled={isGoogleSubmitting}
                 onPress={handleSubmit}
-                style={styles.submit}
               />
 
               {isGoogleSignInAvailable && (
                 <>
                   <View style={styles.divider}>
                     <View
-                      style={[
-                        styles.dividerLine,
-                        { backgroundColor: colors.outlineVariant },
-                      ]}
+                      style={[styles.dividerLine, { backgroundColor: colors.outlineVariant }]}
                     />
                     <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
                       ou
                     </ThemedText>
                     <View
-                      style={[
-                        styles.dividerLine,
-                        { backgroundColor: colors.outlineVariant },
-                      ]}
+                      style={[styles.dividerLine, { backgroundColor: colors.outlineVariant }]}
                     />
                   </View>
 
@@ -191,13 +201,9 @@ export default function LoginScreen() {
                     accessibilityLabel="Continuar com Google"
                     style={[
                       styles.googleButton,
-                      {
-                        backgroundColor: google.container,
-                        borderColor: google.outline,
-                      },
+                      { backgroundColor: google.container, borderColor: google.outline },
                       isBusy && !isGoogleSubmitting && styles.disabled,
-                    ]}
-                  >
+                    ]}>
                     {({ pressed }) => (
                       <>
                         <StateLayer color={google.content} pressed={pressed} />
@@ -208,14 +214,10 @@ export default function LoginScreen() {
                             <ThemedText
                               type="titleLarge"
                               emphasized
-                              style={{ color: BrandColors.google.mark }}
-                            >
+                              style={{ color: BrandColors.google.mark }}>
                               G
                             </ThemedText>
-                            <ThemedText
-                              type="titleMedium"
-                              style={{ color: google.content }}
-                            >
+                            <ThemedText type="titleMedium" style={{ color: google.content }}>
                               Continuar com Google
                             </ThemedText>
                           </>
@@ -234,7 +236,7 @@ export default function LoginScreen() {
                   label="Criar conta"
                   variant="text"
                   tone="secondary"
-                  onPress={() => router.push("/signup")}
+                  onPress={() => router.push('/signup')}
                   disabled={isBusy}
                   accessibilityRole="link"
                 />
@@ -259,10 +261,10 @@ const styles = StyleSheet.create({
   },
   content: {
     flexGrow: 1,
-    justifyContent: "center",
-    width: "100%",
+    justifyContent: 'center',
+    width: '100%',
     maxWidth: 440,
-    alignSelf: "center",
+    alignSelf: 'center',
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.five,
     gap: Spacing.five,
@@ -273,20 +275,23 @@ const styles = StyleSheet.create({
   form: {
     gap: Spacing.three,
   },
-  passwordInput: {
-    paddingRight: Spacing.six + Spacing.three,
+  notice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two + Spacing.one,
+    borderRadius: Shape.medium,
   },
-  togglePassword: {
-    position: "absolute",
-    right: Spacing.one,
-    bottom: Spacing.two,
-  },
-  submit: {
-    marginTop: Spacing.two,
+  forgot: {
+    // Under the field, on its end side; the text button's own padding is the gap.
+    alignSelf: 'flex-end',
+    marginTop: Spacing.one,
+    marginRight: -Spacing.two,
   },
   divider: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: Spacing.three,
   },
   dividerLine: {
@@ -295,21 +300,21 @@ const styles = StyleSheet.create({
   },
   googleButton: {
     height: 56,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     gap: Spacing.two,
     borderRadius: ComponentShape.button,
     borderWidth: 1,
-    overflow: "hidden",
+    overflow: 'hidden',
   },
   disabled: {
     opacity: Disabled.content,
   },
   signupRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
     gap: Spacing.one,
     marginTop: Spacing.two,
   },

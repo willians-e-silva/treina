@@ -45,7 +45,7 @@ export function TrainerCard({ trainer, onPress }: { trainer: Trainer; onPress: (
 }
 
 /** Small icon + value; the star of the rating is filled. */
-export function TrainerStat({ icon, value }: { icon: 'followers' | 'rating'; value: string }) {
+function TrainerStat({ icon, value }: { icon: 'followers' | 'rating'; value: string }) {
   const { colors } = useAppTheme();
 
   return (
