@@ -1,9 +1,7 @@
-// Provides the `localStorage` the session is kept in, so the user stays
-// signed in between launches (https://docs.expo.dev/guides/using-supabase/).
-import 'expo-sqlite/localStorage/install';
-
 import { createClient } from '@supabase/supabase-js';
 import { AppState } from 'react-native';
+
+import { sessionStorage } from './session-storage';
 
 import type { Database } from '@/data/database.types';
 
@@ -26,7 +24,8 @@ export const supabase = createClient<Database>(
   publishableKey || 'not-configured',
   {
     auth: {
-      storage: localStorage,
+      // expo-sqlite on Android and iOS, the browser's localStorage on the web.
+      storage: sessionStorage,
       autoRefreshToken: true,
       persistSession: true,
       // Android and iOS have no URL to read a session from: the links in auth
