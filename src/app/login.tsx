@@ -21,7 +21,7 @@ import { PasswordField } from '@/components/ui/password-field';
 import { StateLayer } from '@/components/ui/state-layer';
 import { Spacing } from '@/constants/theme';
 import { IS_AUTH_MOCKED, useSession } from '@/context/session';
-import { AuthError } from '@/lib/auth';
+import { AuthError, normalizeEmail } from '@/lib/auth';
 import { GoogleSignInError, isGoogleSignInAvailable } from '@/lib/google-auth';
 import { EMAIL_PATTERN } from '@/lib/profile';
 import { BrandColors, ComponentShape, Disabled, Shape, useAppTheme } from '@/theme';
@@ -56,14 +56,16 @@ function LoginForm({ resetEmail }: { resetEmail: string | null }) {
       }
     } catch (e) {
       setError(
-        e instanceof GoogleSignInError ? e.message : 'Não foi possível entrar com o Google.',
+        e instanceof GoogleSignInError || e instanceof AuthError
+          ? e.message
+          : 'Não foi possível entrar com o Google.',
       );
       setIsGoogleSubmitting(false);
     }
   }
 
   async function handleSubmit() {
-    const trimmedEmail = email.trim();
+    const trimmedEmail = normalizeEmail(email);
     if (!IS_AUTH_MOCKED || trimmedEmail) {
       if (!EMAIL_PATTERN.test(trimmedEmail)) {
         setError('Informe um email válido.');
@@ -81,8 +83,12 @@ function LoginForm({ resetEmail }: { resetEmail: string | null }) {
       // On success the root layout's guard swaps this screen for the tabs.
       await signIn(trimmedEmail, password);
     } catch (e) {
-      setError(e instanceof AuthError ? e.message : 'Não foi possível entrar. Tente novamente.');
       setIsSubmitting(false);
+      if (e instanceof AuthError && e.reason === 'email_not_confirmed') {
+        router.push({ pathname: '/signup/confirm', params: { email: trimmedEmail, sent: '0' } });
+        return;
+      }
+      setError(e instanceof AuthError ? e.message : 'Não foi possível entrar. Tente novamente.');
     }
   }
 

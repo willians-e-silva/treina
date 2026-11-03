@@ -7,8 +7,8 @@ import { useUserDataStatus } from '@/hooks/use-user-data-status';
 const DATA_ERROR = 'Não foi possível carregar seus dados. Verifique sua conexão e tente novamente.';
 
 export default function TabLayout() {
-  const { session, signOut } = useSession();
-  const { state, retry } = useMainFlowBootstrap(session);
+  const { signOut } = useSession();
+  const { state, retry } = useMainFlowBootstrap();
   const data = useUserDataStatus();
 
   // The tabs only mount once ready, so they always start on the first tab.

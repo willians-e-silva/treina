@@ -6,14 +6,12 @@ import { HeaderBackButton } from '@/components/ui/header-back-button';
 import { StepScreen } from '@/components/signup/step-screen';
 import { FormField } from '@/components/ui/form-field';
 import { PasswordField } from '@/components/ui/password-field';
-import { useSession } from '@/context/session';
 import { useSignup } from '@/context/signup';
 import { normalizeEmail, PASSWORD_MIN_LENGTH, validatePassword } from '@/lib/auth';
 import { EMAIL_PATTERN } from '@/lib/profile';
 
 /** Step 1: name, email and password. */
 export default function SignupAccountScreen() {
-  const { hasAccount } = useSession();
   const { account, setAccount } = useSignup();
   const emailRef = useRef<TextInputInstance>(null);
   const passwordRef = useRef<TextInputInstance>(null);
@@ -34,10 +32,6 @@ export default function SignupAccountScreen() {
     }
     if (!EMAIL_PATTERN.test(trimmedEmail)) {
       setError('Informe um email válido.');
-      return;
-    }
-    if (hasAccount(trimmedEmail)) {
-      setError('Já existe uma conta com este email. Entre com ela ou recupere a senha.');
       return;
     }
     const invalidPassword = validatePassword(password);
@@ -64,7 +58,7 @@ export default function SignupAccountScreen() {
       />
       <StepScreen
         step={1}
-        steps={2}
+        steps={3}
         title="Sua conta"
         description="Comece com seus dados de acesso."
         error={error}

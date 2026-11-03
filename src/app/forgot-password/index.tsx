@@ -5,7 +5,7 @@ import { StepScreen } from '@/components/signup/step-screen';
 import { FormField } from '@/components/ui/form-field';
 import { HeaderBackButton } from '@/components/ui/header-back-button';
 import { useSession } from '@/context/session';
-import { normalizeEmail } from '@/lib/auth';
+import { AuthError, normalizeEmail } from '@/lib/auth';
 import { EMAIL_PATTERN } from '@/lib/profile';
 
 /** Step 1: the email that gets the reset code. */
@@ -26,10 +26,12 @@ export default function ForgotPasswordEmailScreen() {
     setError(null);
     setSubmitting(true);
     try {
-      const code = await requestPasswordReset(trimmedEmail);
-      router.push({ pathname: '/forgot-password/code', params: { email: trimmedEmail, code } });
-    } catch {
-      setError('Não foi possível enviar o código. Tente novamente.');
+      await requestPasswordReset(trimmedEmail);
+      router.push({ pathname: '/forgot-password/code', params: { email: trimmedEmail } });
+    } catch (e) {
+      setError(
+        e instanceof AuthError ? e.message : 'Não foi possível enviar o código. Tente novamente.',
+      );
     } finally {
       setSubmitting(false);
     }

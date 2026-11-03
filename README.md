@@ -65,6 +65,24 @@ trainer catalog in `seed.sql` and Row Level Security checks in `tests/rls.sql`.
 
 To change the catalog, edit `src/lib/trainers.ts` and run `npx tsx scripts/generate-seed.ts`.
 
+### Auth
+
+The app signs in with Supabase Auth (`src/context/session.tsx`); the session is kept on the device
+with `expo-sqlite/localStorage`, so it needs a development build. Confirming an account and
+resetting the password use the 8-digit code in the email, not a link, so the project's email
+templates must contain `{{ .Token }}`. The ones in `supabase/templates/` do; apply them (and any
+other change to `supabase/config.toml`) with:
+
+```bash
+npx supabase@latest config diff   # check that only what you meant to change differs
+npx supabase@latest config push
+```
+
+Supabase's built-in email service only delivers to the project team's addresses, a few times
+per hour. Set up your own SMTP (Authentication → Emails → SMTP Settings) before other people
+sign up. Signing in with Google also needs the Google provider enabled in the dashboard with
+the app's client IDs.
+
 ## Other setup steps
 
 - To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)

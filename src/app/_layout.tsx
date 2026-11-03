@@ -30,7 +30,6 @@ export default function RootLayout() {
                     <ChatProvider>
                       <TasksProvider>
                         <DashboardLayoutProvider>
-                          <AnimatedSplashOverlay />
                           <RootNavigator />
                         </DashboardLayoutProvider>
                       </TasksProvider>
@@ -47,29 +46,33 @@ export default function RootLayout() {
 }
 
 function RootNavigator() {
-  const { session } = useSession();
+  const { session, restoring } = useSession();
   const topAppBar = useTopAppBarOptions();
 
   return (
-    // Modals that show a header (add-task, meals) get the M3 top app bar.
-    <Stack screenOptions={{ ...topAppBar, headerShown: false }}>
-      <Stack.Protected guard={!!session}>
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="log-food" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="meals" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="log-exercise" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="workouts" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="workout-session" options={{ presentation: 'fullScreenModal' }} />
-        <Stack.Screen name="add-task" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="trainer" />
-        <Stack.Screen name="chat/[trainerId]" />
-      </Stack.Protected>
+    <>
+      {/* Stays up while the saved session is read, so the login never flashes. */}
+      <AnimatedSplashOverlay ready={!restoring} />
+      {/* Modals that show a header (add-task, meals) get the M3 top app bar. */}
+      <Stack screenOptions={{ ...topAppBar, headerShown: false }}>
+        <Stack.Protected guard={!!session}>
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="log-food" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="meals" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="log-exercise" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="workouts" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="workout-session" options={{ presentation: 'fullScreenModal' }} />
+          <Stack.Screen name="add-task" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="trainer" />
+          <Stack.Screen name="chat/[trainerId]" />
+        </Stack.Protected>
 
-      <Stack.Protected guard={!session}>
-        <Stack.Screen name="login" />
-        <Stack.Screen name="signup" />
-        <Stack.Screen name="forgot-password" />
-      </Stack.Protected>
-    </Stack>
+        <Stack.Protected guard={!session}>
+          <Stack.Screen name="login" />
+          <Stack.Screen name="signup" />
+          <Stack.Screen name="forgot-password" />
+        </Stack.Protected>
+      </Stack>
+    </>
   );
 }

@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import * as SplashScreen from 'expo-splash-screen';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { Easing, Keyframe } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
@@ -11,9 +11,17 @@ const DURATION = 600;
 /** Same size as the native splash image (`imageWidth` in app.json). */
 const SPLASH_IMAGE_SIZE = 160;
 
-export function AnimatedSplashOverlay() {
+/** Continues the native splash, and fades out once `ready`. */
+export function AnimatedSplashOverlay({ ready }: { ready: boolean }) {
   const [animate, setAnimate] = useState(false);
   const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    if (!ready) return;
+    SplashScreen.hideAsync().finally(() => {
+      setAnimate(true);
+    });
+  }, [ready]);
 
   if (!visible) return null;
 
@@ -37,9 +45,7 @@ export function AnimatedSplashOverlay() {
   });
 
   // Continues the native splash: same background and image as app.json.
-  const image = (
-    <Image style={styles.splashImage} source={require('@/assets/images/icon.png')} />
-  );
+  const image = <Image style={styles.splashImage} source={require('@/assets/images/icon.png')} />;
 
   return animate ? (
     <Animated.View
@@ -53,15 +59,7 @@ export function AnimatedSplashOverlay() {
       {image}
     </Animated.View>
   ) : (
-    <View
-      onLayout={() => {
-        SplashScreen.hideAsync().finally(() => {
-          setAnimate(true);
-        });
-      }}
-      style={styles.splashOverlay}>
-      {image}
-    </View>
+    <View style={styles.splashOverlay}>{image}</View>
   );
 }
 

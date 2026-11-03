@@ -10,7 +10,7 @@ import { AuthError, PASSWORD_MIN_LENGTH, validatePassword } from '@/lib/auth';
 /** Step 3: the new password, then back to the login to sign in with it. */
 export default function ForgotPasswordNewPasswordScreen() {
   const { resetPassword } = useSession();
-  const { email, code } = useLocalSearchParams<{ email?: string; code?: string }>();
+  const { email } = useLocalSearchParams<{ email?: string }>();
   const confirmRef = useRef<TextInputInstance>(null);
 
   const [password, setPassword] = useState('');
@@ -19,10 +19,9 @@ export default function ForgotPasswordNewPasswordScreen() {
   const [submitting, setSubmitting] = useState(false);
 
   // Reached without the previous steps, e.g. a reload on web.
-  if (!email || !code) return <Redirect href="/forgot-password" />;
+  if (!email) return <Redirect href="/forgot-password" />;
 
   async function submit() {
-    if (!email || !code) return;
     const invalid = validatePassword(password);
     if (invalid) {
       setError(invalid);
@@ -35,7 +34,7 @@ export default function ForgotPasswordNewPasswordScreen() {
     setError(null);
     setSubmitting(true);
     try {
-      await resetPassword(email, code, password);
+      await resetPassword(password);
       // The login shows that the password changed, with the email filled in.
       router.dismissTo('/login');
     } catch (e) {
