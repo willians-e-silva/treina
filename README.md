@@ -69,15 +69,18 @@ To change the catalog, edit `src/lib/trainers.ts` and run `npx tsx scripts/gener
 
 The app signs in with Supabase Auth (`src/context/session.tsx`); the session is kept on the device
 with `expo-sqlite/localStorage`, so it needs a development build. Confirming an account and
-resetting the password use the 8-digit code in the email, not a link, so the project's email
-templates must contain `{{ .Token }}`. The ones in `supabase/templates/` do; apply them (and any
-other change to `supabase/config.toml`) with:
+resetting the password use Supabase's default emails: their link opens the app
+(`treina://auth/callback` and `treina://forgot-password/new-password`), which exchanges its
+`code` for a session (PKCE). The link must be opened on the phone that asked for it. Those
+addresses must be allowed in `auth.additional_redirect_urls`; apply it (and any other change to
+`supabase/config.toml`) with:
 
 ```bash
 npx supabase@latest config diff   # check that only what you meant to change differs
 npx supabase@latest config push
 ```
 
+Custom email templates need your own SMTP provider on the free plan.
 Supabase's built-in email service only delivers to the project team's addresses, a few times
 per hour. Set up your own SMTP (Authentication → Emails → SMTP Settings) before other people
 sign up. Signing in with Google also needs the Google provider enabled in the dashboard with

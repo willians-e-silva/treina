@@ -161,7 +161,8 @@ site_url = "http://localhost:3000"
 # The public URL that Auth serves on. Defaults to the API external URL with `/auth/v1` appended.
 # external_url = ""
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-additional_redirect_urls = []
+# Links in auth emails open the app: `treina://` in builds, `exp://` in Expo Go.
+additional_redirect_urls = ["treina://**", "exp://**"]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to auth.external_url.
@@ -245,14 +246,12 @@ otp_expiry = 3600
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
-# The app asks for the code ({{ .Token }}) instead of opening a link.
-[auth.email.template.confirmation]
-subject = "Seu código de confirmação do Treina"
-content_path = "./supabase/templates/confirmation.html"
-
-[auth.email.template.recovery]
-subject = "Seu código para redefinir a senha do Treina"
-content_path = "./supabase/templates/recovery.html"
+# The default templates are used: free projects on the built-in email
+# service cannot change them. Their links open the app (treina://…).
+# Uncomment to customize email template (needs a custom SMTP provider)
+# [auth.email.template.invite]
+# subject = "You have been invited"
+# content_path = "./supabase/templates/invite.html"
 
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]

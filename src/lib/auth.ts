@@ -1,10 +1,6 @@
 import { isAuthApiError, isAuthError } from '@supabase/supabase-js';
 
 export const PASSWORD_MIN_LENGTH = 6;
-/** Digits of the codes emailed to confirm an account or reset the password (`auth.email.otp_length`). */
-export const CODE_LENGTH = 8;
-/** How long an emailed code stays valid (`auth.email.otp_expiry`). */
-export const CODE_TTL_LABEL = '1 hora';
 /** Wait before another email can be sent (`auth.email.max_frequency`). */
 export const RESEND_DELAY_S = 60;
 
@@ -33,12 +29,17 @@ export class AuthError extends Error {
   }
 }
 
+const EXPIRED_LINK = 'O link expirou ou já foi usado. Peça um novo.';
+
 const MESSAGES: Record<string, string> = {
   invalid_credentials: 'Email ou senha incorretos.',
   email_not_confirmed: 'Confirme seu email para entrar.',
   user_already_exists: 'Já existe uma conta com este email.',
   email_exists: 'Já existe uma conta com este email.',
-  otp_expired: 'Código inválido ou expirado. Confira o código ou peça um novo.',
+  otp_expired: EXPIRED_LINK,
+  flow_state_expired: EXPIRED_LINK,
+  flow_state_not_found: EXPIRED_LINK,
+  bad_code_verifier: 'Abra o link no mesmo celular em que você o pediu.',
   same_password: 'A nova senha precisa ser diferente da atual.',
   weak_password: 'Escolha uma senha mais forte.',
   email_address_invalid: 'Informe um email válido.',
@@ -46,6 +47,11 @@ const MESSAGES: Record<string, string> = {
   over_request_rate_limit: 'Muitas tentativas. Aguarde alguns minutos e tente de novo.',
   signup_disabled: 'Novos cadastros estão desativados no momento.',
 };
+
+/** Message for an error `code` sent back in an auth link (e.g. `otp_expired`). */
+export function linkErrorMessage(code: string | undefined) {
+  return (code && MESSAGES[code]) || EXPIRED_LINK;
+}
 
 /**
  * `AuthError` with a message in Portuguese for an error of Supabase Auth.
@@ -58,6 +64,9 @@ export function toAuthError(error: unknown, fallback: string) {
       MESSAGES[error.code],
       error.code === 'email_not_confirmed' ? 'email_not_confirmed' : undefined,
     );
+  }
+  if (isAuthError(error) && error.name === 'AuthPKCECodeVerifierMissingError') {
+    return new AuthError(MESSAGES.bad_code_verifier);
   }
   if (isAuthError(error) && error.status === 0) {
     return new AuthError('Sem conexão. Verifique sua internet e tente novamente.');

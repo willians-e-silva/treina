@@ -72,6 +72,10 @@ function RootNavigator() {
           <Stack.Screen name="signup" />
           <Stack.Screen name="forgot-password" />
         </Stack.Protected>
+
+        {/* Opened by the link in the confirmation email, signed in or not. Last,
+            so the guards above never fall back to it. */}
+        <Stack.Screen name="auth/callback" />
       </Stack>
     </>
   );

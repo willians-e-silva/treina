@@ -29,8 +29,10 @@ export const supabase = createClient<Database>(
       storage: localStorage,
       autoRefreshToken: true,
       persistSession: true,
-      // Android and iOS have no URL to read a session from.
+      // Android and iOS have no URL to read a session from: the links in auth
+      // emails come back as `treina://…?code=…`, exchanged in the app.
       detectSessionInUrl: false,
+      flowType: 'pkce',
     },
   },
 );

@@ -27,7 +27,7 @@ export default function ForgotPasswordEmailScreen() {
     setSubmitting(true);
     try {
       await requestPasswordReset(trimmedEmail);
-      router.push({ pathname: '/forgot-password/code', params: { email: trimmedEmail } });
+      router.push({ pathname: '/forgot-password/check-email', params: { email: trimmedEmail } });
     } catch (e) {
       setError(
         e instanceof AuthError ? e.message : 'Não foi possível enviar o código. Tente novamente.',
@@ -49,9 +49,9 @@ export default function ForgotPasswordEmailScreen() {
         step={1}
         steps={3}
         title="Esqueceu a senha?"
-        description="Informe o email da sua conta. Vamos enviar um código para você criar uma nova senha."
+        description="Informe o email da sua conta. Vamos enviar um link para você criar uma nova senha."
         error={error}
-        submitLabel="Enviar código"
+        submitLabel="Enviar link"
         submitting={submitting}
         onSubmit={submit}>
         <FormField

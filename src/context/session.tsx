@@ -1,4 +1,5 @@
 import type { Session, User } from '@supabase/supabase-js';
+import * as Linking from 'expo-linking';
 import {
   createContext,
   use,
@@ -42,22 +43,26 @@ type SessionContextValue = {
   signIn: (email: string, password: string) => Promise<void>;
   /**
    * Creates the account. Resolves to `needsConfirmation` when the email must be
-   * confirmed with the emailed code first; otherwise the user is signed in.
+   * confirmed with the emailed link first; otherwise the user is signed in.
    */
   signUp: (account: NewAccount) => Promise<{ needsConfirmation: boolean }>;
-  /** Confirms the account with the emailed code, which signs the user in. */
-  confirmSignUp: (email: string, code: string) => Promise<void>;
-  resendSignUpCode: (email: string) => Promise<void>;
+  /** Sends the confirmation link again. */
+  resendConfirmation: (email: string) => Promise<void>;
+  /** Signs in with the `code` of a confirmation link opened in the app. */
+  completeEmailLink: (link: AuthLink) => Promise<void>;
   /** Resolves to `false` if the user cancelled the Google prompt. */
   signInWithGoogle: () => Promise<boolean>;
   signOut: () => void;
   /** Updates the signed-in user's current weight on screen. */
   setWeight: (kg: number) => void;
-  /** Emails a code to reset the password; never tells whether the email has an account. */
+  /** Emails a link to reset the password; never tells whether the email has an account. */
   requestPasswordReset: (email: string) => Promise<void>;
-  /** Rejects with an `AuthError` when the code is wrong or expired. */
-  verifyResetCode: (email: string, code: string) => Promise<void>;
-  /** Sets the new password after `verifyResetCode`; the user then signs in with it. */
+  /**
+   * Opens the reset with the `code` of the emailed link and resolves to the
+   * account's email. Rejects with an `AuthError` when the link expired.
+   */
+  startPasswordReset: (link: AuthLink) => Promise<string>;
+  /** Sets the new password after `startPasswordReset`; the user then signs in with it. */
   resetPassword: (password: string) => Promise<void>;
   /** Leaves a reset that was verified but not finished. */
   cancelPasswordReset: () => void;
@@ -80,6 +85,36 @@ function assertConfigured() {
       'O app não está configurado para entrar: faltam as chaves do Supabase no .env.local.',
     );
   }
+}
+
+/** Query of an auth link opened in the app (`treina://…?code=…&sb_flow_id=…`). */
+export type AuthLink = { code: string; flowId?: string };
+
+// Where the links in auth emails open the app; listed in
+// `auth.additional_redirect_urls` (supabase/config.toml).
+const CONFIRMED_URL = Linking.createURL('/auth/callback');
+const RESET_URL = Linking.createURL('/forgot-password/new-password');
+
+// A code works once, so a screen that asks again for the same link (e.g. its
+// effect running twice in development) gets the first answer.
+const exchanges = new Map<string, ReturnType<typeof exchangeOnce>>();
+
+async function exchangeOnce({ code, flowId }: AuthLink) {
+  const { data, error } = await supabase.auth.exchangeCodeForSession(
+    code,
+    flowId ? { flowId } : undefined,
+  );
+  if (error) throw toAuthError(error, 'Não foi possível abrir o link. Peça um novo.');
+  return data;
+}
+
+function exchange(link: AuthLink) {
+  let pending = exchanges.get(link.code);
+  if (!pending) {
+    pending = exchangeOnce(link);
+    exchanges.set(link.code, pending);
+  }
+  return pending;
 }
 
 const SessionContext = createContext<SessionContextValue | null>(null);
@@ -105,7 +140,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
   const [restoring, setRestoring] = useState(!IS_AUTH_MOCKED);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [passwordResetEmail, setPasswordResetEmail] = useState<string | null>(null);
-  // Email of a password reset in progress. Verifying its code signs Supabase
+  // Email of a password reset in progress. Opening its link signs Supabase
   // in, but the app stays signed out until the new password is set.
   const recovery = useRef<string | null>(null);
 
@@ -159,6 +194,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
       email,
       password,
       options: {
+        emailRedirectTo: CONFIRMED_URL,
         // Read by the `on_auth_user_created` trigger to create the profile
         // and the first weigh-in (supabase/migrations/…_new_user_profile.sql).
         data: {
@@ -179,18 +215,19 @@ export function SessionProvider({ children }: PropsWithChildren) {
     return { needsConfirmation: !data.session };
   }
 
-  async function confirmSignUp(email: string, code: string) {
-    const { error } = await supabase.auth.verifyOtp({
+  async function resendConfirmation(email: string) {
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
       email: normalizeEmail(email),
-      token: code.trim(),
-      type: 'email',
+      options: { emailRedirectTo: CONFIRMED_URL },
     });
-    if (error) throw toAuthError(error, 'Não foi possível confirmar o email.');
+    if (error) throw toAuthError(error, 'Não foi possível reenviar o email.');
   }
 
-  async function resendSignUpCode(email: string) {
-    const { error } = await supabase.auth.resend({ type: 'signup', email: normalizeEmail(email) });
-    if (error) throw toAuthError(error, 'Não foi possível reenviar o código.');
+  async function completeEmailLink(link: AuthLink) {
+    assertConfigured();
+    // The session it creates signs the user in through `onAuthStateChange`.
+    await exchange(link);
   }
 
   async function handleSignInWithGoogle() {
@@ -235,21 +272,24 @@ export function SessionProvider({ children }: PropsWithChildren) {
       throw new AuthError('A recuperação de senha não está disponível no modo demo.');
     }
     assertConfigured();
-    const { error } = await supabase.auth.resetPasswordForEmail(normalizeEmail(email));
-    if (error) throw toAuthError(error, 'Não foi possível enviar o código. Tente novamente.');
+    const { error } = await supabase.auth.resetPasswordForEmail(normalizeEmail(email), {
+      redirectTo: RESET_URL,
+    });
+    if (error) throw toAuthError(error, 'Não foi possível enviar o email. Tente novamente.');
   }
 
-  async function verifyResetCode(email: string, code: string) {
-    const key = normalizeEmail(email);
-    recovery.current = key;
-    const { error } = await supabase.auth.verifyOtp({
-      email: key,
-      token: code.trim(),
-      type: 'recovery',
-    });
-    if (error) {
+  async function startPasswordReset(link: AuthLink) {
+    assertConfigured();
+    // Placeholder until the account's email is known: keeps the session the
+    // link creates away from the app.
+    recovery.current = 'pending';
+    try {
+      const { user } = await exchange(link);
+      recovery.current = normalizeEmail(user.email ?? '');
+      return recovery.current;
+    } catch (error) {
       recovery.current = null;
-      throw toAuthError(error, 'Não foi possível verificar o código.');
+      throw error;
     }
   }
 
@@ -286,13 +326,13 @@ export function SessionProvider({ children }: PropsWithChildren) {
         setProfile,
         signIn,
         signUp,
-        confirmSignUp,
-        resendSignUpCode,
+        resendConfirmation,
+        completeEmailLink,
         signInWithGoogle: handleSignInWithGoogle,
         signOut,
         setWeight,
         requestPasswordReset,
-        verifyResetCode,
+        startPasswordReset,
         resetPassword,
         cancelPasswordReset,
         passwordResetEmail,
