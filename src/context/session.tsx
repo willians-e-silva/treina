@@ -13,7 +13,7 @@ import {
 } from 'react';
 
 import type { SessionUser } from '@/data/profile';
-import { AuthError, normalizeEmail, toAuthError } from '@/lib/auth';
+import { AuthError, IS_AUTH_MOCKED, normalizeEmail, toAuthError } from '@/lib/auth';
 import { signInWithGoogle, signOutFromGoogle } from '@/lib/google-auth';
 import { MOCK_PROFILE, type Profile } from '@/lib/profile';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
@@ -70,12 +70,7 @@ type SessionContextValue = {
   passwordResetEmail: string | null;
 };
 
-/**
- * Demo mode (`EXPO_PUBLIC_AUTH_MODE=demo`): signing in and up always works
- * without Supabase, with any email and password, and nothing is kept. Off by
- * default; password reset is not available in it.
- */
-export const IS_AUTH_MOCKED = process.env.EXPO_PUBLIC_AUTH_MODE === 'demo';
+export { IS_AUTH_MOCKED } from '@/lib/auth';
 const DEMO_EMAIL = 'usuario@exemplo.com';
 
 /** Before any request to Supabase Auth: fails clearly when `.env.local` lacks the keys. */

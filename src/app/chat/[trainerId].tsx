@@ -17,8 +17,8 @@ import { ThemedText } from '@/components/themed-text';
 import { TrainerAvatar } from '@/components/trainers/trainer-avatar';
 import { IconButton } from '@/components/ui/icon-button';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { useCatalog } from '@/context/catalog';
 import { useChat, type ChatMessage } from '@/context/chat';
-import { getTrainer } from '@/lib/trainers';
 import { Shape, useAppTheme } from '@/theme';
 
 /** Line height of the message being typed. */
@@ -35,7 +35,7 @@ export default function ChatScreen() {
   const { colors, typography } = useAppTheme();
   const insets = useSafeAreaInsets();
   const { trainerId } = useLocalSearchParams<{ trainerId: string }>();
-  const trainer = getTrainer(trainerId);
+  const trainer = useCatalog().getTrainer(trainerId);
   const { messagesWith, sendMessage } = useChat();
   const [draft, setDraft] = useState('');
   // Height of the whole text (the padding is on the pill), at least one line.

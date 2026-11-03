@@ -5,13 +5,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { WorkoutExerciseList } from '@/components/trainers/workout-exercise-list';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
-import { getPackage } from '@/lib/trainers';
+import { useCatalog } from '@/context/catalog';
 
 /** One workout of a trainer's package: the detailed description and the exercises with notes. */
 export default function PackageWorkoutScreen() {
   const insets = useSafeAreaInsets();
   const { packageId, index } = useLocalSearchParams<{ packageId: string; index: string }>();
-  const found = getPackage(packageId);
+  const found = useCatalog().getPackage(packageId);
   const workout = found?.pkg.workouts[Number(index)];
 
   if (!found || !workout) {

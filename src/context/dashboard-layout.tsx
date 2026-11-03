@@ -15,6 +15,9 @@ import {
 type DashboardLayoutContextValue = {
   status: StoreStatus;
   retry: () => void;
+  /** A change could not be saved; `retrySave` sends it again. */
+  saveFailed: boolean;
+  retrySave: () => void;
   /** Rows of items shown on the home dashboard, top to bottom. */
   rows: DashboardRows;
   /** Items currently shown, in reading order. */
@@ -67,6 +70,8 @@ export function DashboardLayoutProvider({ children }: PropsWithChildren) {
       value={{
         status: store.status,
         retry: store.retry,
+        saveFailed: store.saveFailed,
+        retrySave: store.retrySave,
         rows,
         widgets: rows.flat(),
         addWidget,

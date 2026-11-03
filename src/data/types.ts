@@ -3,6 +3,7 @@ import type { DashboardRows } from '@/lib/dashboard-widgets';
 import type { ExerciseEntry } from '@/lib/exercises';
 import type { FoodEntry, Meal } from '@/lib/foods';
 import type { Task } from '@/lib/tasks';
+import type { Trainer } from '@/lib/trainers';
 import type { WeighIn } from '@/lib/weight';
 import type { Workout, WorkoutCompletion, WorkoutPlan } from '@/lib/workouts';
 
@@ -38,9 +39,8 @@ export interface FoodLogRepository {
   load(): Promise<FoodLogData>;
   addEntry(entry: FoodEntry): Promise<void>;
   removeEntry(id: string): Promise<void>;
-  /** Adds the meal at its place among the diary's meals. */
-  addMeal(meal: Meal): Promise<void>;
-  removeMeal(id: string): Promise<void>;
+  /** Saves the diary's meals as given, in this order; meals left out are removed. */
+  saveMeals(meals: Meal[]): Promise<void>;
 }
 
 export interface ExerciseLogRepository {
@@ -97,6 +97,11 @@ export interface ChatRepository {
   send(trainerId: string, message: ChatMessage): Promise<void>;
 }
 
+/** The trainers and their packages; the same for every account, read-only. */
+export interface CatalogRepository {
+  load(): Promise<Trainer[]>;
+}
+
 export type Repositories = {
   weight: WeightRepository;
   foodLog: FoodLogRepository;
@@ -106,4 +111,5 @@ export type Repositories = {
   dashboardLayout: DashboardLayoutRepository;
   coaching: CoachingRepository;
   chat: ChatRepository;
+  catalog: CatalogRepository;
 };

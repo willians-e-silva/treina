@@ -20,6 +20,9 @@ import {
 type WorkoutPlanContextValue = {
   status: StoreStatus;
   retry: () => void;
+  /** A change could not be saved; `retrySave` sends it again. */
+  saveFailed: boolean;
+  retrySave: () => void;
   workouts: Workout[];
   plan: WorkoutPlan;
   completions: WorkoutCompletion[];
@@ -240,6 +243,8 @@ export function WorkoutPlanProvider({ children }: PropsWithChildren) {
       value={{
         status: store.status,
         retry: store.retry,
+        saveFailed: store.saveFailed,
+        retrySave: store.retrySave,
         workouts: store.data.workouts,
         plan: store.data.plan,
         completions: store.data.completions,

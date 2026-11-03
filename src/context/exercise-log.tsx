@@ -10,6 +10,9 @@ import type { ExerciseEntry, NewExerciseEntry } from '@/lib/exercises';
 type ExerciseLogContextValue = {
   status: StoreStatus;
   retry: () => void;
+  /** A change could not be saved; `retrySave` sends it again. */
+  saveFailed: boolean;
+  retrySave: () => void;
   entries: ExerciseEntry[];
   addEntry: (entry: NewExerciseEntry) => void;
   removeEntry: (id: string) => void;
@@ -64,6 +67,8 @@ export function ExerciseLogProvider({ children }: PropsWithChildren) {
       value={{
         status: store.status,
         retry: store.retry,
+        saveFailed: store.saveFailed,
+        retrySave: store.retrySave,
         entries: store.data,
         addEntry,
         removeEntry,

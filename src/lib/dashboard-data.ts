@@ -1,4 +1,4 @@
-export type MacroKey = "carbs" | "protein" | "fat";
+export type MacroKey = 'carbs' | 'protein' | 'fat';
 
 export type DashboardData = {
   calories: {
@@ -14,8 +14,6 @@ export type DashboardData = {
   steps: { count: number; goal: number };
   /** Calories burned and minutes of exercise today, and the daily burn goal (kcal). */
   exercise: { calories: number; minutes: number; goal: number };
-  /** Weigh-ins in kg, oldest first. */
-  weight: { date: string; kg: number }[];
 };
 
 /**
@@ -31,14 +29,4 @@ export const MOCK_DASHBOARD: DashboardData = {
   },
   steps: { count: 6840, goal: 10000 },
   exercise: { calories: 320, minutes: 45, goal: 400 },
-  weight: [
-    { date: "2026-07-20", kg: 84.6 },
-    { date: "2026-08-03", kg: 84.1 },
-    { date: "2026-08-17", kg: 83.8 },
-    { date: "2026-08-31", kg: 83.9 },
-    { date: "2026-09-14", kg: 83.2 },
-    { date: "2026-09-28", kg: 82.7 },
-    { date: "2026-10-12", kg: 82.4 },
-    { date: "2026-10-18", kg: 82.1 },
-  ],
 };

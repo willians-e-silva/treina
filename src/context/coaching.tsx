@@ -1,16 +1,20 @@
 import { createContext, use, type PropsWithChildren } from 'react';
 
+import { useCatalog } from './catalog';
 import { useSession } from './session';
 import { useWorkoutPlan } from './workout-plan';
 
 import type { CoachingMembership, Repositories } from '@/data/types';
 import { useUserStore, type StoreStatus } from '@/data/use-user-store';
-import { getPackage, packageWeek, type TrainingPackage } from '@/lib/trainers';
+import { packageWeek, type TrainingPackage } from '@/lib/trainers';
 import { WEEKDAYS } from '@/lib/workouts';
 
 type CoachingContextValue = {
   status: StoreStatus;
   retry: () => void;
+  /** A change could not be saved; `retrySave` sends it again. */
+  saveFailed: boolean;
+  retrySave: () => void;
   /** Id of the package the user follows; only one at a time. */
   joinedPackageId: string | undefined;
   isJoined: (packageId: string) => boolean;
@@ -43,6 +47,7 @@ const load = (repositories: Repositories) => repositories.coaching.load();
 export function CoachingProvider({ children }: PropsWithChildren) {
   const { session } = useSession();
   const { importWorkouts, removeWorkout, setWeekday } = useWorkoutPlan();
+  const { getPackage } = useCatalog();
   const store = useUserStore<CoachingMembership | undefined>(session, undefined, load);
 
   function save(membership: CoachingMembership | undefined) {
@@ -73,6 +78,8 @@ export function CoachingProvider({ children }: PropsWithChildren) {
       value={{
         status: store.status,
         retry: store.retry,
+        saveFailed: store.saveFailed,
+        retrySave: store.retrySave,
         joinedPackageId: store.data?.packageId,
         isJoined: (packageId) => store.data?.packageId === packageId,
         joinPackage,

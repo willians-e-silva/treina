@@ -83,10 +83,11 @@ const cardio = (name: string, minutes: number, met: number, note?: string): NewP
 });
 
 /**
- * MOCK: trainers until there is a backend. Photos come from randomuser.me;
- * the avatar shows the initials when they cannot load.
+ * The catalog of the local data source, and the source of supabase/seed.sql
+ * (scripts/generate-seed.ts). Photos come from randomuser.me; the avatar shows
+ * the initials when they cannot load.
  */
-const TRAINERS: Trainer[] = [
+export const TRAINERS: Trainer[] = [
   {
     id: 'ana-souza',
     name: 'Ana Souza',
@@ -626,13 +627,13 @@ export function packageWeek(count: number): Partial<Record<Weekday, number>> {
   return Object.fromEntries(days.map((day, index) => [day, index % count]));
 }
 
-export function getTrainer(id: string) {
-  return TRAINERS.find((trainer) => trainer.id === id);
+export function findTrainer(trainers: readonly Trainer[], id: string) {
+  return trainers.find((trainer) => trainer.id === id);
 }
 
 /** The package with `id` and the trainer who published it. */
-export function getPackage(id: string) {
-  for (const trainer of TRAINERS) {
+export function findPackage(trainers: readonly Trainer[], id: string) {
+  for (const trainer of trainers) {
     const pkg = trainer.packages.find((candidate) => candidate.id === id);
     if (pkg) return { trainer, pkg };
   }
@@ -640,10 +641,10 @@ export function getPackage(id: string) {
 }
 
 /** Trainers whose name contains every word of `query`, ignoring accents. */
-export function searchTrainers(query: string) {
+export function searchTrainers(trainers: readonly Trainer[], query: string) {
   const terms = normalizeText(query).split(/\s+/).filter(Boolean);
-  if (terms.length === 0) return TRAINERS;
-  return TRAINERS.filter((trainer) => {
+  if (terms.length === 0) return trainers;
+  return trainers.filter((trainer) => {
     const name = normalizeText(trainer.name);
     return terms.every((term) => name.includes(term));
   });

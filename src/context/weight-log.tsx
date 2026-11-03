@@ -12,6 +12,9 @@ export type { WeighIn } from '@/lib/weight';
 type WeightLogContextValue = {
   status: StoreStatus;
   retry: () => void;
+  /** A change could not be saved; `retrySave` sends it again. */
+  saveFailed: boolean;
+  retrySave: () => void;
   /** Weigh-ins, oldest first; at most one per day. */
   entries: WeighIn[];
   /** Target weight; `undefined` until the user sets one. */
@@ -57,6 +60,8 @@ export function WeightLogProvider({ children }: PropsWithChildren) {
       value={{
         status: store.status,
         retry: store.retry,
+        saveFailed: store.saveFailed,
+        retrySave: store.retrySave,
         entries: store.data.entries,
         goalKg: store.data.goalKg,
         logWeight,

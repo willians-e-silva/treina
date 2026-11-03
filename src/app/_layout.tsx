@@ -3,6 +3,8 @@ import * as SplashScreen from 'expo-splash-screen';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
+import { SaveErrorBanner } from '@/components/save-error-banner';
+import { CatalogProvider } from '@/context/catalog';
 import { ChatProvider } from '@/context/chat';
 import { CoachingProvider } from '@/context/coaching';
 import { DashboardLayoutProvider } from '@/context/dashboard-layout';
@@ -22,23 +24,25 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider value={useNavigationTheme()}>
         <SessionProvider>
-          <WeightLogProvider>
-            <FoodLogProvider>
-              <ExerciseLogProvider>
-                <WorkoutPlanProvider>
-                  <CoachingProvider>
-                    <ChatProvider>
-                      <TasksProvider>
-                        <DashboardLayoutProvider>
-                          <RootNavigator />
-                        </DashboardLayoutProvider>
-                      </TasksProvider>
-                    </ChatProvider>
-                  </CoachingProvider>
-                </WorkoutPlanProvider>
-              </ExerciseLogProvider>
-            </FoodLogProvider>
-          </WeightLogProvider>
+          <CatalogProvider>
+            <WeightLogProvider>
+              <FoodLogProvider>
+                <ExerciseLogProvider>
+                  <WorkoutPlanProvider>
+                    <CoachingProvider>
+                      <ChatProvider>
+                        <TasksProvider>
+                          <DashboardLayoutProvider>
+                            <RootNavigator />
+                          </DashboardLayoutProvider>
+                        </TasksProvider>
+                      </ChatProvider>
+                    </CoachingProvider>
+                  </WorkoutPlanProvider>
+                </ExerciseLogProvider>
+              </FoodLogProvider>
+            </WeightLogProvider>
+          </CatalogProvider>
         </SessionProvider>
       </ThemeProvider>
     </GestureHandlerRootView>
@@ -77,6 +81,7 @@ function RootNavigator() {
             so the guards above never fall back to it. */}
         <Stack.Screen name="auth/callback" />
       </Stack>
+      <SaveErrorBanner />
     </>
   );
 }

@@ -1,5 +1,12 @@
 import { isAuthApiError, isAuthError } from '@supabase/supabase-js';
 
+/**
+ * Demo mode (`EXPO_PUBLIC_AUTH_MODE=demo`): signing in and up always works
+ * without Supabase, with any email and password, and data stays in memory.
+ * Off by default; password reset is not available in it.
+ */
+export const IS_AUTH_MOCKED = process.env.EXPO_PUBLIC_AUTH_MODE === 'demo';
+
 export const PASSWORD_MIN_LENGTH = 6;
 /** Wait before another email can be sent (`auth.email.max_frequency`). */
 export const RESEND_DELAY_S = 60;

@@ -1,3 +1,4 @@
+import { useCatalog } from '@/context/catalog';
 import { useChat } from '@/context/chat';
 import { useCoaching } from '@/context/coaching';
 import { useDashboardLayout } from '@/context/dashboard-layout';
@@ -13,6 +14,7 @@ import { useWorkoutPlan } from '@/context/workout-plan';
  */
 export function useUserDataStatus() {
   const stores = [
+    useCatalog(),
     useWeightLog(),
     useFoodLog(),
     useExerciseLog(),
@@ -33,6 +35,11 @@ export function useUserDataStatus() {
           : ('ready' as const),
     retry: () => {
       for (const store of failed) store.retry();
+    },
+    /** Some change on screen could not be saved. */
+    saveFailed: stores.some((store) => store.saveFailed),
+    retrySave: () => {
+      for (const store of stores) if (store.saveFailed) store.retrySave();
     },
   };
 }

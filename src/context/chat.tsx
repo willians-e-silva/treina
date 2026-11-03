@@ -12,6 +12,9 @@ export type { ChatMessage } from '@/lib/chat';
 type ChatContextValue = {
   status: StoreStatus;
   retry: () => void;
+  /** A change could not be saved; `retrySave` sends it again. */
+  saveFailed: boolean;
+  retrySave: () => void;
   /** Messages with the trainer, oldest first. */
   messagesWith: (trainerId: string) => ChatMessage[];
   sendMessage: (trainerId: string, text: string) => void;
@@ -55,6 +58,8 @@ export function ChatProvider({ children }: PropsWithChildren) {
       value={{
         status: store.status,
         retry: store.retry,
+        saveFailed: store.saveFailed,
+        retrySave: store.retrySave,
         messagesWith: (trainerId) => store.data[trainerId] ?? [],
         sendMessage,
       }}>

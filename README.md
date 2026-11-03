@@ -65,6 +65,22 @@ trainer catalog in `seed.sql` and Row Level Security checks in `tests/rls.sql`.
 
 To change the catalog, edit `src/lib/trainers.ts` and run `npx tsx scripts/generate-seed.ts`.
 
+### Data
+
+With `EXPO_PUBLIC_DATA_SOURCE=supabase` the app reads and writes the account's data through the
+repositories in `src/data/supabase/` (one per domain, typed by `src/data/database.types.ts`).
+Changes show at once and are saved in the background, in order; when a save fails (e.g. no
+connection), a banner offers "Tentar novamente" and nothing on screen is lost.
+
+`scripts/check-supabase-repos.ts` checks those repositories against the project: it saves one
+change of each kind as a test account, reads it all back from a second sign-in (like another
+device) and undoes what it can. Use an account made only for this:
+
+```bash
+set -a; . ./.env.local; set +a
+TREINA_TEST_EMAIL=… TREINA_TEST_PASSWORD=…   npx tsx --tsconfig scripts/check/tsconfig.json scripts/check-supabase-repos.ts
+```
+
 ### Auth
 
 The app signs in with Supabase Auth (`src/context/session.tsx`); the session is kept on the device

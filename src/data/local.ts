@@ -1,11 +1,11 @@
 import type { CoachingMembership, Repositories } from './types';
 
 import type { ChatThreads } from '@/lib/chat';
-import { MOCK_DASHBOARD } from '@/lib/dashboard-data';
 import { DEFAULT_DASHBOARD, type DashboardRows } from '@/lib/dashboard-widgets';
 import type { ExerciseEntry } from '@/lib/exercises';
-import { DEFAULT_MEALS, insertMeal, type FoodEntry, type Meal } from '@/lib/foods';
+import { DEFAULT_MEALS, type FoodEntry, type Meal } from '@/lib/foods';
 import type { Task } from '@/lib/tasks';
+import { TRAINERS } from '@/lib/trainers';
 import { upsertWeighIn, type WeighIn } from '@/lib/weight';
 import { EMPTY_PLAN, type Workout, type WorkoutCompletion, type WorkoutPlan } from '@/lib/workouts';
 
@@ -26,8 +26,7 @@ type UserData = {
 
 function newUserData(): UserData {
   return {
-    // TEMPORARY: the mock history every account starts with (removed in phase 4, I-03).
-    weighIns: [...MOCK_DASHBOARD.weight],
+    weighIns: [],
     goalKg: undefined,
     foodEntries: [],
     meals: [...DEFAULT_MEALS],
@@ -84,13 +83,8 @@ export function localRepositories(userId: string): Repositories {
       async removeEntry(id) {
         data.foodEntries = data.foodEntries.filter((entry) => entry.id !== id);
       },
-      async addMeal(meal) {
-        if (!data.meals.some((other) => other.id === meal.id)) {
-          data.meals = insertMeal(data.meals, meal);
-        }
-      },
-      async removeMeal(id) {
-        data.meals = data.meals.filter((meal) => meal.id !== id);
+      async saveMeals(meals) {
+        data.meals = meals;
       },
     },
     exerciseLog: {
@@ -159,6 +153,11 @@ export function localRepositories(userId: string): Repositories {
       },
       async save(membership) {
         data.membership = membership;
+      },
+    },
+    catalog: {
+      async load() {
+        return TRAINERS;
       },
     },
     chat: {

@@ -7,14 +7,14 @@ import { TrainerAvatar } from './trainer-avatar';
 import { ThemedText } from '@/components/themed-text';
 import { StateLayer } from '@/components/ui/state-layer';
 import { Spacing } from '@/constants/theme';
-import { getPackage } from '@/lib/trainers';
+import { useCatalog } from '@/context/catalog';
 import type { WorkoutSource } from '@/lib/workouts';
 import { MinTouchTarget, Shape, useAppTheme } from '@/theme';
 
 /** Trainer and package a workout was copied from; opens the package. */
 export function WorkoutSourceRow({ source }: { source: WorkoutSource }) {
   const { colors } = useAppTheme();
-  const found = getPackage(source.packageId);
+  const found = useCatalog().getPackage(source.packageId);
   if (!found) return null;
   const { trainer, pkg } = found;
 

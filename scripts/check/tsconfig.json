@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "target": "es2022",
+    "baseUrl": "../..",
+    "paths": {
+      "@/lib/supabase": ["./scripts/check/supabase-node.ts"],
+      "lucide-react-native/icons/*": ["./scripts/check/icon-stub.ts"],
+      "expo-crypto": ["./scripts/check/crypto-stub.ts"],
+      "@/*": ["./src/*"]
+    }
+  }
+}

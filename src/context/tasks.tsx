@@ -17,6 +17,9 @@ import {
 type TasksContextValue = {
   status: StoreStatus;
   retry: () => void;
+  /** A change could not be saved; `retrySave` sends it again. */
+  saveFailed: boolean;
+  retrySave: () => void;
   tasks: Task[];
   addTask: (task: NewTask) => void;
   removeTask: (id: string) => void;
@@ -119,6 +122,8 @@ export function TasksProvider({ children }: PropsWithChildren) {
       value={{
         status: store.status,
         retry: store.retry,
+        saveFailed: store.saveFailed,
+        retrySave: store.retrySave,
         tasks: store.data,
         addTask,
         removeTask,

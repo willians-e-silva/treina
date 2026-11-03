@@ -1,5 +1,3 @@
-import { MOCK_DASHBOARD } from './dashboard-data';
-
 /** `unspecified`: the user preferred not to say. */
 export type Sex = 'female' | 'male' | 'unspecified';
 
@@ -37,15 +35,14 @@ export type Profile = {
 
 /**
  * Profile of the demo mode, and the body data used for estimates (e.g.
- * calories) while the user's own is missing. The weight follows the latest
- * mock weigh-in, so it matches the home dashboard.
+ * calories) while the user's own is missing.
  */
 export const MOCK_PROFILE: Omit<Profile, 'email'> & { weightKg: number } = {
   name: 'Usuário Treina',
   birthDate: '1996-01-01',
   sex: 'male',
   heightCm: 178,
-  weightKg: MOCK_DASHBOARD.weight[MOCK_DASHBOARD.weight.length - 1].kg,
+  weightKg: 82,
 };
 
 /** Full years on `today` of someone born on `birthDate` (both `YYYY-MM-DD`). */

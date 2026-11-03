@@ -18,6 +18,9 @@ import {
 type FoodLogContextValue = {
   status: StoreStatus;
   retry: () => void;
+  /** A change could not be saved; `retrySave` sends it again. */
+  saveFailed: boolean;
+  retrySave: () => void;
   entries: FoodEntry[];
   addEntry: (entry: NewFoodEntry) => void;
   removeEntry: (id: string) => void;
@@ -95,17 +98,20 @@ export function FoodLogProvider({ children }: PropsWithChildren) {
         : { id: `custom-${createId()}`, name: input.name.trim() };
     if (!meal?.name) return;
     let added = false;
-    store.update((data) => {
+    const { meals } = store.update((data) => {
       if (data.meals.some((other) => other.id === meal.id)) return data;
       added = true;
       return { ...data, meals: insertMeal(data.meals, meal) };
     });
-    if (added) store.write((repositories) => repositories.foodLog.addMeal(meal));
+    if (added) store.write((repositories) => repositories.foodLog.saveMeals(meals));
   }
 
   function removeMeal(id: string) {
-    store.update((data) => ({ ...data, meals: data.meals.filter((meal) => meal.id !== id) }));
-    store.write((repositories) => repositories.foodLog.removeMeal(id));
+    const { meals } = store.update((data) => ({
+      ...data,
+      meals: data.meals.filter((meal) => meal.id !== id),
+    }));
+    store.write((repositories) => repositories.foodLog.saveMeals(meals));
   }
 
   return (
@@ -113,6 +119,8 @@ export function FoodLogProvider({ children }: PropsWithChildren) {
       value={{
         status: store.status,
         retry: store.retry,
+        saveFailed: store.saveFailed,
+        retrySave: store.retrySave,
         entries: store.data.entries,
         addEntry,
         removeEntry,
