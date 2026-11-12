@@ -167,7 +167,7 @@
   function viewScreens() {
     var groups = ['Todas'].concat(D.screens.map(function (s) { return s.group; }).filter(function (g, i, a) { return a.indexOf(g) === i; }));
     var items = D.screens.filter(function (s) { return screenFilter === 'Todas' || s.group === screenFilter; });
-    return head('Seção 2', 'Telas', D.screens.length + ' telas e 5 diálogos analisados. Abra uma tela para ver funcionalidades, UX, técnica, oportunidades, notas e arquivos.') +
+    return head('Seção 2', 'Telas', D.screens.length + ' telas e ' + D.counts.dialogs + ' diálogos e avisos analisados. Abra uma tela para ver funcionalidades, UX, técnica, oportunidades, notas e arquivos.') +
       '<div class="toolbar"><div class="seg" role="group" aria-label="Filtrar por grupo">' + groups.map(function (g) {
         return '<button type="button" data-sf="' + esc(g) + '" aria-pressed="' + (g === screenFilter) + '">' + esc(g) + '</button>';
       }).join('') + '</div></div>' +
@@ -332,7 +332,7 @@
     var domRows = A.domains.map(function (d) {
       return '<tr><td><b>' + esc(d.name) + '</b></td><td><code>' + esc(d.context) + '</code></td><td><code>' + esc(d.lib) + '</code></td><td>' + d.screens.map(function (s) { return '<code>' + esc(s) + '</code>'; }).join(' ') + '</td></tr>';
     }).join('');
-    return head('Seção 5', 'Arquitetura', 'Estrutura identificada no código: camadas, estado global, domínios e integrações. A recomendação central é criar a camada de repositório antes de continuar adicionando telas.') +
+    return head('Seção 5', 'Arquitetura', 'Estrutura identificada no código: camadas, estado global, domínios e integrações. A camada de repositório já existe; os próximos passos são carregamento por seção e por período e uma fila de salvamento persistida.') +
       '<section class="card"><div class="card-head"><h2>Camadas e dependências</h2><span class="faint">setas tracejadas: quem usa quem</span></div><div class="arch"><div class="layer-stack">' +
       A.layers.map(function (l, i) {
         var cls = i === 0 ? 'l-routes' : l.name.indexOf('Contextos') === 0 ? 'l-ctx' : '';
@@ -345,10 +345,10 @@
       '<section class="card"><h2>Integrações</h2><div class="table-wrap"><table><thead><tr><th>Serviço</th><th>Onde</th><th>Observação</th></tr></thead><tbody>' +
       A.external.map(function (e) { return '<tr><td><b>' + esc(e.name) + '</b></td><td><code>' + esc(e.used) + '</code></td><td>' + esc(e.note) + '</td></tr>'; }).join('') + '</tbody></table></div></section>' +
       '<div class="pc"><section class="card"><h2>Pontos positivos</h2>' + list(A.pros, 'list-plus') + '</section><section class="card"><h2>Pontos negativos</h2>' + list(A.cons, 'list-minus') + '</section></div>' +
-      '<section class="card"><h2>Arquitetura recomendada para a integração</h2><div class="chain" role="img" aria-label="Telas chamam hooks, hooks chamam repositórios, repositórios têm implementação local agora e HTTP depois">' +
-      ['Telas e componentes', 'Hooks de domínio', 'Interfaces de repositório', 'Implementação local (agora)', 'Implementação HTTP (fase 5)'].map(function (t, i) {
-        return '<div class="node ' + (i === 4 ? 'missing' : 'ok') + '" style="flex-basis:180px"><div class="box"><span class="d"></span>' + esc(t) + '</div></div>';
-      }).join('') + '</div><p class="muted">As telas continuam falando com os mesmos hooks; só a implementação do repositório muda. Os tipos de <code>src/lib</code> viram o contrato inicial da API, e os dados de exemplo passam a ser fixtures ativadas apenas em modo demo.</p></section>';
+      '<section class="card"><h2>Como um registro é salvo hoje</h2><div class="chain" role="img" aria-label="A tela chama o contexto, que mostra a mudança na hora, coloca o salvamento na fila do useUserStore, o repositório grava no Supabase com RLS e, em caso de erro, aparece o aviso com Tentar novamente">' +
+      [['Tela', 'ok'], ['Contexto: mostra na hora', 'ok'], ['useUserStore: fila em ordem', 'friction'], ['Repositório Supabase', 'ok'], ['Postgres + RLS', 'ok'], ['Falha → aviso com Tentar novamente', 'ok']].map(function (t) {
+        return '<div class="node ' + t[1] + '" style="flex-basis:170px"><div class="box"><span class="d"></span>' + esc(t[0]) + '</div></div>';
+      }).join('') + '</div><p class="muted">A fila (em amarelo) vive só na memória: se o app fechar antes de salvar, a mudança se perde (N-11). No modo demo, o repositório é <code>src/data/local.ts</code>, com a mesma interface.</p></section>';
   }
 
   function viewFlows() {
@@ -403,14 +403,14 @@
     });
     cells += '<div></div><div class="ax">Complexidade baixa</div><div class="ax">média</div><div class="ax">alta</div>';
     var pris = ['Todas', 'P0', 'P1', 'P2', 'P3'];
-    return head('Seção 9', 'Roadmap de evolução', 'Cinco fases ordenadas por impacto, dependências e esforço. As fases 1 a 4 não dependem do backend; a fase 5 é a integração e o lançamento.') +
+    return head('Seção 9', 'Roadmap de evolução', 'Cinco fases ordenadas por impacto, dependências e esforço. A fase 1 trata o que já causou problema no aparelho; a 5, os requisitos de loja e privacidade.') +
       '<div class="grid g-2"><section class="card"><div class="card-head"><h2>Impacto × complexidade</h2><span class="faint">verde: maior retorno por esforço</span></div><div class="matrix">' + cells + '</div><p class="faint">Borda vermelha: P0 · laranja: P1.</p></section>' +
       '<section class="card"><h2>Cinco ações mais importantes</h2><ol style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px">' +
-      ['<b>R-03 + R-04</b> · Camada de repositório e persistência local. Destrava testes reais e a integração.',
-       '<b>R-01 + R-02</b> · Isolar dados por conta e tirar dados fictícios do estado do usuário.',
-       '<b>R-08</b> · Metas calculadas do perfil, cumprindo a promessa do cadastro.',
-       '<b>R-09 + R-12</b> · Edição de registros e histórico de treinos.',
-       '<b>R-07</b> · Testes de domínio e CI antes do OTA.'].map(function (t) { return '<li>' + t + '</li>'; }).join('') + '</ol></section></div>' +
+      ['<b>R-01 + R-02</b> · Verificação nativa no CI e monitoramento de erros.',
+       '<b>R-09 + R-25</b> · Perfil editável, configurações, excluir conta e consentimento.',
+       '<b>R-07</b> · Metas calculadas do perfil.',
+       '<b>R-08 + R-10</b> · Edição de registros e histórico de treinos.',
+       '<b>R-03 + R-11 + R-12</b> · Carregamento por seção e por período e fila persistida.'].map(function (t) { return '<li>' + t + '</li>'; }).join('') + '</ol></section></div>' +
       '<div class="toolbar"><div class="seg" role="group" aria-label="Filtrar por prioridade">' + pris.map(function (p) {
         return '<button type="button" data-rp="' + p + '" aria-pressed="' + (p === roadPri) + '">' + p + '</button>';
       }).join('') + '</div></div>' +
@@ -442,7 +442,7 @@
       kpi('Nota anterior', num(o.previousScore) + '<small> /10</small>', D.meta.previousAudit) +
       kpi('Nota atual', num(o.score) + '<small> /10</small>', 'commit ' + D.meta.commit) +
       order.map(function (k) { return kpi(k, counts[k] || 0, k === 'Resolvido' ? 'corrigidos no código' : k === 'Parcial' ? 'melhoraram, ainda abertos' : 'sem mudança'); }).join('') +
-      kpi('Problemas novos', D.issues.filter(function (i) { return i.id.indexOf('N-') === 0; }).length, 'encontrados nesta edição') +
+      kpi('Problemas atuais', D.issues.filter(function (i) { return i.id.indexOf('N-') === 0; }).length, 'abertos nesta edição (N-)') +
       '</div>' +
       '<section class="card"><div class="card-head"><h2>Situação dos ' + E.length + ' problemas anteriores</h2><div class="legend">' + order.map(function (k) { return '<span><i style="background:var(--' + (cls[k] === 'good' ? 'good' : cls[k] === 'warning' ? 'warning' : 'critical') + ')"></i>' + k + ' (' + (counts[k] || 0) + ')</span>'; }).join('') + '</div></div>' + bar + '</section>' +
       '<div class="table-wrap"><table><thead><tr><th>ID</th><th>Problema</th><th>Situação</th><th>Observação</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
