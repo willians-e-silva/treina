@@ -1,10 +1,8 @@
 # Treina — Fluxograma do projeto
 
-Visão geral do app **Treina** (Expo SDK 58 + Expo Router + Supabase): features, commits aplicados, telas,
-arquitetura de dados e próximos passos. Os diagramas usam [Mermaid](https://mermaid.js.org/) e são renderizados
-direto pelo GitHub.
+Visão geral do app **Treina** (Expo SDK 58 + Expo Router + Supabase): features, commits aplicados, telas e possíveis alterações futuras. Os diagramas usam [Mermaid](https://mermaid.js.org/) e são renderizados direto pelo GitHub.
 
-> Estado analisado: `f21319a` na `main` (2026-11-12), 34 commits.
+> Estado analisado: `f21319a` (2026-11-12).
 
 ---
 
@@ -100,9 +98,11 @@ gitGraph
     commit id: "f21319a fase 1 roadmap"
 ```
 
+> O `81a9540` foi criado localmente, sem relação com o `a71eb20` do GitHub; o merge `befc2eb` uniu os dois históricos.
+
 | Período | Commits | O que entrou |
 | --- | --- | --- |
-| 18/10 · Base | `a71eb20`, `81a9540`, `befc2eb` | Expo Router, login (e-mail simulado + Google), splash animado, abas deslizantes próprias, tema claro/escuro. O `81a9540` foi criado localmente e unido ao `a71eb20` do GitHub pelo merge `befc2eb`. |
+| 18/10 · Base | `a71eb20`, `81a9540`, `befc2eb` | Expo Router, login (e-mail simulado + Google), splash animado, abas deslizantes próprias, tema claro/escuro. |
 | 18–28/10 · Features | `33c12f6`, `d6ba8db`, `71a5680` | Dashboard do dia, aba Exercícios com ExerciseDB e cálculo de kcal por MET, tarefas com repetição e subtarefas, perfil. |
 | 29–30/10 · EAS, diário e visual | `3e47e46` … `89cc59a` | Configuração do EAS e workflow de OTA, diário alimentar (TACO embarcada + Open Food Facts), refeições configuráveis, design system Material 3 gerado do ícone, tela inicial com widgets arrastáveis. |
 | 02/11 · Treinadores | `5fd90b1`, `a645770`, `de10529` | Aba Treinador, perfil do treinador, pacotes de treinos, plano semanal ou em fila, sessão cronometrada com sensação, chat; limpeza de código não usado; ajustes no login. |
@@ -191,7 +191,7 @@ flowchart LR
 
 ---
 
-## 4. Arquitetura de dados
+## 4. Fluxo de dados das features
 
 ```mermaid
 flowchart LR
@@ -247,55 +247,24 @@ flowchart LR
 | Regras | `src/lib/*` | Lógica pura que continua no app (fila de treinos, repetição de tarefas, ordem das refeições, kcal por MET), agora coberta por 28 testes em `src/lib/__tests__` |
 | Desfazer | `components/undo-snackbar.tsx`, `ui/confirm-dialog.tsx` | Snackbar com Desfazer para remoções simples e diálogo de confirmação para ações grandes |
 
----
-
-## 5. Fluxo de autenticação
+### Regras das tarefas
 
 ```mermaid
 flowchart TD
-    Open(["App abre"]) --> Restore["Lê a sessão salva<br/>(expo-sqlite / localStorage na web)"]
-    Restore --> Has{"Sessão válida?"}
-    Has -- "sim" --> Profile["Carrega o perfil (profiles)"] --> Check{"Perfil completo?"}
-    Check -- "sim" --> App["Abas"]
-    Check -- "não" --> CP["Complete seu perfil<br/>saveBodyData + pesagem"] --> App
-    Has -- "não" --> Login["Login"]
-
-    Login --> Mode{"EXPO_PUBLIC_AUTH_MODE"}
-    Mode -- "demo" --> Demo["Entra com qualquer e-mail<br/>dados em memória"] --> App
-    Mode -- "vazio" --> Real["signInWithPassword /<br/>signInWithIdToken (Google)"]
-    Real -- "e-mail não confirmado" --> Confirm["/signup/confirm<br/>reenviar e-mail"]
-    Real -- "ok" --> Profile
-
-    SignUp["Cadastro em 2 etapas"] --> Create["signUp + profiles<br/>(trigger new_user_profile)"]
-    Create --> Confirm
-    Confirm -.->|"link treina://auth/callback?code="| Exchange["exchangeCodeForSession"] --> Profile
-
-    App -- "Sair" --> Out["signOut<br/>stores voltam ao vazio"] --> Login
+    New["Nova tarefa"] --> Rep{"Repetição"}
+    Rep -- "Não repete" --> OneOff["kind: none<br/>aparece todo dia até ser concluída,<br/>depois só no dia da conclusão"]
+    Rep -- "Todo dia / Toda semana /<br/>A cada N dias|semanas" --> Every["kind: every<br/>devida quando dias desde startDate<br/>% (N × 1|7) = 0"]
+    OneOff --> Sub{"Tem subtarefas?"}
+    Every --> Sub
+    Sub -- "sim" --> Sync["Tarefa concluída no dia ⇔<br/>todas as subtarefas concluídas"]
+    Sub -- "não" --> Toggle["Marcar / desmarcar no dia"]
 ```
 
 ---
 
-## 6. Entrega (workflow do EAS)
+## 5. Possíveis alterações futuras
 
-```mermaid
-flowchart LR
-    Push(["push na main"]) --> Checks
-    subgraph Checks["checks · ambiente preview"]
-        direction TB
-        E["check-env<br/>variáveis obrigatórias"] --> Li["lint"] --> Ty["typecheck"] --> Te["testes (Jest)"]
-    end
-    Checks -- "falhou" --> Stop["Nada é publicado"]
-    Checks -- "ok" --> FP["fingerprint nativo"]
-    FP --> GB{"Build preview<br/>compatível?"}
-    GB -- "sim" --> OTA["Atualização OTA<br/>canal preview"]
-    GB -- "não" --> Build["Novo build Android"]
-```
-
-Antes do `f21319a`, o workflow publicava a atualização direto, sem verificação; foi assim que o crash do `ExpoSQLite` chegou ao celular. Agora qualquer falha em variáveis, lint, typecheck ou testes interrompe a publicação. Ainda não há um teste do APK aberto no aparelho antes de liberar o canal.
-
----
-
-## 7. O que ainda é simulado ou falta
+Levantadas a partir dos `TODO` / `TEMPORARY` no código, das lacunas atuais e do roadmap da auditoria em `audit/`.
 
 ```mermaid
 flowchart TD
@@ -324,7 +293,7 @@ flowchart TD
     L --> L3["Smoke test do APK e iOS"]
 ```
 
-| Área | Situação na `main` | Próximo passo |
+| Área | Onde está hoje | Sugestão |
 | --- | --- | --- |
 | Conta | Supabase Auth, Google, confirmação e recuperação de senha; perfil incompleto pede os dados antes das abas | Editar o perfil depois (só peso e meta são editáveis) |
 | Dados | Persistidos por conta com RLS; fila de salvamento com nova tentativa; remoções com Desfazer | Edição de registros, fila persistida no aparelho, carregamento por período |
