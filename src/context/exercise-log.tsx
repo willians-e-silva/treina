@@ -16,6 +16,8 @@ type ExerciseLogContextValue = {
   entries: ExerciseEntry[];
   addEntry: (entry: NewExerciseEntry) => void;
   removeEntry: (id: string) => void;
+  /** Puts back an entry just removed ("Desfazer"), with its id. */
+  restoreEntry: (entry: ExerciseEntry) => void;
 };
 
 const ExerciseLogContext = createContext<ExerciseLogContextValue | null>(null);
@@ -63,6 +65,11 @@ export function ExerciseLogProvider({ children }: PropsWithChildren) {
     store.write((repositories) => repositories.exerciseLog.remove(id));
   }
 
+  function restoreEntry(entry: ExerciseEntry) {
+    store.update((entries) => [...entries, entry]);
+    store.write((repositories) => repositories.exerciseLog.add(entry));
+  }
+
   return (
     <ExerciseLogContext
       value={{
@@ -73,6 +80,7 @@ export function ExerciseLogProvider({ children }: PropsWithChildren) {
         entries: store.data,
         addEntry,
         removeEntry,
+        restoreEntry,
       }}>
       {children}
     </ExerciseLogContext>

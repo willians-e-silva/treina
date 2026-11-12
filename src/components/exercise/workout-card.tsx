@@ -19,7 +19,6 @@ import { useExerciseLog } from '@/context/exercise-log';
 import { useSession } from '@/context/session';
 import { useWorkoutPlan } from '@/context/workout-plan';
 import { estimateCalories, fromDateKey, toDateKey, type ExerciseEntry } from '@/lib/exercises';
-import { MOCK_PROFILE } from '@/lib/profile';
 import {
   describePlanned,
   FEELING_LABELS,
@@ -40,7 +39,7 @@ export function WorkoutCard({ date }: { date: string }) {
   const { workouts, plan, completions, completeWorkout, undoCompletion } = useWorkoutPlan();
   const session = completions.find((completion) => completion.date === date)?.session;
   const { entries, addEntry, removeEntry } = useExerciseLog();
-  const bodyWeightKg = useSession().profile?.weightKg ?? MOCK_PROFILE.weightKg;
+  const bodyWeightKg = useSession().profile?.weightKg ?? null;
   const today = toDateKey(new Date());
   const current = getWorkoutForDate(plan, workouts, completions, date, today);
   // Future days only preview the workout: nothing can be logged yet.
@@ -56,7 +55,10 @@ export function WorkoutCard({ date }: { date: string }) {
         ...base,
         category: 'cardio',
         minutes: exercise.minutes,
-        calories: exercise.met ? estimateCalories(exercise.met, bodyWeightKg, exercise.minutes) : 0,
+        calories:
+          exercise.met && bodyWeightKg !== null
+            ? estimateCalories(exercise.met, bodyWeightKg, exercise.minutes)
+            : 0,
       });
     } else {
       addEntry({

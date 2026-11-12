@@ -102,11 +102,27 @@ per hour. Set up your own SMTP (Authentication → Emails → SMTP Settings) bef
 sign up. Signing in with Google also needs the Google provider enabled in the dashboard with
 the app's client IDs.
 
-## Other setup steps
+## Environment variables
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+`.env.local` is only read on your machine. EAS builds and updates read the variables of the
+**preview** environment on expo.dev (Project → Environment variables), so every key in
+`.env.example` must be set there too. `npm run check-env` lists the ones missing; outside the
+demo mode these are required:
+
+- `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` (Android needs it for Google to return an idToken)
+
+## Checks
+
+```bash
+npm run lint        # ESLint
+npm run typecheck   # tsc --noEmit
+npm test            # Jest (jest-expo): rules in src/lib
+npm run check-env   # required environment variables
+```
+
+The `Preview no celular` workflow (`.eas/workflows/preview.yml`) runs all four before the
+fingerprint, so a failing check stops both the new build and the OTA update.
 
 ## Learn more
 

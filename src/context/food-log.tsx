@@ -24,6 +24,8 @@ type FoodLogContextValue = {
   entries: FoodEntry[];
   addEntry: (entry: NewFoodEntry) => void;
   removeEntry: (id: string) => void;
+  /** Puts back an entry just removed ("Desfazer"), with its id. */
+  restoreEntry: (entry: FoodEntry) => void;
   /** Meals shown in the diary, in order. */
   meals: Meal[];
   /** Adds a preset by id, or a custom meal by name. */
@@ -91,6 +93,11 @@ export function FoodLogProvider({ children }: PropsWithChildren) {
     store.write((repositories) => repositories.foodLog.removeEntry(id));
   }
 
+  function restoreEntry(entry: FoodEntry) {
+    store.update((data) => ({ ...data, entries: [...data.entries, entry] }));
+    store.write((repositories) => repositories.foodLog.addEntry(entry));
+  }
+
   function addMeal(input: { presetId: string } | { name: string }) {
     const meal =
       'presetId' in input
@@ -124,6 +131,7 @@ export function FoodLogProvider({ children }: PropsWithChildren) {
         entries: store.data.entries,
         addEntry,
         removeEntry,
+        restoreEntry,
         meals: store.data.meals,
         addMeal,
         removeMeal,

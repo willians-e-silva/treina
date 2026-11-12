@@ -1,4 +1,4 @@
-import type { PropsWithChildren } from 'react';
+import type { PropsWithChildren, ReactNode } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -16,6 +16,8 @@ type StepScreenProps = PropsWithChildren<{
   submitLabel: string;
   submitting?: boolean;
   onSubmit: () => void;
+  /** Shown under the main button, e.g. a secondary action. */
+  footer?: ReactNode;
 }>;
 
 /** Shared layout of the sign-up steps: progress, title, fields and the main button. */
@@ -28,6 +30,7 @@ export function StepScreen({
   submitLabel,
   submitting,
   onSubmit,
+  footer,
   children,
 }: StepScreenProps) {
   const { colors } = useAppTheme();
@@ -79,6 +82,7 @@ export function StepScreen({
             onPress={onSubmit}
             style={styles.submit}
           />
+          {footer}
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

@@ -10,6 +10,7 @@ import { ThemedText } from '@/components/themed-text';
 import { IconButton } from '@/components/ui/icon-button';
 import { StateLayer } from '@/components/ui/state-layer';
 import { Surface } from '@/components/ui/surface';
+import { useUndo } from '@/components/undo-snackbar';
 import { Spacing } from '@/constants/theme';
 import { useTasks } from '@/context/tasks';
 import { MinTouchTarget, Shape, useAppTheme } from '@/theme';
@@ -28,7 +29,8 @@ type TaskSectionProps = {
 /** Panel with a checklist of tasks, like the exercise diary sections. */
 export function TaskSection({ title, icon: Icon, color, date, tasks, empty }: TaskSectionProps) {
   const { colors } = useAppTheme();
-  const { toggleTask, removeTask, toggleSubtask, removeSubtask } = useTasks();
+  const { toggleTask, removeTask, restoreTask, toggleSubtask, removeSubtask } = useTasks();
+  const { showUndo } = useUndo();
   const done = tasks.filter((task) => isTaskDone(task, date)).length;
 
   return (
@@ -68,7 +70,10 @@ export function TaskSection({ title, icon: Icon, color, date, tasks, empty }: Ta
                 details={details.join(' · ')}
                 checked={isTaskDone(task, date)}
                 onToggle={() => toggleTask(task.id, date)}
-                onRemove={() => removeTask(task.id)}
+                onRemove={() => {
+                  removeTask(task.id);
+                  showUndo('Tarefa excluída', () => restoreTask(task));
+                }}
                 onAddSubtask={() =>
                   router.push({ pathname: '/add-task', params: { date, parentId: task.id } })
                 }

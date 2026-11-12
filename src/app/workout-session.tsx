@@ -22,7 +22,7 @@ import { useExerciseLog } from '@/context/exercise-log';
 import { useSession } from '@/context/session';
 import { useWorkoutPlan } from '@/context/workout-plan';
 import { estimateCalories, toDateKey } from '@/lib/exercises';
-import { MOCK_PROFILE, parseDecimal } from '@/lib/profile';
+import { parseDecimal } from '@/lib/profile';
 import {
   describePlanned,
   formatDuration,
@@ -71,7 +71,7 @@ export default function WorkoutSessionScreen() {
   const date = params.date ?? toDateKey(new Date());
   const { workouts, completeWorkout } = useWorkoutPlan();
   const { entries, addEntry, removeEntry } = useExerciseLog();
-  const bodyWeightKg = useSession().profile?.weightKg ?? MOCK_PROFILE.weightKg;
+  const bodyWeightKg = useSession().profile?.weightKg ?? null;
   const workout = workouts.find((candidate) => candidate.id === params.workoutId);
 
   const [startedAt] = useState(() => Date.now());
@@ -142,7 +142,10 @@ export default function WorkoutSessionScreen() {
           ...base,
           category: 'cardio',
           minutes,
-          calories: exercise.met ? estimateCalories(exercise.met, bodyWeightKg, minutes) : 0,
+          calories:
+            exercise.met && bodyWeightKg !== null
+              ? estimateCalories(exercise.met, bodyWeightKg, minutes)
+              : 0,
         });
       } else {
         addEntry({

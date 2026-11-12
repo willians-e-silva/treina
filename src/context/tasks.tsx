@@ -23,6 +23,8 @@ type TasksContextValue = {
   tasks: Task[];
   addTask: (task: NewTask) => void;
   removeTask: (id: string) => void;
+  /** Puts back a task just removed ("Desfazer"), with its subtasks and done dates. */
+  restoreTask: (task: Task) => void;
   /** Marks the task, and all its subtasks, done on `date`, or undone if it already was. */
   toggleTask: (id: string, date: string) => void;
   /** `date` is the day on screen, where the task's done state is updated. */
@@ -72,6 +74,11 @@ export function TasksProvider({ children }: PropsWithChildren) {
   function removeTask(id: string) {
     store.update((current) => current.filter((task) => task.id !== id));
     store.write((repositories) => repositories.tasks.remove(id));
+  }
+
+  function restoreTask(task: Task) {
+    store.update((current) => [...current, task]);
+    store.write((repositories) => repositories.tasks.add(task));
   }
 
   function toggleTask(id: string, date: string) {
@@ -127,6 +134,7 @@ export function TasksProvider({ children }: PropsWithChildren) {
         tasks: store.data,
         addTask,
         removeTask,
+        restoreTask,
         toggleTask,
         addSubtask,
         removeSubtask,

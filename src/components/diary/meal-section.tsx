@@ -8,6 +8,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
 import { IconButton } from '@/components/ui/icon-button';
 import { Surface } from '@/components/ui/surface';
+import { useUndo } from '@/components/undo-snackbar';
 import { Spacing } from '@/constants/theme';
 import { useFoodLog } from '@/context/food-log';
 import { useAppTheme } from '@/theme';
@@ -26,7 +27,8 @@ type MealSectionProps = {
 /** One diary meal with its foods, its total kcal and an add button. */
 export function MealSection({ meal, date, entries, removed }: MealSectionProps) {
   const { colors } = useAppTheme();
-  const { removeEntry } = useFoodLog();
+  const { removeEntry, restoreEntry } = useFoodLog();
+  const { showUndo } = useUndo();
   const total = sumNutrients(entries.map((entry) => entry.nutrients));
   const { icon: Icon, color } = useMealIcon(meal.id);
 
@@ -64,7 +66,10 @@ export function MealSection({ meal, date, entries, removed }: MealSectionProps) 
             <ThemedText type="titleSmall">{formatInt(entry.nutrients.kcal)} kcal</ThemedText>
             <IconButton
               icon={Trash}
-              onPress={() => removeEntry(entry.id)}
+              onPress={() => {
+                removeEntry(entry.id);
+                showUndo(`${entry.name} removido`, () => restoreEntry(entry));
+              }}
               accessibilityLabel={`Remover ${entry.name}`}
             />
           </View>

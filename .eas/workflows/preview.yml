@@ -1,5 +1,6 @@
-# On every push to main: publishes an OTA update when a compatible preview
-# build exists (same native fingerprint), or makes a new build otherwise.
+# On every push to main: checks the code first, then publishes an OTA update
+# when a compatible preview build exists (same native fingerprint), or makes a
+# new build otherwise. Nothing ships if the checks fail.
 name: Preview no celular
 
 on:
@@ -7,8 +8,29 @@ on:
     branches: ['main']
 
 jobs:
+  checks:
+    name: Lint, typecheck, testes e variáveis
+    environment: preview
+    steps:
+      - uses: eas/checkout
+      - uses: eas/install_node_modules
+      # Variables of the preview environment on expo.dev: a missing key would
+      # only fail when used, on the phone.
+      - name: Variáveis de ambiente
+        run: npm run check-env
+      - name: Lint
+        run: npm run lint
+      - name: Typecheck
+        # expo-env.d.ts is git-ignored (Expo writes it on start); tsconfig.json includes it.
+        run: |
+          echo '/// <reference types="expo/types" />' > expo-env.d.ts
+          npm run typecheck
+      - name: Testes
+        run: npm test -- --ci
+
   fingerprint:
     name: Fingerprint
+    needs: [checks]
     type: fingerprint
     environment: preview
 

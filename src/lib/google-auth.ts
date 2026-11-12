@@ -1,5 +1,7 @@
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 
+import { IS_AUTH_MOCKED } from './auth';
+
 export type GoogleUser = {
   email: string;
   name: string | null;
@@ -38,6 +40,13 @@ export async function signInWithGoogle(): Promise<GoogleUser | null> {
   const lib = getGoogleSignin();
   if (!lib) {
     throw new GoogleSignInError('Login com Google requer um development build.');
+  }
+  // Without it Google signs in but returns no idToken for Supabase (the demo
+  // mode needs only the email).
+  if (!IS_AUTH_MOCKED && !process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID) {
+    throw new GoogleSignInError(
+      'O login com Google não está configurado neste app: falta EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID.',
+    );
   }
   const { GoogleSignin, isErrorWithCode, isSuccessResponse, statusCodes } = lib;
 

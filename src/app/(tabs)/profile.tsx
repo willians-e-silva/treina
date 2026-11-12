@@ -12,6 +12,7 @@ import { formatDecimal, formatInt } from '@/components/dashboard/format';
 import { TabScreen } from '@/components/tab-screen';
 import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Surface } from '@/components/ui/surface';
 import {
   describeGoalProgress,
@@ -21,6 +22,7 @@ import {
 import { Spacing } from '@/constants/theme';
 import { useSession } from '@/context/session';
 import { useWeightLog } from '@/context/weight-log';
+import { DATA_SOURCE } from '@/data';
 import { toDateKey } from '@/lib/exercises';
 import { ageOn, formatHeight, getInitials, MOCK_PROFILE, SEX_LABELS } from '@/lib/profile';
 import { Shape, useAppTheme } from '@/theme';
@@ -35,6 +37,7 @@ export default function ProfileScreen() {
   const profile = signedInProfile ?? { ...MOCK_PROFILE, email: '' };
   const { goalKg } = useWeightLog();
   const [weightDialog, setWeightDialog] = useState<WeightDialogMode | null>(null);
+  const [confirmSignOut, setConfirmSignOut] = useState(false);
 
   return (
     <TabScreen>
@@ -128,7 +131,19 @@ export default function ProfileScreen() {
         tone="error"
         size="medium"
         fullWidth
-        onPress={signOut}
+        onPress={() => setConfirmSignOut(true)}
+      />
+      <ConfirmDialog
+        visible={confirmSignOut}
+        title="Sair da conta?"
+        message={
+          DATA_SOURCE === 'supabase'
+            ? 'Seus dados continuam salvos na conta. Para voltar, entre de novo com o mesmo email ou Google.'
+            : 'Neste modo os dados ficam só na memória do app e se perdem quando ele é fechado.'
+        }
+        confirmLabel="Sair"
+        onConfirm={signOut}
+        onDismiss={() => setConfirmSignOut(false)}
       />
 
       {weightDialog && <WeightDialog mode={weightDialog} onDismiss={() => setWeightDialog(null)} />}
