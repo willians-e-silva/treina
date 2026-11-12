@@ -1,9 +1,10 @@
 # Treina — Fluxograma do projeto
 
-Visão geral do app **Treina** (Expo SDK 57 + Expo Router): features, commits aplicados, telas e possíveis
-alterações futuras. Os diagramas usam [Mermaid](https://mermaid.js.org/) e são renderizados direto pelo GitHub.
+Visão geral do app **Treina** (Expo SDK 58 + Expo Router + Supabase): features, commits aplicados, telas,
+arquitetura de dados e próximos passos. Os diagramas usam [Mermaid](https://mermaid.js.org/) e são renderizados
+direto pelo GitHub.
 
-> Estado analisado: `71a5680` (2026-10-28).
+> Estado analisado: `25f3a9b` na `main` (2026-11-07), 33 commits.
 
 ---
 
@@ -11,62 +12,64 @@ alterações futuras. Os diagramas usam [Mermaid](https://mermaid.js.org/) e sã
 
 ```mermaid
 flowchart LR
-    subgraph C["Commits"]
+    subgraph C["Fases do projeto"]
         direction TB
-        C1["a71eb20<br/>Initial commit"] --> C2["81a9540<br/>skeleton"]
-        C2 --> C3["33c12f6<br/>home dashboard"]
-        C3 --> C4["d6ba8db<br/>API de exercícios"]
-        C4 --> C5["71a5680<br/>perfil + tarefas"]
+        C1["18/10 · Base<br/>skeleton, login, abas"] --> C2["18–28/10 · Features<br/>dashboard, exercícios, tarefas, perfil"]
+        C2 --> C3["29–30/10 · EAS + diário<br/>alimentação, Material 3"]
+        C3 --> C4["02/11 · Treinadores<br/>pacotes, treinos, sessão, chat"]
+        C4 --> C5["02/11 · Supabase<br/>fases 1 a 5"]
+        C5 --> C6["03–07/11 · Correções Android<br/>crashes ao abrir"]
     end
 
     subgraph F["Features"]
         direction TB
-        F1["Autenticação<br/>e-mail mock + Google"]
-        F2["Navegação<br/>abas deslizantes + modais"]
-        F3["Dashboard do dia"]
-        F4["Diário de exercícios<br/>ExerciseDB"]
-        F5["Tarefas com repetição<br/>e subtarefas"]
-        F6["Perfil do usuário"]
+        F1["Conta<br/>Supabase Auth + Google"]
+        F2["Tela inicial personalizável"]
+        F3["Diário alimentar<br/>TACO + Open Food Facts"]
+        F4["Exercícios e plano de treino<br/>semanal ou fila, sessão cronometrada"]
+        F5["Treinadores<br/>catálogo, pacotes, chat"]
+        F6["Tarefas"]
+        F7["Peso e meta"]
     end
 
     subgraph T["Telas"]
         direction TB
-        T1["/login"]
-        T2["(tabs)/index — Início"]
-        T3["(tabs)/exercise — Exercícios"]
-        T4["/log-exercise + /log-exercise/[id]"]
-        T5["(tabs)/tasks + /add-task"]
-        T6["(tabs)/profile — Perfil"]
-        T7["(tabs)/explore · (tabs)/activity<br/>placeholders"]
+        T1["login · signup · forgot-password · auth/callback"]
+        T2["Início"]
+        T3["Diário · log-food · meals"]
+        T4["Exercícios · log-exercise · workouts · workout-session"]
+        T5["Treinador · trainer · package · chat"]
+        T6["Tarefas · add-task"]
+        T7["Perfil"]
     end
 
-    subgraph N["Futuro"]
+    subgraph N["Próximos passos"]
         direction TB
-        N1["Backend + auth real"]
-        N2["Persistência dos dados"]
-        N3["Diário de alimentação"]
-        N4["Explorar / Atividade"]
-        N5["Editar perfil e metas"]
+        N1["Metas calculadas do perfil"]
+        N2["Passos reais"]
+        N3["Editar registros"]
+        N4["Testes e CI"]
+        N5["Lado do treinador no chat"]
     end
 
-    C2 --> F1 & F2
+    C1 --> F1
+    C2 --> F2 & F4 & F6 & F7
     C3 --> F3
-    C4 --> F4
-    C5 --> F5 & F6
+    C4 --> F5
+    C5 -.->|persistência| F1 & F3 & F4 & F5 & F6 & F7
 
     F1 --> T1
-    F2 --> T7
-    F3 --> T2
-    F4 --> T3 & T4
+    F2 --> T2
+    F3 --> T3
+    F4 --> T4
     F5 --> T5
     F6 --> T6
+    F7 --> T7 & T2
 
-    F1 -.-> N1
-    F4 -.-> N2
-    F5 -.-> N2
+    F2 -.-> N1 & N2
     F3 -.-> N3
-    T7 -.-> N4
-    F6 -.-> N5
+    F5 -.-> N5
+    C6 -.-> N4
 ```
 
 ---
@@ -80,21 +83,29 @@ gitGraph
     commit id: "81a9540 skeleton"
     checkout main
     merge local id: "befc2eb Merge"
-    commit id: "33c12f6 home dashboard"
-    commit id: "d6ba8db API de exercícios"
+    commit id: "33c12f6 dashboard"
+    commit id: "d6ba8db exercícios"
     commit id: "71a5680 perfil + tarefas"
+    commit id: "2bae5e4 diário + EAS"
+    commit id: "a7d7534 Material 3"
+    commit id: "89cc59a dashboard arrastável"
+    commit id: "5fd90b1 treinadores + chat"
+    commit id: "39b79b9 Supabase fase 1"
+    commit id: "c0c98a8 fase 3: auth"
+    commit id: "8a829b3 fase 4: repositórios"
+    commit id: "090bb41 fase 5: realtime"
+    commit id: "bc153f6 fix Reanimated"
+    commit id: "25f3a9b fix ExpoSQLite"
 ```
 
-> O `81a9540` foi criado localmente, sem relação com o `a71eb20` do GitHub; o merge `befc2eb` uniu os dois históricos.
-
-| Commit | Data | O que entrou | Arquivos-chave |
-| --- | --- | --- | --- |
-| `a71eb20` Initial commit | 2026-10-18 | README inicial | `README.md` |
-| `81a9540` skeleton | 2026-10-18 | Base Expo Router, login (e-mail mock + Google Sign-In), sessão, splash animado, tela de carregamento/erro do fluxo principal, abas deslizantes customizadas, tema claro/escuro, placeholders | `src/app/_layout.tsx`, `src/app/login.tsx`, `src/context/session.tsx`, `src/lib/google-auth*.ts`, `src/components/sliding-tabs/*`, `src/hooks/use-main-flow-bootstrap.ts` |
-| `befc2eb` Merge | 2026-10-18 | Junta o skeleton com o `main` remoto | — |
-| `33c12f6` home dashboard | 2026-10-18 | Dashboard "Hoje": calorias (anel), macros, passos/exercício, peso (gráfico) com dados mock | `src/components/dashboard/*`, `src/lib/dashboard-data.ts` |
-| `d6ba8db` API de exercícios | 2026-10-26 | Aba Exercícios com seletor de dia, cardio × musculação, modal de busca no ExerciseDB (paginação, cache, 429), detalhes com GIF e estimativa de kcal por MET; dashboard passa a usar o exercício real | `src/lib/exercisedb.ts`, `src/lib/exercises.ts`, `src/context/exercise-log.tsx`, `src/app/log-exercise/*`, `src/app/(tabs)/exercise.tsx` |
-| `71a5680` perfil + tarefas | 2026-10-28 | Aba Tarefas (repetição diária/semanal/a cada N, subtarefas sincronizadas), modal de nova tarefa/subtarefa, aba Perfil (idade, peso, altura, sair) | `src/lib/tasks.ts`, `src/context/tasks.tsx`, `src/app/(tabs)/tasks.tsx`, `src/app/add-task.tsx`, `src/app/(tabs)/profile.tsx`, `src/lib/profile.ts` |
+| Período | Commits | O que entrou |
+| --- | --- | --- |
+| 18/10 · Base | `a71eb20`, `81a9540`, `befc2eb` | Expo Router, login (e-mail simulado + Google), splash animado, abas deslizantes próprias, tema claro/escuro. O `81a9540` foi criado localmente e unido ao `a71eb20` do GitHub pelo merge `befc2eb`. |
+| 18–28/10 · Features | `33c12f6`, `d6ba8db`, `71a5680` | Dashboard do dia, aba Exercícios com ExerciseDB e cálculo de kcal por MET, tarefas com repetição e subtarefas, perfil. |
+| 29–30/10 · EAS, diário e visual | `3e47e46` … `89cc59a` | Configuração do EAS e workflow de OTA, diário alimentar (TACO embarcada + Open Food Facts), refeições configuráveis, design system Material 3 gerado do ícone, tela inicial com widgets arrastáveis. |
+| 02/11 · Treinadores | `5fd90b1`, `a645770`, `de10529` | Aba Treinador, perfil do treinador, pacotes de treinos, plano semanal ou em fila, sessão cronometrada com sensação, chat; limpeza de código não usado; ajustes no login. |
+| 02/11 · Supabase | `39b79b9` … `090bb41` | Fase 1: camada de repositório. Fase 2: schema, RLS e seed do catálogo. Fase 3: autenticação real, confirmação e recuperação de senha. Fase 4: repositórios Supabase. Fase 5: chat em tempo real. Ajustes do build web (`bfb892c`, `98473de`). |
+| 03–07/11 · Correções | `f38f27a` … `25f3a9b` | Ajustes de peso e exercícios, ícone adaptativo, tela de erro no lugar do crash (`94d5d86`), correção do `NaN` do Reanimated na lixeira (`bc153f6`) e do crash `ExpoSQLite` (`25f3a9b`): o Expo 58.0.21 trazia um runtime de módulos incompatível com o `expo-sqlite` pré-compilado; a atualização para 58.0.23 alinhou os pacotes. |
 
 ---
 
@@ -102,162 +113,192 @@ gitGraph
 
 ```mermaid
 flowchart TD
-    Start(["Abrir app"]) --> Splash["Splash animado<br/>AnimatedSplashOverlay"]
-    Splash --> Guard{"Há sessão?<br/>Stack.Protected"}
+    Start(["Abrir app"]) --> Splash["Splash animado<br/>fica até ler a sessão salva"]
+    Splash --> Guard{"Sessão salva?<br/>Stack.Protected"}
 
     Guard -- "não" --> Login["/login"]
-    Login -- "E-mail + senha<br/>IS_AUTH_MOCKED = true" --> SignIn["signIn()"]
-    Login -- "Entrar com Google" --> Google["signInWithGoogle()"]
-    Google -- "cancelou" --> Login
-    Google -- "erro" --> LoginErr["Mensagem de erro"] --> Login
-    SignIn --> Guard
-    Google -- "ok" --> Guard
+    Login -- "E-mail + senha" --> Auth["Supabase Auth"]
+    Login -- "Continuar com Google" --> Google["idToken → signInWithIdToken"]
+    Login -- "Esqueci minha senha" --> FP["/forgot-password<br/>e-mail"]
+    FP --> FPC["/forgot-password/check-email"]
+    FPC -.->|link do e-mail| FPN["/forgot-password/new-password"]
+    FPN --> Login
+    Login -- "Criar conta" --> SU1["/signup · conta"]
+    SU1 --> SU2["/signup/details · dados corporais"]
+    SU2 --> SUC["/signup/confirm<br/>confirme o e-mail"]
+    SUC -.->|link do e-mail| CB["/auth/callback"]
+    CB --> Guard
+    Auth --> Guard
+    Google --> Guard
 
-    Guard -- "sim" --> Boot["(tabs)/_layout<br/>prepareMainFlow()"]
-    Boot -- "loading" --> Loading["MainFlowLoading"]
-    Boot -- "erro" --> BootErr["Tela de erro"]
-    BootErr -- "Tentar de novo" --> Boot
-    BootErr -- "Sair" --> SignOut
-    Boot -- "ready" --> Tabs
+    Guard -- "sim" --> Boot["(tabs)/_layout<br/>prepareMainFlow"]
+    Boot -- "erro" --> BootErr["Tentar de novo / Sair"]
+    BootErr --> Boot
+    Boot -- "ok" --> Tabs
 
-    subgraph Tabs["Abas deslizantes (SlidingTabs)"]
+    subgraph Tabs["Abas deslizantes"]
         direction LR
-        Home["Início<br/>dashboard"]
+        Home["Início"]
+        Diary["Diário"]
         Exercise["Exercícios"]
+        Trainers["Treinador"]
         Tasks["Tarefas"]
-        Explore["Explorar<br/>SurfaceTest temporário"]
-        Activity["Atividade<br/>Em breve"]
         Profile["Perfil"]
     end
 
-    Exercise -- "+ cardio / musculação<br/>params: category, date" --> Search["Modal /log-exercise<br/>catálogo + busca"]
-    Search -- "escolhe exercício" --> Details["/log-exercise/[id]<br/>GIF, MET, campos"]
-    Search -- "nome personalizado<br/>id = custom" --> Details
-    Details -- "Salvar → addEntry()<br/>fecha o modal" --> Exercise
-
-    Tasks -- "Adicionar tarefa<br/>params: date" --> AddTask["Modal /add-task<br/>Nova tarefa"]
-    Tasks -- "+ subtarefa<br/>params: parentId" --> AddSub["Modal /add-task<br/>Nova subtarefa"]
-    AddTask -- "addTask()" --> Tasks
-    AddSub -- "addSubtask()" --> Tasks
-
-    Profile -- "Sair" --> SignOut["signOut()"]
-    SignOut --> Guard
+    Diary -- "Adicionar alimento" --> LF["log-food<br/>busca → quantidade"]
+    Diary -- "Editar refeições" --> Meals["meals"]
+    Exercise -- "Adicionar exercício" --> LE["log-exercise<br/>busca → detalhes"]
+    Exercise -- "Planejar treinos" --> WK["workouts<br/>plano → treino"]
+    Exercise -- "Iniciar treino" --> WS["workout-session<br/>tela cheia"]
+    WK -- "Adicionar exercício" --> LE
+    Trainers --> TR["trainer/[id]"]
+    TR --> PK["trainer/package/[id]"]
+    PK --> PW["trainer/workout"]
+    PK -- "Aderir ao treino" --> WK
+    TR -- "Conversar" --> Chat["chat/[trainerId]<br/>tempo real"]
+    Tasks -- "Adicionar tarefa" --> AT["add-task"]
+    Home -- "Registrar peso / meta" --> WD["Diálogos de peso"]
+    Profile -- "Registrar peso / meta" --> WD
+    Profile -- "Sair" --> Guard
 ```
 
 ### Mapa de rotas (`src/app/`)
 
 ```mermaid
 flowchart LR
-    Root["_layout.tsx<br/>Stack raiz + providers"] --> Login["login.tsx"]
-    Root --> TabsL["(tabs)/_layout.tsx"]
-    Root --> LogL["log-exercise/_layout.tsx<br/>modal"]
-    Root --> Add["add-task.tsx<br/>modal"]
-    TabsL --> I["index.tsx"] & E["exercise.tsx"] & T["tasks.tsx"] & X["explore.tsx"] & A["activity.tsx"] & P["profile.tsx"]
-    LogL --> LI["index.tsx — busca"] & LD["[id].tsx — detalhes"]
+    Root["_layout.tsx<br/>providers + ErrorBoundary"] --> Login["login"]
+    Root --> SU["signup/<br/>index · details · confirm"]
+    Root --> FP["forgot-password/<br/>index · check-email · new-password"]
+    Root --> CB["auth/callback"]
+    Root --> Tabs["(tabs)/<br/>index · diary · exercise · trainers · tasks · profile"]
+    Root --> LF["log-food/<br/>index · [id]"]
+    Root --> Meals["meals"]
+    Root --> LE["log-exercise/<br/>index · [id]"]
+    Root --> WK["workouts/<br/>index · [id]"]
+    Root --> WS["workout-session"]
+    Root --> AT["add-task"]
+    Root --> TR["trainer/<br/>[id] · package/[id] · workout"]
+    Root --> Chat["chat/[trainerId]"]
 ```
 
 ---
 
-## 4. Fluxo de dados das features
+## 4. Arquitetura de dados
 
 ```mermaid
 flowchart LR
-    subgraph Providers["Providers (src/context) — em memória"]
-        S["SessionProvider<br/>session: e-mail"]
-        EL["ExerciseLogProvider<br/>entries[]"]
-        TK["TasksProvider<br/>tasks[]"]
+    subgraph UI["Telas e componentes"]
+        Screens["src/app · src/components"]
     end
 
-    subgraph Libs["Lógica (src/lib)"]
-        GA["google-auth.ts<br/>(web: indisponível)"]
-        EDB["exercisedb.ts<br/>oss.exercisedb.dev<br/>cache + estimateMet"]
-        EX["exercises.ts<br/>estimateCalories, datas"]
-        TL["tasks.ts<br/>isTaskDue, markDone,<br/>syncWithSubtasks"]
-        DD["dashboard-data.ts<br/>MOCK_DASHBOARD"]
-        PR["profile.ts<br/>MOCK_PROFILE"]
+    subgraph Ctx["Contextos (src/context)"]
+        direction TB
+        Session["session<br/>conta e perfil"]
+        Stores["weight-log · food-log · exercise-log<br/>workout-plan · coaching · chat<br/>tasks · dashboard-layout · catalog"]
     end
 
-    API[("ExerciseDB API")]
-    GAPI[("Google Sign-In")]
+    Store["useUserStore<br/>mostra na hora, salva em fila,<br/>recomeça ao trocar de conta"]
+    Repo{"repositoriesFor(userId)<br/>EXPO_PUBLIC_DATA_SOURCE"}
+    Local["local.ts<br/>memória (demo)"]
+    SupaRepo["data/supabase/*<br/>um repositório por domínio"]
 
-    GA <--> GAPI
-    S --> GA
-    EDB <--> API
-    EDB --> SearchScreen["/log-exercise"]
-    EX --> DetailsScreen["/log-exercise/[id]"]
-    DD -- "peso corporal p/ kcal" --> DetailsScreen
-    DetailsScreen -- "addEntry" --> EL
-    EL -- "useExerciseDay(date)" --> ExerciseTab["Aba Exercícios"]
-    EL -- "kcal + minutos de hoje" --> HomeTab["Aba Início"]
-    DD -- "comida, macros, passos, peso" --> HomeTab
-    TL --> TK
-    TK --> TasksTab["Aba Tarefas"]
-    AddTaskScreen["/add-task"] -- "addTask / addSubtask" --> TK
-    DD --> PR --> ProfileTab["Aba Perfil"]
-    S --> ProfileTab
+    subgraph SB["Supabase"]
+        direction TB
+        SAuth["Auth<br/>e-mail, Google, PKCE"]
+        DB[("Postgres + RLS<br/>18 tabelas")]
+        RT["Realtime<br/>chat_messages"]
+    end
+
+    subgraph Ext["Fontes externas"]
+        direction TB
+        EDB[("ExerciseDB")]
+        OFF[("Open Food Facts")]
+        TACO[("TACO embarcada")]
+    end
+
+    Lib["src/lib<br/>regras puras: fila de treinos,<br/>repetição de tarefas, refeições"]
+    SQLite["expo-sqlite<br/>sessão salva no aparelho"]
+
+    Screens --> Ctx
+    Session --> SAuth
+    Session --> SQLite
+    Stores --> Store --> Repo
+    Repo -- "local" --> Local
+    Repo -- "supabase" --> SupaRepo --> DB
+    SupaRepo --> RT
+    Ctx --> Lib
+    Screens --> EDB & OFF & TACO
 ```
 
-### Regras das tarefas
+| Camada | Arquivos | Papel |
+| --- | --- | --- |
+| Contextos | `src/context/*.tsx` (11) | Estado de cada domínio e ações que as telas chamam |
+| Store por conta | `src/data/use-user-store.ts` | Carrega os dados da conta, mostra mudanças na hora, salva em fila ordenada e mostra "Tentar novamente" se falhar (`save-error-banner`) |
+| Repositórios | `src/data/types.ts`, `local.ts`, `supabase/*` | Interface por domínio; implementação em memória (modo demo) ou Supabase |
+| Supabase | `supabase/migrations/*`, `seed.sql`, `tests/rls.sql` | 18 tabelas, Row Level Security por `auth.uid()`, perfil criado no cadastro, refeições padrão, chat em tempo real |
+| Regras | `src/lib/*` | Lógica pura que continua no app (fila de treinos, repetição de tarefas, ordem das refeições, kcal por MET) |
+
+---
+
+## 5. Fluxo de autenticação
 
 ```mermaid
 flowchart TD
-    New["Nova tarefa"] --> Rep{"Repetição"}
-    Rep -- "Não repete" --> OneOff["kind: none<br/>aparece todo dia até ser concluída,<br/>depois só no dia da conclusão"]
-    Rep -- "Todo dia / Toda semana /<br/>A cada N dias|semanas" --> Every["kind: every<br/>devida quando dias desde startDate<br/>% (N × 1|7) = 0"]
-    OneOff --> Sub{"Tem subtarefas?"}
-    Every --> Sub
-    Sub -- "sim" --> Sync["Tarefa concluída no dia ⇔<br/>todas as subtarefas concluídas"]
-    Sub -- "não" --> Toggle["Marcar / desmarcar no dia"]
+    Open(["App abre"]) --> Restore["Lê a sessão salva<br/>(expo-sqlite / localStorage na web)"]
+    Restore --> Has{"Sessão válida?"}
+    Has -- "sim" --> Profile["Carrega o perfil (profiles)"] --> App["Abas"]
+    Has -- "não" --> Login["Login"]
+
+    Login --> Mode{"EXPO_PUBLIC_AUTH_MODE"}
+    Mode -- "demo" --> Demo["Entra com qualquer e-mail<br/>dados em memória"] --> App
+    Mode -- "vazio" --> Real["signInWithPassword /<br/>signInWithIdToken (Google)"]
+    Real -- "e-mail não confirmado" --> Confirm["/signup/confirm<br/>reenviar e-mail"]
+    Real -- "ok" --> Profile
+
+    SignUp["Cadastro em 2 etapas"] --> Create["signUp + profiles<br/>(trigger new_user_profile)"]
+    Create --> Confirm
+    Confirm -.->|"link treina://auth/callback?code="| Exchange["exchangeCodeForSession"] --> Profile
+
+    App -- "Sair" --> Out["signOut<br/>stores voltam ao vazio"] --> Login
 ```
 
 ---
 
-## 5. Possíveis alterações futuras
-
-Levantadas a partir dos `TODO` / `TEMPORARY` no código e das lacunas atuais.
+## 6. O que ainda é simulado ou falta
 
 ```mermaid
 flowchart TD
-    Now(["Estado atual<br/>71a5680"]) --> B["Backend / API própria"]
+    Now(["Estado atual<br/>25f3a9b"]) --> M["Ainda simulado"]
+    M --> M1["Passos: 6.840 fixos<br/>(MOCK_DASHBOARD)"]
+    M --> M2["Metas fixas: 2.200 kcal, macros,<br/>400 kcal de exercício"]
+    M --> M3["Chat: treinador ainda não tem app<br/>para responder"]
 
-    B --> B1["Auth real<br/>remover IS_AUTH_MOCKED<br/>validar idToken do Google"]
-    B --> B2["Persistir sessão<br/>expo-secure-store"]
-    B --> B3["Persistir exercícios e tarefas<br/>hoje somem ao reiniciar"]
-    B --> B4["prepareMainFlow() carregar<br/>perfil e dados iniciais"]
+    Now --> P["Produto"]
+    P --> P1["Metas calculadas do perfil<br/>(idade, sexo, altura, peso, objetivo)"]
+    P --> P2["Editar alimento, exercício<br/>e exercício do treino"]
+    P --> P3["Histórico e evolução de cargas"]
+    P --> P4["Passos via Health Connect / HealthKit"]
+    P --> P5["Lembretes e notificações"]
 
-    Now --> D["Dados reais no dashboard"]
-    D --> D1["Diário de alimentação<br/>calorias e macros"]
-    D --> D2["Registro de peso<br/>usado no cálculo de kcal"]
-    D --> D3["Passos via sensor<br/>expo-sensors Pedometer"]
+    Now --> Q["Qualidade e entrega"]
+    Q --> Q1["Testes de src/lib e CI<br/>antes do OTA"]
+    Q --> Q2["Variáveis do Supabase e do Google<br/>no ambiente preview do EAS"]
+    Q --> Q3["Configuração iOS<br/>(bundleIdentifier, URL scheme)"]
+    Q --> Q4["Conferir runtime das OTA:<br/>evitar JS novo em APK antigo"]
 
-    Now --> U["Telas pendentes"]
-    U --> U1["Explorar<br/>remover SurfaceTest"]
-    U --> U2["Atividade<br/>histórico e gráficos"]
-    U --> U3["Editar perfil e metas"]
-    U --> U4["Editar / excluir tarefas<br/>e registros de exercício"]
-
-    Now --> Q["Qualidade"]
-    Q --> Q1["Unificar idioma das mensagens<br/>login ainda em inglês"]
-    Q --> Q2["Testes unitários<br/>tasks.ts, exercises.ts, profile.ts"]
-    Q --> Q3["Configurar iosUrlScheme real<br/>e README do projeto"]
-    Q --> Q4["Notificações de tarefas<br/>expo-notifications"]
-
-    B1 --> B2
-    B3 --> U2
-    D2 --> U3
+    Now --> L["Lançamento"]
+    L --> L1["Consentimento LGPD, exportar<br/>e excluir conta"]
+    L --> L2["Monitoramento de erros"]
+    L --> L3["Painel do treinador"]
 ```
 
-| Área | Onde está hoje | Sugestão |
+| Área | Situação na `main` | Próximo passo |
 | --- | --- | --- |
-| Login por e-mail | `src/context/session.tsx` — `IS_AUTH_MOCKED = true` | Requisição real de auth e validação no `login.tsx` |
-| Login Google | `session.tsx` — `TODO: send user.idToken to your backend` | Verificar o token no backend e criar sessão |
-| Sessão | `useState` em memória | Persistir com `expo-secure-store` para não deslogar ao reabrir |
-| Bootstrap | `src/lib/prepare-main-flow.ts` vazio | Buscar perfil/metas antes de mostrar as abas |
-| Dashboard | `src/lib/dashboard-data.ts` — `MOCK_DASHBOARD` | Diário de alimentação, passos e pesagens reais |
-| Peso nos cálculos | `log-exercise/[id].tsx` — `TODO: use the user's real latest weigh-in` | Usar o último peso do perfil |
-| Exercícios / Tarefas | Providers em memória (`TEMPORARY`) | Persistência local (SQLite) e/ou backend |
-| Perfil | `src/lib/profile.ts` — `MOCK_PROFILE` | Tela de edição de nome, nascimento, altura e metas |
-| Explorar | `SurfaceTest` (`TEMPORARY`) | Voltar a `ComingSoon` ou implementar a feature |
-| Atividade | `ComingSoon` | Histórico/estatísticas de treinos e tarefas |
-| ExerciseDB | Nomes só em inglês, MET estimado pelo nome | Tradução dos nomes e tabela de MET mais precisa |
-| Rótulos das abas | `src/constants/tabs.ts` — nomes temporários | Definir nomes/ícones finais de Explorar e Atividade |
+| Conta | Supabase Auth real, Google, confirmação e recuperação de senha, modo demo opcional | Variáveis do Google no `.env.local` e no EAS |
+| Dados | Persistidos no Supabase por conta, com RLS; fila de salvamento com nova tentativa | Edição de registros nos repositórios que só têm `add`/`remove` |
+| Catálogo de treinadores | Vem do banco (`trainers`, `training_packages`, seed) | Painel para o treinador publicar |
+| Chat | Tempo real pelo Supabase; aviso de que o treinador ainda não responde | App ou painel do treinador |
+| Tela inicial | Calorias, macros, exercício e peso reais | Passos reais e metas calculadas |
+| Android | Crashes de abertura corrigidos (`bc153f6`, `25f3a9b`) | Gerar APK novo com os módulos nativos atuais e testar |
+| Qualidade | Typecheck passa; sem testes | `jest-expo` + testes de `src/lib` e `supabase/tests/rls.sql` no CI |
