@@ -4,7 +4,7 @@ Visão geral do app **Treina** (Expo SDK 58 + Expo Router + Supabase): features,
 arquitetura de dados e próximos passos. Os diagramas usam [Mermaid](https://mermaid.js.org/) e são renderizados
 direto pelo GitHub.
 
-> Estado analisado: `25f3a9b` na `main` (2026-11-07), 33 commits.
+> Estado analisado: `f21319a` na `main` (2026-11-12), 34 commits.
 
 ---
 
@@ -19,6 +19,7 @@ flowchart LR
         C3 --> C4["02/11 · Treinadores<br/>pacotes, treinos, sessão, chat"]
         C4 --> C5["02/11 · Supabase<br/>fases 1 a 5"]
         C5 --> C6["03–07/11 · Correções Android<br/>crashes ao abrir"]
+        C6 --> C7["12/11 · Fase 1 do roadmap<br/>perfil completo, desfazer, testes, CI"]
     end
 
     subgraph F["Features"]
@@ -48,7 +49,7 @@ flowchart LR
         N1["Metas calculadas do perfil"]
         N2["Passos reais"]
         N3["Editar registros"]
-        N4["Testes e CI"]
+        N4["Fila de salvamento persistida<br/>e carregamento por período"]
         N5["Lado do treinador no chat"]
     end
 
@@ -69,7 +70,7 @@ flowchart LR
     F2 -.-> N1 & N2
     F3 -.-> N3
     F5 -.-> N5
-    C6 -.-> N4
+    C7 -.-> N4
 ```
 
 ---
@@ -96,6 +97,7 @@ gitGraph
     commit id: "090bb41 fase 5: realtime"
     commit id: "bc153f6 fix Reanimated"
     commit id: "25f3a9b fix ExpoSQLite"
+    commit id: "f21319a fase 1 roadmap"
 ```
 
 | Período | Commits | O que entrou |
@@ -106,6 +108,7 @@ gitGraph
 | 02/11 · Treinadores | `5fd90b1`, `a645770`, `de10529` | Aba Treinador, perfil do treinador, pacotes de treinos, plano semanal ou em fila, sessão cronometrada com sensação, chat; limpeza de código não usado; ajustes no login. |
 | 02/11 · Supabase | `39b79b9` … `090bb41` | Fase 1: camada de repositório. Fase 2: schema, RLS e seed do catálogo. Fase 3: autenticação real, confirmação e recuperação de senha. Fase 4: repositórios Supabase. Fase 5: chat em tempo real. Ajustes do build web (`bfb892c`, `98473de`). |
 | 03–07/11 · Correções | `f38f27a` … `25f3a9b` | Ajustes de peso e exercícios, ícone adaptativo, tela de erro no lugar do crash (`94d5d86`), correção do `NaN` do Reanimated na lixeira (`bc153f6`) e do crash `ExpoSQLite` (`25f3a9b`): o Expo 58.0.21 trazia um runtime de módulos incompatível com o `expo-sqlite` pré-compilado; a atualização para 58.0.23 alinhou os pacotes. |
+| 12/11 · Fase 1 do roadmap | `f21319a` | Tela "Complete seu perfil" para contas sem dados corporais (Google), cálculo de kcal sem peso de exemplo, confirmação ao aderir e ao sair de pacote, desfazer ao remover alimento, exercício e tarefa, confirmação ao excluir treino e ao sair da conta, 28 testes com Jest em `src/lib`, `check-env` para as variáveis e workflow que roda variáveis, lint, typecheck e testes antes do OTA. |
 
 ---
 
@@ -134,7 +137,10 @@ flowchart TD
     Guard -- "sim" --> Boot["(tabs)/_layout<br/>prepareMainFlow"]
     Boot -- "erro" --> BootErr["Tentar de novo / Sair"]
     BootErr --> Boot
-    Boot -- "ok" --> Tabs
+    Boot -- "ok" --> Done{"Perfil completo?"}
+    Done -- "não (ex.: Google)" --> CP["Complete seu perfil<br/>nascimento, sexo, altura, peso"]
+    CP --> Tabs
+    Done -- "sim" --> Tabs
 
     subgraph Tabs["Abas deslizantes"]
         direction LR
@@ -155,12 +161,13 @@ flowchart TD
     Trainers --> TR["trainer/[id]"]
     TR --> PK["trainer/package/[id]"]
     PK --> PW["trainer/workout"]
-    PK -- "Aderir ao treino" --> WK
+    PK -- "Aderir ao treino<br/>(confirma se há dias planejados)" --> WK
     TR -- "Conversar" --> Chat["chat/[trainerId]<br/>tempo real"]
     Tasks -- "Adicionar tarefa" --> AT["add-task"]
     Home -- "Registrar peso / meta" --> WD["Diálogos de peso"]
     Profile -- "Registrar peso / meta" --> WD
-    Profile -- "Sair" --> Guard
+    Profile -- "Sair (confirma)" --> Guard
+    Diary -- "Remover alimento" --> Undo["Snackbar com Desfazer"]
 ```
 
 ### Mapa de rotas (`src/app/`)
@@ -237,7 +244,8 @@ flowchart LR
 | Store por conta | `src/data/use-user-store.ts` | Carrega os dados da conta, mostra mudanças na hora, salva em fila ordenada e mostra "Tentar novamente" se falhar (`save-error-banner`) |
 | Repositórios | `src/data/types.ts`, `local.ts`, `supabase/*` | Interface por domínio; implementação em memória (modo demo) ou Supabase |
 | Supabase | `supabase/migrations/*`, `seed.sql`, `tests/rls.sql` | 18 tabelas, Row Level Security por `auth.uid()`, perfil criado no cadastro, refeições padrão, chat em tempo real |
-| Regras | `src/lib/*` | Lógica pura que continua no app (fila de treinos, repetição de tarefas, ordem das refeições, kcal por MET) |
+| Regras | `src/lib/*` | Lógica pura que continua no app (fila de treinos, repetição de tarefas, ordem das refeições, kcal por MET), agora coberta por 28 testes em `src/lib/__tests__` |
+| Desfazer | `components/undo-snackbar.tsx`, `ui/confirm-dialog.tsx` | Snackbar com Desfazer para remoções simples e diálogo de confirmação para ações grandes |
 
 ---
 
@@ -247,7 +255,9 @@ flowchart LR
 flowchart TD
     Open(["App abre"]) --> Restore["Lê a sessão salva<br/>(expo-sqlite / localStorage na web)"]
     Restore --> Has{"Sessão válida?"}
-    Has -- "sim" --> Profile["Carrega o perfil (profiles)"] --> App["Abas"]
+    Has -- "sim" --> Profile["Carrega o perfil (profiles)"] --> Check{"Perfil completo?"}
+    Check -- "sim" --> App["Abas"]
+    Check -- "não" --> CP["Complete seu perfil<br/>saveBodyData + pesagem"] --> App
     Has -- "não" --> Login["Login"]
 
     Login --> Mode{"EXPO_PUBLIC_AUTH_MODE"}
@@ -265,40 +275,61 @@ flowchart TD
 
 ---
 
-## 6. O que ainda é simulado ou falta
+## 6. Entrega (workflow do EAS)
+
+```mermaid
+flowchart LR
+    Push(["push na main"]) --> Checks
+    subgraph Checks["checks · ambiente preview"]
+        direction TB
+        E["check-env<br/>variáveis obrigatórias"] --> Li["lint"] --> Ty["typecheck"] --> Te["testes (Jest)"]
+    end
+    Checks -- "falhou" --> Stop["Nada é publicado"]
+    Checks -- "ok" --> FP["fingerprint nativo"]
+    FP --> GB{"Build preview<br/>compatível?"}
+    GB -- "sim" --> OTA["Atualização OTA<br/>canal preview"]
+    GB -- "não" --> Build["Novo build Android"]
+```
+
+Antes do `f21319a`, o workflow publicava a atualização direto, sem verificação; foi assim que o crash do `ExpoSQLite` chegou ao celular. Agora qualquer falha em variáveis, lint, typecheck ou testes interrompe a publicação. Ainda não há um teste do APK aberto no aparelho antes de liberar o canal.
+
+---
+
+## 7. O que ainda é simulado ou falta
 
 ```mermaid
 flowchart TD
-    Now(["Estado atual<br/>25f3a9b"]) --> M["Ainda simulado"]
-    M --> M1["Passos: 6.840 fixos<br/>(MOCK_DASHBOARD)"]
-    M --> M2["Metas fixas: 2.200 kcal, macros,<br/>400 kcal de exercício"]
-    M --> M3["Chat: treinador ainda não tem app<br/>para responder"]
+    Now(["Estado atual<br/>f21319a"]) --> Done["Feito na Fase 1"]
+    Done --> D1["Completar perfil após Google"]
+    Done --> D2["kcal sem peso de exemplo"]
+    Done --> D3["Desfazer e confirmações"]
+    Done --> D4["Testes + gate no workflow"]
+    Done --> D5["check-env das variáveis"]
 
-    Now --> P["Produto"]
-    P --> P1["Metas calculadas do perfil<br/>(idade, sexo, altura, peso, objetivo)"]
-    P --> P2["Editar alimento, exercício<br/>e exercício do treino"]
-    P --> P3["Histórico e evolução de cargas"]
-    P --> P4["Passos via Health Connect / HealthKit"]
-    P --> P5["Lembretes e notificações"]
+    Now --> M["Ainda simulado"]
+    M --> M1["Passos: 6.840 fixos"]
+    M --> M2["Metas fixas: 2.200 kcal e macros"]
+    M --> M3["Chat: treinador não responde"]
 
-    Now --> Q["Qualidade e entrega"]
-    Q --> Q1["Testes de src/lib e CI<br/>antes do OTA"]
-    Q --> Q2["Variáveis do Supabase e do Google<br/>no ambiente preview do EAS"]
-    Q --> Q3["Configuração iOS<br/>(bundleIdentifier, URL scheme)"]
-    Q --> Q4["Conferir runtime das OTA:<br/>evitar JS novo em APK antigo"]
+    Now --> P["Fase 2 · consolidação"]
+    P --> P1["Metas calculadas do perfil"]
+    P --> P2["Editar registros, perfil e exercícios do treino"]
+    P --> P3["Fila de salvamento persistida"]
+    P --> P4["Carregamento por período e erro por aba"]
+    P --> P5["Histórico e evolução de cargas"]
 
-    Now --> L["Lançamento"]
-    L --> L1["Consentimento LGPD, exportar<br/>e excluir conta"]
+    Now --> L["Produção"]
+    L --> L1["LGPD: consentimento e excluir conta"]
     L --> L2["Monitoramento de erros"]
-    L --> L3["Painel do treinador"]
+    L --> L3["Smoke test do APK e iOS"]
 ```
 
 | Área | Situação na `main` | Próximo passo |
 | --- | --- | --- |
-| Conta | Supabase Auth real, Google, confirmação e recuperação de senha, modo demo opcional | Variáveis do Google no `.env.local` e no EAS |
-| Dados | Persistidos no Supabase por conta, com RLS; fila de salvamento com nova tentativa | Edição de registros nos repositórios que só têm `add`/`remove` |
-| Catálogo de treinadores | Vem do banco (`trainers`, `training_packages`, seed) | Painel para o treinador publicar |
-| Chat | Tempo real pelo Supabase; aviso de que o treinador ainda não responde | App ou painel do treinador |
-| Tela inicial | Calorias, macros, exercício e peso reais | Passos reais e metas calculadas |
-| Android | Crashes de abertura corrigidos (`bc153f6`, `25f3a9b`) | Gerar APK novo com os módulos nativos atuais e testar |
-| Qualidade | Typecheck passa; sem testes | `jest-expo` + testes de `src/lib` e `supabase/tests/rls.sql` no CI |
+| Conta | Supabase Auth, Google, confirmação e recuperação de senha; perfil incompleto pede os dados antes das abas | Editar o perfil depois (só peso e meta são editáveis) |
+| Dados | Persistidos por conta com RLS; fila de salvamento com nova tentativa; remoções com Desfazer | Edição de registros, fila persistida no aparelho, carregamento por período |
+| Cálculos | Sem peso real, a tela pede para registrar o peso em vez de usar um valor de exemplo | Metas calculadas (kcal e macros) a partir do perfil |
+| Treinadores | Catálogo do banco; aderir e sair do pacote pedem confirmação; chat em tempo real com aviso | Lado do treinador para responder e publicar |
+| Tela inicial | Calorias, macros, exercício e peso reais | Passos reais e metas pessoais |
+| Qualidade | 28 testes (Jest) em `src/lib`, lint e typecheck limpos, gate no workflow | Testes de `useUserStore` e dos repositórios; smoke test do APK |
+| Entrega | Workflow bloqueia OTA se algo falhar; `check-env` valida as variáveis | Monitoramento de erros e configuração iOS |
