@@ -8,6 +8,7 @@ import { formatDecimal, formatInt } from '@/components/dashboard/format';
 import { ThemedText } from '@/components/themed-text';
 import { IconButton } from '@/components/ui/icon-button';
 import { Surface } from '@/components/ui/surface';
+import { useUndo } from '@/components/undo-snackbar';
 import { Spacing } from '@/constants/theme';
 import { useExerciseLog } from '@/context/exercise-log';
 import { useAppTheme } from '@/theme';
@@ -21,7 +22,8 @@ type ExerciseListProps = {
 /** The exercises logged on a day; new ones are added from the screen's FAB. */
 export function ExerciseList({ entries }: ExerciseListProps) {
   const { colors, custom } = useAppTheme();
-  const { removeEntry } = useExerciseLog();
+  const { removeEntry, restoreEntry } = useExerciseLog();
+  const { showUndo } = useUndo();
 
   return (
     <Surface style={styles.container}>
@@ -58,7 +60,10 @@ export function ExerciseList({ entries }: ExerciseListProps) {
               )}
               <IconButton
                 icon={Trash}
-                onPress={() => removeEntry(entry.id)}
+                onPress={() => {
+                  removeEntry(entry.id);
+                  showUndo(`${entry.name} removido`, () => restoreEntry(entry));
+                }}
                 accessibilityLabel={`Remover ${entry.name}`}
               />
             </View>

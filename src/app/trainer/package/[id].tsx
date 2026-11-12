@@ -17,6 +17,7 @@ import { Surface } from '@/components/ui/surface';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useCatalog } from '@/context/catalog';
 import { useCoaching } from '@/context/coaching';
+import { useWorkoutPlan } from '@/context/workout-plan';
 import { fromDateKey } from '@/lib/exercises';
 import {
   formatRating,
@@ -38,7 +39,9 @@ export default function PackageScreen() {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { joinedPackageId, isJoined, joinPackage, leavePackage } = useCoaching();
+  const { plan } = useWorkoutPlan();
   const [confirmReplace, setConfirmReplace] = useState(false);
+  const [confirmLeave, setConfirmLeave] = useState(false);
   const { getPackage } = useCatalog();
   const found = getPackage(id);
   const current = joinedPackageId ? getPackage(joinedPackageId) : undefined;
@@ -58,9 +61,12 @@ export default function PackageScreen() {
       ? pkg.comments.reduce((sum, comment) => sum + comment.rating, 0) / pkg.comments.length
       : undefined;
 
+  // Joining fills the week with the package's workouts, replacing the days
+  // already planned, from another package or the user's own.
+  const hasPlannedDays = Object.values(plan.weekly).some(Boolean);
+
   function join() {
-    // Only one package at a time: joining another replaces the current plan.
-    if (current) setConfirmReplace(true);
+    if (current || hasPlannedDays) setConfirmReplace(true);
     else confirmJoin();
   }
 
@@ -165,7 +171,7 @@ export default function PackageScreen() {
                 variant="outlined"
                 tone="error"
                 icon={LogOut}
-                onPress={leavePackage}
+                onPress={() => setConfirmLeave(true)}
                 style={styles.flex}
               />
               <Button
@@ -189,7 +195,7 @@ export default function PackageScreen() {
       </View>
 
       <Dialog
-        visible={confirmReplace && !!current}
+        visible={confirmReplace}
         title="Substituir planejamento?"
         onDismiss={() => setConfirmReplace(false)}
         actions={
@@ -205,14 +211,33 @@ export default function PackageScreen() {
             />
           </>
         }>
-        {current && (
-          <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
-            Você só pode seguir um pacote de treinos por vez e já segue “{current.pkg.name}”, de{' '}
-            {current.trainer.name}. Ao aderir a “{pkg.name}”
-            {current.trainer.id === trainer.id ? '' : `, de ${trainer.name}`}, os treinos e os dias
-            da semana do planejamento de {current.trainer.name} serão substituídos.
-          </ThemedText>
-        )}
+        <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
+          {current
+            ? `Você só pode seguir um pacote de treinos por vez e já segue “${current.pkg.name}”, de ${current.trainer.name}. Ao aderir a “${pkg.name}”${current.trainer.id === trainer.id ? '' : `, de ${trainer.name}`}, os treinos e os dias da semana do planejamento de ${current.trainer.name} serão substituídos.`
+            : `Seu planejamento já tem treinos em alguns dias da semana. Ao aderir a “${pkg.name}”, esses dias passam a seguir os treinos do pacote. Seus treinos continuam salvos em Planejar treinos.`}
+        </ThemedText>
+      </Dialog>
+
+      <Dialog
+        visible={confirmLeave}
+        title="Sair do pacote?"
+        onDismiss={() => setConfirmLeave(false)}
+        actions={
+          <>
+            <Button label="Cancelar" variant="text" onPress={() => setConfirmLeave(false)} />
+            <Button
+              label="Sair"
+              variant="text"
+              onPress={() => {
+                setConfirmLeave(false);
+                leavePackage();
+              }}
+            />
+          </>
+        }>
+        <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
+          Os treinos de “{pkg.name}” saem do seu planejamento e dos dias da semana.
+        </ThemedText>
       </Dialog>
     </>
   );

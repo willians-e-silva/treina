@@ -4,6 +4,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { SaveErrorBanner } from '@/components/save-error-banner';
+import { UndoProvider } from '@/components/undo-snackbar';
 import { CatalogProvider } from '@/context/catalog';
 import { ChatProvider } from '@/context/chat';
 import { CoachingProvider } from '@/context/coaching';
@@ -36,7 +37,9 @@ export default function RootLayout() {
                       <ChatProvider>
                         <TasksProvider>
                           <DashboardLayoutProvider>
-                            <RootNavigator />
+                            <UndoProvider>
+                              <RootNavigator />
+                            </UndoProvider>
                           </DashboardLayoutProvider>
                         </TasksProvider>
                       </ChatProvider>

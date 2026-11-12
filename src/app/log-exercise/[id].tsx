@@ -14,7 +14,6 @@ import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useExerciseLog } from '@/context/exercise-log';
 import { useSession } from '@/context/session';
 import { useWorkoutPlan } from '@/context/workout-plan';
-import { MOCK_PROFILE } from '@/lib/profile';
 import {
   CATEGORY_LABELS,
   estimateCalories,
@@ -39,7 +38,8 @@ export default function ExerciseDetailsScreen() {
   const navigation = useNavigation();
   const { addEntry } = useExerciseLog();
   const { addExercise } = useWorkoutPlan();
-  const bodyWeightKg = useSession().profile?.weightKg ?? MOCK_PROFILE.weightKg;
+  // No weigh-in yet: no estimate, rather than one for somebody else's weight.
+  const bodyWeightKg = useSession().profile?.weightKg ?? null;
   const params = useLocalSearchParams<{
     id: string;
     date?: string;
@@ -72,7 +72,9 @@ export default function ExerciseDetailsScreen() {
 
   const minutesValue = parseNumber(minutes);
   const estimated =
-    exercise?.met && minutesValue > 0 ? estimateCalories(exercise.met, bodyWeightKg, minutesValue) : 0;
+    exercise?.met && bodyWeightKg !== null && minutesValue > 0
+      ? estimateCalories(exercise.met, bodyWeightKg, minutesValue)
+      : 0;
   const calories = caloriesOverride ?? String(estimated);
   const caloriesValue = parseNumber(calories);
   const setsValue = parseNumber(sets);
@@ -160,7 +162,9 @@ export default function ExerciseDetailsScreen() {
                 onChangeText={setCaloriesOverride}
                 hint={
                   exercise?.met && caloriesOverride === null
-                    ? `Estimativa para ${formatDecimal(bodyWeightKg)} kg`
+                    ? bodyWeightKg === null
+                      ? 'Registre seu peso no Perfil para estimar as calorias'
+                      : `Estimativa para ${formatDecimal(bodyWeightKg)} kg`
                     : undefined
                 }
               />

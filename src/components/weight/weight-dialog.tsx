@@ -12,7 +12,6 @@ import { toDateKey } from '@/lib/exercises';
 import {
   isValidWeight,
   maskDate,
-  MOCK_PROFILE,
   parseDate,
   parseDecimal,
   WEIGHT_MAX_KG,
@@ -38,7 +37,7 @@ type WeightDialogProps = {
  */
 export function WeightDialog({ mode, onDismiss }: WeightDialogProps) {
   const { goalKg, logWeight, setGoal } = useWeightLog();
-  const currentKg = useSession().profile?.weightKg ?? MOCK_PROFILE.weightKg;
+  const currentKg = useSession().profile?.weightKg ?? undefined;
   const initial = mode === 'current' ? currentKg : goalKg;
   const [text, setText] = useState(initial === undefined ? '' : formatDecimal(initial));
   // Required: starts empty so the user always says when they weighed themselves.
@@ -97,7 +96,9 @@ export function WeightDialog({ mode, onDismiss }: WeightDialogProps) {
       <ThemedText type="bodyMedium" themeColor="onSurfaceVariant">
         {mode === 'current'
           ? 'O peso fica registrado na data da medição. A medição mais recente é o seu peso atual.'
-          : `Seu peso atual é ${formatDecimal(currentKg)} kg.`}
+          : currentKg === undefined
+            ? 'Registre seu peso atual para acompanhar o progresso até a meta.'
+            : `Seu peso atual é ${formatDecimal(currentKg)} kg.`}
       </ThemedText>
       <FormField
         label={mode === 'current' ? 'Peso atual' : 'Peso desejado'}

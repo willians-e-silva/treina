@@ -3,6 +3,7 @@ import Dumbbell from 'lucide-react-native/icons/dumbbell';
 import HeartPulse from 'lucide-react-native/icons/heart-pulse';
 import Lock from 'lucide-react-native/icons/lock';
 import Trash from 'lucide-react-native/icons/trash';
+import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -10,6 +11,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ExerciseNote } from '@/components/trainers/exercise-note';
 import { WorkoutSourceRow } from '@/components/trainers/workout-source';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { FormField } from '@/components/ui/form-field';
 import { IconButton } from '@/components/ui/icon-button';
 import { Surface } from '@/components/ui/surface';
@@ -29,6 +31,7 @@ export default function WorkoutScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { workouts, renameWorkout, removeWorkout, removeExercise } = useWorkoutPlan();
   const workout = workouts.find((candidate) => candidate.id === id);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   if (!workout) {
     // Deleted, or lost with the in-memory plan after a reload.
@@ -156,11 +159,20 @@ export default function WorkoutScreen() {
             variant="outlined"
             tone="error"
             icon={Trash}
-            onPress={deleteWorkout}
+            onPress={() => setConfirmDelete(true)}
             style={styles.delete}
           />
         )}
       </ScrollView>
+
+      <ConfirmDialog
+        visible={confirmDelete}
+        title="Excluir treino?"
+        message={`“${workout.name || 'Treino'}” e seus exercícios saem do planejamento e dos dias da semana.`}
+        confirmLabel="Excluir"
+        onConfirm={deleteWorkout}
+        onDismiss={() => setConfirmDelete(false)}
+      />
     </>
   );
 }

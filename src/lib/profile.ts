@@ -34,9 +34,19 @@ export type Profile = {
 };
 
 /**
- * Profile of the demo mode, and the body data used for estimates (e.g.
- * calories) while the user's own is missing.
+ * `true` while the profile lacks the body data the estimates need: accounts
+ * created with Google start with only the name and email.
  */
+export function isProfileIncomplete(profile: Profile) {
+  return (
+    profile.birthDate === null ||
+    profile.sex === null ||
+    profile.heightCm === null ||
+    profile.weightKg === null
+  );
+}
+
+/** Profile of the demo mode. */
 export const MOCK_PROFILE: Omit<Profile, 'email'> & { weightKg: number } = {
   name: 'Usuário Treina',
   birthDate: '1996-01-01',
