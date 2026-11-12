@@ -1,95 +1,105 @@
 # Treina — arquitetura identificada
 
-Estado no commit `5fd90b1`.
+Estado no commit `25f3a9b`.
 
 ## Stack
 
-- **Plataforma:** Expo SDK 58 (expo ~58.0.21); React Native 0.88.1; React 19.3; TypeScript 6.0 (strict); React Compiler habilitado (app.json → experiments.reactCompiler); Typed routes (experiments.typedRoutes)
-- **Navegação:** Expo Router 58 (rotas em src/app); Stack.Protected para separar área logada; Abas próprias com swipe (src/components/sliding-tabs) sobre react-native-gesture-handler
-- **UI:** Design system Material 3 próprio gerado do ícone (scripts/generate-theme.mjs + @material/material-color-utilities); lucide-react-native (ícones importados por caminho); react-native-svg (gráficos do dashboard); react-native-reanimated 4 + worklets (arrastar do dashboard, teclado do chat); expo-image (GIFs de exercícios)
-- **Estado e dados:** 9 React Contexts com useState (sem biblioteca de estado); Sem persistência: nenhum AsyncStorage, SQLite, MMKV ou SecureStore; Caches em memória por módulo (Map) nos clientes de API
-- **Integrações:** ExerciseDB v1 (oss.exercisedb.dev) para catálogo de exercícios; Open Food Facts search-a-licious para produtos brasileiros; TACO 4ª ed. embarcada (597 alimentos, src/lib/taco-data.ts); Google Sign-In (@react-native-google-signin/google-signin); Fotos de treinadores em randomuser.me; Links para Instagram (Linking.openURL)
-- **Entrega:** EAS Build (perfis development, preview APK, production); EAS Update com runtimeVersion por fingerprint; Workflow EAS: OTA ou build Android a cada push na main
+- **Plataforma:** Expo SDK 58 (expo ~58.0.23); React Native 0.88.1 · React 19.3; TypeScript 6 estrito; React Compiler e typed routes habilitados
+- **Navegação:** Expo Router 58, 35 arquivos de rota; Stack.Protected separa as pilhas com e sem sessão; Abas próprias com swipe (sliding-tabs)
+- **UI:** Design system Material 3 gerado do ícone; 17 componentes base em components/ui (inclui password-field); lucide-react-native, react-native-svg, Reanimated 4 + Worklets, expo-image
+- **Dados:** 9 contextos de domínio sobre useUserStore (estado por conta + fila de salvamento); Repositórios por domínio: local (memória) ou Supabase (src/data); expo-sqlite guarda a sessão no aparelho; expo-crypto gera ids
+- **Backend:** Supabase: Auth (e-mail, Google, PKCE), Postgres com 18 tabelas e RLS, Realtime no chat; 5 migrações versionadas, seed do catálogo e teste SQL de RLS
+- **Integrações:** ExerciseDB (catálogo de exercícios); Open Food Facts (produtos brasileiros); TACO embarcada (597 alimentos); Google Sign-In; Fotos de exemplo em randomuser.me
+- **Entrega:** EAS Build (development, preview APK, production); EAS Update com runtime por fingerprint; Workflow: OTA ou build Android a cada push na main
 
 ## Camadas
 
 ```mermaid
 flowchart TB
-  R["Rotas · src/app (29)"] --> C["Componentes · src/components (59)"]
-  R --> X["Contextos · src/context (11)"]
+  R["Rotas · src/app (35)"] --> C["Componentes (58)"]
+  R --> X["Contextos (11)"]
   C --> X
-  C --> T["Tema · src/theme"]
-  R --> T
-  X --> L["Domínio e serviços · src/lib (15)"]
-  C --> L
-  R --> L
-  L --> E1[("ExerciseDB")]
-  L --> E2[("Open Food Facts")]
-  L --> E3[("TACO embarcada")]
-  L --> E4[("Google Sign-In")]
+  X --> D["Dados · src/data (19)<br/>useUserStore + repositórios"]
+  X --> LB["Domínio e serviços · src/lib (21)"]
+  R --> LB
+  D --> LOC["Local · memória (demo)"]
+  D --> SB[("Supabase<br/>Auth · Postgres+RLS · Realtime")]
+  LB --> E1[("ExerciseDB")]
+  LB --> E2[("Open Food Facts")]
+  LB --> E3[("TACO embarcada")]
+  LB --> E4[("Google Sign-In")]
 ```
 
 | Camada | Papel | Arquivos |
 |---|---|---|
-| Rotas (src/app) | Telas e navegadores do Expo Router. Leem contextos e chamam ações. | 29 |
-| Componentes (src/components) | UI reutilizável: ui/ (17 primitivos M3), dashboard/, diary/, exercise/, trainers/, tasks/, sliding-tabs/. | 59 |
-| Contextos (src/context) | Estado global em useState e as ações de cada domínio. Também são a fonte de dados (sem armazenamento). | 11 |
-| Domínio e serviços (src/lib) | Tipos e regras puras (tasks, workouts, foods, dashboard-widgets), clientes de API (exercisedb, openfoodfacts), dados embarcados (taco-data, trainers). | 15 |
-| Tema (src/theme) | Tokens Material 3 gerados, tipografia, tema de navegação. | 3 |
+| Rotas (src/app) | 35 arquivos: telas, layouts e o ErrorBoundary raiz. Leem contextos e chamam ações. | 35 |
+| Componentes (src/components) | UI reutilizável: ui/, auth/, dashboard/, diary/, exercise/, trainers/, tasks/, weight/, sliding-tabs/, save-error-banner. | 58 |
+| Contextos (src/context) | session + 9 domínios + signup. Cada domínio usa useUserStore e chama os repositórios. | 11 |
+| Dados (src/data) | useUserStore, contratos de repositório, implementação local (memória) e Supabase, carregamento do perfil, tipos gerados do banco. | 19 |
+| Domínio e serviços (src/lib) | Regras puras (tarefas, treinos, refeições, peso), clientes ExerciseDB e Open Food Facts, TACO, auth, cliente Supabase. | 21 |
+| Supabase (supabase/) | Migrações, RLS, trigger de perfil, refeições padrão, realtime do chat, seed e teste SQL. | 8 |
 
 ## Estado global
 
-Nove providers aninhados em `src/app/_layout.tsx`, nesta ordem (de fora para dentro). Todos acima do `Stack.Protected`, por isso sobrevivem ao logout.
+10 providers aninhados em `src/app/_layout.tsx`, de fora para dentro. Os domínios usam `useUserStore`, chaveado pela conta: ao trocar de conta, os dados recomeçam do vazio.
 
 ```mermaid
 flowchart LR
   p0["SessionProvider"]
-  p1["WeightLogProvider"]
-  p0 -.contém.-> p1
-  p2["FoodLogProvider"]
-  p1 -.contém.-> p2
-  p3["ExerciseLogProvider"]
-  p2 -.contém.-> p3
-  p4["WorkoutPlanProvider"]
-  p3 -.contém.-> p4
-  p5["CoachingProvider"]
-  p4 -.contém.-> p5
-  p6["ChatProvider"]
-  p5 -.contém.-> p6
-  p7["TasksProvider"]
-  p6 -.contém.-> p7
-  p8["DashboardLayoutProvider"]
-  p7 -.contém.-> p8
-  p1 ==>|"setWeight"| p0
-  p5 ==>|"importWorkouts / setWeekday"| p4
+  p1["CatalogProvider"]
+  p0 -.->|contém| p1
+  p2["WeightLogProvider"]
+  p1 -.->|contém| p2
+  p3["FoodLogProvider"]
+  p2 -.->|contém| p3
+  p4["ExerciseLogProvider"]
+  p3 -.->|contém| p4
+  p5["WorkoutPlanProvider"]
+  p4 -.->|contém| p5
+  p6["CoachingProvider"]
+  p5 -.->|contém| p6
+  p7["ChatProvider"]
+  p6 -.->|contém| p7
+  p8["TasksProvider"]
+  p7 -.->|contém| p8
+  p9["DashboardLayoutProvider"]
+  p8 -.->|contém| p9
+  p2 ==> p0
+  p6 ==> p5
+  p6 ==> p1
 ```
 
 Dependências entre providers:
 
-- `WeightLogProvider` → `SessionProvider`: logWeight chama session.setWeight
-- `CoachingProvider` → `WorkoutPlanProvider`: joinPackage importa treinos e define dias da semana
+- `Todos os domínios` → `SessionProvider`: useUserStore é chaveado pelo id da conta
+- `WeightLogProvider` → `SessionProvider`: logWeight atualiza o peso do perfil na tela
+- `CoachingProvider` → `WorkoutPlanProvider`: aderir importa treinos e define a semana
+- `CoachingProvider` → `CatalogProvider`: busca o pacote e o treinador
 
-Nenhum provider persiste dados. Ids são gerados com `Date.now()` + contador por módulo.
+Ids criados no app com `expo-crypto` (UUID), para a mudança aparecer antes de ser salva. A fila de salvamento de cada domínio fica em memória (N-03).
+
 
 ## Domínios
 
 | Domínio | Contexto | Lib | Telas |
 |---|---|---|---|
-| Conta e perfil | `session.tsx, signup.tsx` | `profile.ts, google-auth.ts` | `login`, `signup`, `signup/details`, `(tabs)/profile` |
-| Alimentação | `food-log.tsx` | `foods.ts, taco.ts, taco-data.ts, openfoodfacts.ts` | `(tabs)/diary`, `log-food`, `log-food/[id]`, `meals` |
-| Exercício avulso | `exercise-log.tsx` | `exercises.ts, exercisedb.ts` | `(tabs)/exercise`, `log-exercise`, `log-exercise/[id]` |
-| Plano de treino | `workout-plan.tsx` | `workouts.ts` | `workouts`, `workouts/[id]`, `workout-session` |
-| Treinadores | `coaching.tsx, chat.tsx` | `trainers.ts` | `(tabs)/trainers`, `trainer/[id]`, `trainer/package/[id]`, `trainer/workout`, `chat/[trainerId]` |
-| Tarefas | `tasks.tsx` | `tasks.ts` | `(tabs)/tasks`, `add-task` |
-| Peso | `weight-log.tsx` | `profile.ts` | `(tabs)/index`, `(tabs)/profile` |
+| Conta e perfil | `session.tsx, signup.tsx` | `auth.ts, google-auth.ts, profile.ts, supabase.ts, data/profile.ts` | `login`, `signup/*`, `forgot-password/*`, `auth/callback`, `(tabs)/profile` |
+| Alimentação | `food-log.tsx` | `foods.ts, taco.ts, openfoodfacts.ts, data/supabase/food-log.ts` | `(tabs)/diary`, `log-food/*`, `meals` |
+| Exercício avulso | `exercise-log.tsx` | `exercises.ts, exercisedb.ts, data/supabase/exercise-log.ts` | `(tabs)/exercise`, `log-exercise/*` |
+| Plano de treino | `workout-plan.tsx` | `workouts.ts, data/supabase/workout-plan.ts` | `workouts/*`, `workout-session` |
+| Treinadores | `catalog.tsx, coaching.tsx, chat.tsx` | `trainers.ts, chat.ts, data/supabase/catalog.ts, coaching.ts, chat.ts` | `(tabs)/trainers`, `trainer/*`, `chat/[trainerId]` |
+| Tarefas | `tasks.tsx` | `tasks.ts, data/supabase/tasks.ts` | `(tabs)/tasks`, `add-task` |
+| Peso | `weight-log.tsx` | `weight.ts, data/supabase/weight.ts` | `(tabs)/index`, `(tabs)/profile` |
 | Tela inicial | `dashboard-layout.tsx` | `dashboard-widgets.ts, dashboard-data.ts` | `(tabs)/index` |
 
 ## Navegação
 
 ```mermaid
 flowchart TD
-  root["_layout · Stack"] -->|sem sessão| login["login"]
-  root -->|sem sessão| signup["signup · Stack (2 etapas)"]
+  root["_layout · Stack + ErrorBoundary"] -->|sem sessão| login["login"]
+  root -->|sem sessão| signup["signup · conta → dados → confirmar"]
+  root -->|sem sessão| fp["forgot-password · e-mail → verificar → nova senha"]
+  root -->|link| cb["auth/callback"]
   root -->|com sessão| tabs["(tabs) · SlidingTabs"]
   tabs --> t1["Início"] & t2["Diário"] & t3["Exercícios"] & t4["Treinador"] & t5["Tarefas"] & t6["Perfil"]
   root -->|modal| lf["log-food · busca → quantidade"]
@@ -106,42 +116,42 @@ flowchart TD
 
 | Serviço | Onde | Observações |
 |---|---|---|
-| ExerciseDB | `src/lib/exercisedb.ts` | API gratuita, sem chave, limita rajadas (429). Nomes só em inglês. Dependência crítica de um serviço de terceiros sem SLA. |
-| Open Food Facts | `src/lib/openfoodfacts.ts` | Dados colaborativos; o cliente descarta valores impossíveis por 100 g. Envia User-Agent como a API pede. |
-| TACO embarcada | `src/lib/taco.ts` | 597 alimentos offline, ~37 KB. Escolha certa para o público brasileiro. |
-| Google Sign-In | `src/lib/google-auth.ts` | Funciona só em build nativo; web mostra indisponível. iOS ainda com iosUrlScheme de exemplo. |
-| randomuser.me | `src/lib/trainers.ts` | Fotos de pessoas fictícias para os treinadores de exemplo. |
+| Supabase | `src/lib/supabase.ts, src/data/supabase/*` | Auth com PKCE e sessão no expo-sqlite; Postgres com RLS; Realtime no chat. Chave publicável no app; service role nunca usada. |
+| ExerciseDB | `src/lib/exercisedb.ts` | API gratuita sem SLA, nomes só em inglês, MET estimado pelo nome. |
+| Open Food Facts | `src/lib/openfoodfacts.ts` | Produtos do Brasil; valores impossíveis descartados. |
+| TACO embarcada | `src/lib/taco.ts` | 597 alimentos offline. |
+| Google Sign-In | `src/lib/google-auth.ts` | idToken enviado ao Supabase (signInWithIdToken). Exige os client IDs no ambiente; iOS ainda com URL scheme de exemplo. |
+| randomuser.me | `supabase/seed.sql, src/lib/trainers.ts` | Fotos de pessoas fictícias no catálogo de exemplo. |
 
 ## Pontos positivos
 
-- Regras de domínio puras e sem React em src/lib, prontas para testes unitários (ex.: isTaskDue, getWorkoutForDate, moveWidget, insertMeal).
-- Tipos discriminados bem usados (TaskRepeat, PlannedExercise com DistributiveOmit, RemoteSearch).
-- Clientes de API com cache de promessas, descarte de respostas obsoletas e mensagens de erro em pt-BR.
-- Design system gerado a partir do ícone, com relatório de contraste (scripts/generate-theme.mjs --report).
-- Guard de sessão com Stack.Protected e tela de carregamento/erro antes das abas (use-main-flow-bootstrap).
-- Comentários explicam decisões (por que a busca do ExerciseDB é só ao enviar, por que ícones são importados por caminho).
+- Camada de repositório com contrato por domínio e duas implementações (memória e Supabase), escolhida por EXPO_PUBLIC_DATA_SOURCE.
+- useUserStore: dados de uma conta nunca aparecem para outra, mudanças aparecem na hora e são salvas em ordem, com banner de nova tentativa.
+- Schema com checks de domínio (pesos 30–400 kg, altura 100–250 cm, gramas > 0) e RLS em todas as tabelas, verificado por supabase/tests/rls.sql.
+- Fluxos de conta completos e cuidadosos: troca de código uma única vez, recuperação que não loga o app até a senha nova, saída global após trocar a senha.
+- Perfil com data de nascimento (idade sempre correta) e peso atual derivado da última pesagem.
+- Modo demo preserva o objetivo de front funcional sem servidor.
 
 ## Pontos negativos
 
-- Contextos são ao mesmo tempo estado de tela, regra de negócio e banco de dados; trocar para API exige reescrever os 9.
-- Providers ficam acima do Stack.Protected e sobrevivem ao logout com os dados da conta anterior.
-- Duas fontes de verdade para o peso (profile.weightKg e weight-log).
-- Dados de exemplo misturados ao estado real (histórico de peso começa com MOCK_DASHBOARD.weight).
-- Nenhum teste e nenhum CI de qualidade.
-- Sobras do template Expo (componentes e dependências sem uso, README e reset-project.js).
+- O app só abre depois que os 9 domínios carregam; uma falha em qualquer um bloqueia tudo.
+- O login baixa o histórico completo de alimentos, exercícios, pesagens e chat.
+- A fila de salvamento fica só em memória: mudanças pendentes se perdem se o app fechar.
+- Ainda sem testes JavaScript e sem CI antes de publicar OTA.
+- 11 providers aninhados que dependem da ordem.
+- Parte da configuração (variáveis do EAS, client IDs do Google) fica fora do repositório e falha só em tempo de execução.
 
-## Arquitetura recomendada para a integração
+## Próximos passos de arquitetura
 
 ```mermaid
 flowchart LR
-  UI["Telas e componentes"] --> H["Hooks de domínio<br/>useFoodDay, useWorkoutPlan…"]
-  H --> REPO["Interfaces de repositório<br/>FoodLogRepository, WorkoutRepository…"]
-  REPO --> LOCAL["Implementação local<br/>persistência no aparelho"]
-  REPO -.fase 5.-> API["Implementação HTTP<br/>backend"]
-  LOCAL <-.sincronização.-> API
+  T["Telas"] --> X["Contextos"] --> S["useUserStore"]
+  S --> Q["Fila persistida no expo-sqlite<br/>(R-11)"] --> R["Repositórios"] --> SB[("Supabase")]
+  S --> W["Janela por período<br/>(R-12)"] --> R
+  X --> E["Erro por aba,<br/>não global (R-12)"]
 ```
 
-- As telas continuam falando com hooks; só a implementação do repositório muda quando o backend chegar.
-- Os tipos de `src/lib` (Food, FoodEntry, Workout, Task, WeighIn) viram o contrato inicial da API.
-- Dados de exemplo (treinadores, histórico de peso) passam a ser fixtures da implementação local, ativadas só em modo demo.
-- Registros chaveados pela conta resolvem o vazamento entre usuários (I-02).
+- Persistir a fila de salvamento para não perder mudanças ao fechar o app.
+- Carregar uma janela recente no login e buscar o resto sob demanda.
+- Bloquear o app só se o perfil falhar; cada aba trata o próprio erro.
+- Testar `useUserStore` e o repositório local, que são o coração da camada de dados.

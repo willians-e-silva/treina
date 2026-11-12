@@ -55,6 +55,7 @@
   // ---------- views ----------
   var VIEWS = [
     { id: 'visao', label: 'Visão geral', render: viewOverview },
+    { id: 'evolucao', label: 'Evolução', count: function () { return D.evolution.length; }, render: viewEvolution },
     { id: 'scorecard', label: 'Scorecard', count: function () { return D.scores.length; }, render: viewScorecard },
     { id: 'telas', label: 'Telas', count: function () { return D.screens.length; }, render: viewScreens },
     { id: 'galeria', label: 'Galeria de telas', count: function () { return D.gallery.images.length; }, render: viewGallery },
@@ -87,7 +88,7 @@
     return head('Treina · commit ' + D.meta.commit + ' · ' + D.meta.date, 'Visão geral', null) +
       '<div class="banner"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><p>' + esc(D.meta.phase) + '</p></div>' +
       '<div class="grid g-kpi">' +
-      kpi('Nota geral', num(o.score) + '<small> /10</small>', 'Produção; ' + num(o.frontPhaseScore) + ' para a fase de front') +
+      kpi('Nota geral', num(o.score) + '<small> /10</small>', 'Era ' + num(o.previousScore) + ' · ' + num(o.frontPhaseScore) + ' para a fase de front') +
       kpi('Maturidade', esc(o.maturity), 'Escala de 6 níveis') +
       kpi('Telas analisadas', c.screens, '+ ' + c.dialogs + ' diálogos') +
       kpi('Features', c.features, 'Inventário completo') +
@@ -422,6 +423,29 @@
               '<details><summary>Dependências e critério de conclusão</summary><p><b>Depende de:</b> ' + esc(t.deps) + '</p><p><b>Concluído quando:</b> ' + esc(t.done) + '</p></details></div>';
           }).join('') : '<p class="faint">Nenhuma tarefa com essa prioridade nesta fase.</p>') + '</div></div>';
       }).join('') + '</div>';
+  }
+
+  function viewEvolution() {
+    var E = D.evolution, o = D.overall;
+    var order = ['Resolvido', 'Parcial', 'Aberto'];
+    var cls = { Resolvido: 'good', Parcial: 'warning', Aberto: 'critical' };
+    var counts = {}; E.forEach(function (e) { counts[e.status] = (counts[e.status] || 0) + 1; });
+    var bar = '<div class="stackbar" role="img" aria-label="' + order.map(function (k) { return (counts[k] || 0) + ' ' + k.toLowerCase(); }).join(', ') + '">' +
+      order.map(function (k) { return counts[k] ? '<i class="' + cls[k] + '" style="flex:' + counts[k] + '" title="' + k + ': ' + counts[k] + '"></i>' : ''; }).join('') + '</div>';
+    var rows = order.map(function (k) {
+      return E.filter(function (e) { return e.status === k; }).map(function (e) {
+        return '<tr><td class="n">' + e.id + '</td><td><b>' + esc(e.title) + '</b></td><td>' + pill(e.status, cls[e.status]) + '</td><td>' + rich(e.note) + '</td></tr>';
+      }).join('');
+    }).join('');
+    return head('Comparação', 'Evolução desde a auditoria anterior', 'Os ' + E.length + ' problemas da auditoria de ' + D.meta.previousAudit + ', conferidos um a um no código atual. Problemas novos estão na seção Problemas com o prefixo N-.') +
+      '<div class="grid g-kpi">' +
+      kpi('Nota anterior', num(o.previousScore) + '<small> /10</small>', D.meta.previousAudit) +
+      kpi('Nota atual', num(o.score) + '<small> /10</small>', 'commit ' + D.meta.commit) +
+      order.map(function (k) { return kpi(k, counts[k] || 0, k === 'Resolvido' ? 'corrigidos no código' : k === 'Parcial' ? 'melhoraram, ainda abertos' : 'sem mudança'); }).join('') +
+      kpi('Problemas novos', D.issues.filter(function (i) { return i.id.indexOf('N-') === 0; }).length, 'encontrados nesta edição') +
+      '</div>' +
+      '<section class="card"><div class="card-head"><h2>Situação dos ' + E.length + ' problemas anteriores</h2><div class="legend">' + order.map(function (k) { return '<span><i style="background:var(--' + (cls[k] === 'good' ? 'good' : cls[k] === 'warning' ? 'warning' : 'critical') + ')"></i>' + k + ' (' + (counts[k] || 0) + ')</span>'; }).join('') + '</div></div>' + bar + '</section>' +
+      '<div class="table-wrap"><table><thead><tr><th>ID</th><th>Problema</th><th>Situação</th><th>Observação</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
   }
 
   // ---------- routing ----------

@@ -2,40 +2,42 @@
 window.AUDIT = {
  "meta": {
   "project": "Treina",
-  "date": "2026-11-02",
-  "commit": "5fd90b1",
+  "date": "2026-11-12",
+  "commit": "25f3a9b",
   "branchAnalyzed": "main",
-  "linesOfCode": 14402,
-  "sourceFiles": 123,
-  "routeFiles": 29,
-  "commits": 18,
-  "phase": "Front-end primeiro: a aplicação está sendo construída com dados simulados e estado em memória antes da integração com o backend. A auditoria avalia o front para essa fase e, separadamente, a distância até a produção.",
+  "previousAudit": "5fd90b1 (02/11/2026)",
+  "linesOfCode": 18084,
+  "sourceFiles": 154,
+  "routeFiles": 35,
+  "commits": 33,
+  "phase": "O objetivo declarado é ter um front funcional antes de depender do backend. Na prática, a main já tem os dois caminhos: o modo demo, com dados em memória e sem servidor, e o Supabase, com autenticação e persistência reais, escolhido por variáveis de ambiente. A auditoria avalia o front nos dois modos e mede separadamente a distância até a produção.",
   "notVerified": [
-   "O app não foi executado em dispositivo, emulador ou navegador durante a auditoria; tudo foi avaliado por leitura de código, lint e typecheck.",
-   "O fluxo real do Google Sign-In não foi testado (depende de IDs de cliente em .env.local, que não estão no repositório).",
-   "Desempenho em tempo de execução (FPS do arrastar do dashboard, troca de abas por gesto, tempo de abertura) não foi medido.",
-   "Não há documento de produto, público-alvo ou métricas no repositório; posicionamento e público foram inferidos do código (idioma pt-BR, tabela TACO, treinadores com Instagram)."
+   "O app não foi executado em Android ou iOS nesta auditoria. As capturas vêm da versão web exportada (expo export -p web) em modo demo, com dados criados pela interface.",
+   "O Supabase real não foi acessado: as migrações, as políticas RLS e o teste supabase/tests/rls.sql foram lidos, mas não executados contra um banco.",
+   "O fluxo real de e-mail (confirmação e recuperação de senha) e o Google Sign-In não puderam ser testados de ponta a ponta. As telas foram abertas diretamente pelo endereço.",
+   "Desempenho em aparelho não foi medido.",
+   "Continua sem documento de produto ou público-alvo no repositório; o posicionamento foi inferido do código."
   ],
   "checks": [
    {
     "name": "TypeScript (tsc --noEmit)",
     "result": "Passa",
-    "detail": "Falha com 2 erros apenas quando expo-env.d.ts não existe; o arquivo é gerado por expo start e está no .gitignore. Com ele gerado, 0 erros."
+    "detail": "0 erros com o expo-env.d.ts gerado pelo expo start (o arquivo está no .gitignore, então um clone novo falha até gerá-lo)."
    },
    {
     "name": "ESLint (expo lint)",
     "result": "1 erro",
-    "detail": "src/hooks/use-color-scheme.web.ts:11, setState síncrono dentro de useEffect (regra react-hooks/set-state-in-effect)."
+    "detail": "O mesmo da auditoria anterior: src/hooks/use-color-scheme.web.ts:11, setState síncrono em useEffect."
    },
    {
     "name": "Testes automatizados",
-    "result": "Inexistentes",
-    "detail": "Nenhum arquivo de teste, nenhum test runner e nenhum script de teste em package.json."
+    "result": "Só SQL",
+    "detail": "supabase/tests/rls.sql verifica as políticas RLS com duas contas numa transação desfeita no fim. Nenhum teste JavaScript nem test runner."
    },
    {
     "name": "CI de qualidade",
     "result": "Inexistente",
-    "detail": ".eas/workflows/preview.yml só gera build ou atualização OTA Android; não roda lint, typecheck ou testes."
+    "detail": ".eas/workflows/preview.yml publica OTA ou gera build Android a cada push na main, sem lint, typecheck, testes ou teste do APK."
    }
   ]
  },
@@ -43,57 +45,59 @@ window.AUDIT = {
   {
    "group": "Plataforma",
    "items": [
-    "Expo SDK 58 (expo ~58.0.21)",
-    "React Native 0.88.1",
-    "React 19.3",
-    "TypeScript 6.0 (strict)",
-    "React Compiler habilitado (app.json → experiments.reactCompiler)",
-    "Typed routes (experiments.typedRoutes)"
+    "Expo SDK 58 (expo ~58.0.23)",
+    "React Native 0.88.1 · React 19.3",
+    "TypeScript 6 estrito",
+    "React Compiler e typed routes habilitados"
    ]
   },
   {
    "group": "Navegação",
    "items": [
-    "Expo Router 58 (rotas em src/app)",
-    "Stack.Protected para separar área logada",
-    "Abas próprias com swipe (src/components/sliding-tabs) sobre react-native-gesture-handler"
+    "Expo Router 58, 35 arquivos de rota",
+    "Stack.Protected separa as pilhas com e sem sessão",
+    "Abas próprias com swipe (sliding-tabs)"
    ]
   },
   {
    "group": "UI",
    "items": [
-    "Design system Material 3 próprio gerado do ícone (scripts/generate-theme.mjs + @material/material-color-utilities)",
-    "lucide-react-native (ícones importados por caminho)",
-    "react-native-svg (gráficos do dashboard)",
-    "react-native-reanimated 4 + worklets (arrastar do dashboard, teclado do chat)",
-    "expo-image (GIFs de exercícios)"
+    "Design system Material 3 gerado do ícone",
+    "17 componentes base em components/ui (inclui password-field)",
+    "lucide-react-native, react-native-svg, Reanimated 4 + Worklets, expo-image"
    ]
   },
   {
-   "group": "Estado e dados",
+   "group": "Dados",
    "items": [
-    "9 React Contexts com useState (sem biblioteca de estado)",
-    "Sem persistência: nenhum AsyncStorage, SQLite, MMKV ou SecureStore",
-    "Caches em memória por módulo (Map) nos clientes de API"
+    "9 contextos de domínio sobre useUserStore (estado por conta + fila de salvamento)",
+    "Repositórios por domínio: local (memória) ou Supabase (src/data)",
+    "expo-sqlite guarda a sessão no aparelho; expo-crypto gera ids"
+   ]
+  },
+  {
+   "group": "Backend",
+   "items": [
+    "Supabase: Auth (e-mail, Google, PKCE), Postgres com 18 tabelas e RLS, Realtime no chat",
+    "5 migrações versionadas, seed do catálogo e teste SQL de RLS"
    ]
   },
   {
    "group": "Integrações",
    "items": [
-    "ExerciseDB v1 (oss.exercisedb.dev) para catálogo de exercícios",
-    "Open Food Facts search-a-licious para produtos brasileiros",
-    "TACO 4ª ed. embarcada (597 alimentos, src/lib/taco-data.ts)",
-    "Google Sign-In (@react-native-google-signin/google-signin)",
-    "Fotos de treinadores em randomuser.me",
-    "Links para Instagram (Linking.openURL)"
+    "ExerciseDB (catálogo de exercícios)",
+    "Open Food Facts (produtos brasileiros)",
+    "TACO embarcada (597 alimentos)",
+    "Google Sign-In",
+    "Fotos de exemplo em randomuser.me"
    ]
   },
   {
    "group": "Entrega",
    "items": [
-    "EAS Build (perfis development, preview APK, production)",
-    "EAS Update com runtimeVersion por fingerprint",
-    "Workflow EAS: OTA ou build Android a cada push na main"
+    "EAS Build (development, preview APK, production)",
+    "EAS Update com runtime por fingerprint",
+    "Workflow: OTA ou build Android a cada push na main"
    ]
   }
  ],
@@ -101,162 +105,162 @@ window.AUDIT = {
   {
    "key": "tech",
    "label": "Qualidade técnica",
-   "score": 6.5,
-   "why": "TypeScript estrito sem any, regras de domínio puras e bem comentadas em src/lib (tasks.ts, workouts.ts, dashboard-widgets.ts), tratamento de 429 e cache nos clientes de API. Perde pontos por zero testes, um erro de lint e helpers duplicados.",
+   "score": 7.5,
+   "why": "A camada nova é sólida: repositórios com contrato claro (src/data/types.ts), store por conta com fila ordenada de salvamento e nova tentativa (use-user-store.ts), fluxos de autenticação completos e tratados, schema com checks e RLS testado em SQL. Continua sem nenhum teste JavaScript, com o erro de lint antigo e helpers duplicados.",
    "problems": [
-    "Nenhum teste automatizado (I-16)",
-    "parseNumber, EMAIL_PATTERN, createId e initials duplicados (I-18)",
-    "Erro de lint em use-color-scheme.web.ts (I-17)"
+    "Zero testes JavaScript (I-16)",
+    "parseNumber duplicado e initials/getInitials (I-18)",
+    "Fallback silencioso para 82 kg nos cálculos (N-02)"
    ],
    "improve": [
-    "Adicionar jest-expo e cobrir src/lib primeiro",
-    "Extrair helpers de parsing e validação para src/lib",
-    "Rodar lint e tsc em CI"
+    "jest-expo com testes de src/lib e de use-user-store",
+    "Unificar parsing e iniciais em src/lib",
+    "Bloquear o cálculo de kcal sem peso real"
    ]
   },
   {
    "key": "arch",
    "label": "Arquitetura",
-   "score": 6,
-   "why": "Camadas claras (rotas → componentes → contextos → lib), domínio separado da UI. Mas cada contexto guarda os dados em useState sem uma camada de acesso a dados, os providers ficam acima do controle de sessão e dependem da ordem de aninhamento.",
+   "score": 7.5,
+   "why": "O principal problema da auditoria anterior foi resolvido: telas → contextos → useUserStore → repositórios (local ou Supabase), com dados isolados por conta. Restam 11 providers aninhados com dependência pela ordem, um carregamento tudo-ou-nada e o histórico inteiro carregado no login.",
    "problems": [
-    "Sem camada de repositório para trocar mock por API (I-20)",
-    "Dados não isolados por conta (I-02)",
-    "Dependência implícita pela ordem dos providers (I-21)"
+    "Carregamento bloqueante de 9 stores (N-05)",
+    "Histórico inteiro carregado no login (N-04)",
+    "Dependência implícita entre providers (I-21)"
    ],
    "improve": [
-    "Definir interfaces de repositório por domínio com implementação local",
-    "Escopar os dados pela conta e limpar no logout",
-    "Agrupar providers ou usar um store com seletores"
+    "Carregar cada domínio sob demanda e por período",
+    "Deixar falhas de um domínio não bloquearem o app",
+    "Compor os providers num único ponto"
    ]
   },
   {
    "key": "ux",
    "label": "UX/UI",
    "score": 7,
-   "why": "Material 3 aplicado de forma consistente, tema claro e escuro, estados de vazio, carregando e erro na maioria das listas e acessibilidade acima da média (labels, roles, ações de acessibilidade no arrastar). Perde por login em inglês, exclusões sem confirmação, 6 abas e números fictícios exibidos como reais.",
+   "why": "Textos agora consistentes em pt-BR, fluxos de conta completos (confirmação, reenvio com contagem, recuperação de senha, aviso de senha alterada), aviso honesto no chat e registro de peso com data. Perde por exclusões sem confirmação, 6 abas, metas e passos fictícios exibidos como reais e ausência de onboarding e de edição de perfil.",
    "problems": [
-    "Login com textos em inglês e erros de grafia (I-08)",
-    "Exclusões sem confirmação ou desfazer (I-11)",
-    "6 destinos na barra inferior (I-24)",
-    "Passos e histórico de peso fictícios sem aviso (I-03, I-05)"
+    "Exclusões sem confirmação nem desfazer (I-11)",
+    "Metas e passos fictícios (I-04, I-05)",
+    "Sem completar perfil após Google (N-01)",
+    "6 abas (I-24)"
    ],
    "improve": [
-    "Revisão de textos pt-BR",
-    "Snackbar com Desfazer em toda exclusão",
-    "Reduzir para 5 abas",
-    "Estados vazios no lugar de dados simulados"
+    "Snackbar com Desfazer",
+    "Metas calculadas e passos ocultos até haver fonte",
+    "Tela de completar perfil",
+    "5 abas"
    ]
   },
   {
    "key": "features",
    "label": "Funcionalidades",
-   "score": 6.5,
-   "why": "Cobre os três pilares de um app de saúde (alimentação, treino, peso) e um diferencial (pacotes de treinadores). Várias features param no primeiro passo: não há edição de registros nem histórico, e as metas não são calculadas.",
+   "score": 7,
+   "why": "Os pilares estão de pé com dados persistidos: conta, diário alimentar, plano de treino e sessão, treinadores com pacotes e chat em tempo real, tarefas, peso com histórico. Faltam edição de registros, histórico de treinos e metas pessoais.",
    "problems": [
     "Sem edição de registros (I-12)",
-    "Metas fixas apesar do cadastro (I-04)",
-    "Chat sem resposta (I-14)"
+    "Metas fixas (I-04)",
+    "Chat só de ida (I-14)"
    ],
    "improve": [
-    "Edição em todos os registros",
-    "Metas calculadas do perfil",
-    "Histórico de treinos e de peso real"
+    "Editar alimento, exercício e exercício do treino",
+    "Metas calculadas",
+    "Histórico de cargas"
    ]
   },
   {
    "key": "complete",
    "label": "Completude",
-   "score": 4.5,
-   "why": "Os fluxos de criação funcionam de ponta a ponta no front, mas edição, configurações, recuperação de senha, histórico e persistência faltam. O usuário perde tudo ao fechar o app.",
+   "score": 5.5,
+   "why": "Persistência, autenticação e isolamento de dados foram fechados. Continuam abertos: edição, perfil editável, onboarding, configurações, exclusão de conta, histórico e o lado do treinador.",
    "problems": [
-    "Nenhuma persistência local (I-01)",
-    "Perfil não editável (I-13)",
-    "Sem tela de configurações ou recuperação de senha"
+    "Perfil não editável e sem completar após Google (I-13, N-01)",
+    "Sem configurações nem exclusão de conta",
+    "Mudanças pendentes se perdem ao fechar (N-03)"
    ],
    "improve": [
-    "Persistência local já na fase de front",
-    "Fechar o ciclo criar → editar → excluir em todos os domínios"
+    "Fechar criar → editar → excluir em todos os domínios",
+    "Configurações com conta e privacidade"
    ]
   },
   {
    "key": "security",
    "label": "Segurança",
-   "score": 2.5,
-   "why": "Para produção não há autenticação real: o login por e-mail aceita qualquer valor, o idToken do Google não é verificado, a senha do cadastro não vai a lugar nenhum e não há armazenamento seguro de sessão. Na fase atual isso é esperado; a nota mede a distância até a produção.",
+   "score": 6.5,
+   "why": "Autenticação real com PKCE, chave publicável no app, RLS em todas as tabelas do usuário com teste SQL, catálogo só leitura, saída de todos os aparelhos ao trocar a senha e e-mail de recuperação que não revela se a conta existe. Faltam consentimento e exclusão de conta (dados de saúde), e a configuração de ambiente não é versionada.",
    "problems": [
-    "IS_AUTH_MOCKED = true (I-10)",
-    "Sem armazenamento seguro de token",
-    "Dados de saúde sem consentimento ou política de privacidade"
+    "Sem consentimento LGPD nem exclusão de conta (M-04)",
+    "Variáveis do EAS fora do repositório (N-06)"
    ],
    "improve": [
-    "Backend de autenticação com verificação do idToken",
-    "Sessão em expo-secure-store",
-    "Consentimento e exclusão de conta (LGPD)"
+    "Consentimento no cadastro e exclusão de conta no app",
+    "Documentar e validar as variáveis no build"
    ]
   },
   {
    "key": "perf",
    "label": "Performance",
    "score": 7,
-   "why": "Boas decisões visíveis no código: índice TACO criado sob demanda, buscas com debounce e cache, GIFs sem autoplay na lista, ícones importados um a um, React Compiler ativo. Nada foi medido em execução, e os filtros de arrays inteiros a cada render vão pesar quando houver histórico persistido.",
+   "why": "Mantém as boas decisões (TACO sob demanda, debounce e cache, GIFs sem autoplay, React Compiler) e mostra mudanças antes de salvar. Mas o login baixa todo o histórico de todos os domínios em páginas (selectAll), o que cresce sem limite com o uso. Nada foi medido em aparelho.",
    "problems": [
-    "Filtros O(n) por render em useFoodDay, useExerciseDay e ExerciseTile (H-01)",
-    "Sem medição em dispositivo"
+    "Histórico inteiro no login (N-04)",
+    "Filtros por render sobre o histórico (H-01)"
    ],
    "improve": [
-    "Indexar registros por data ao introduzir persistência",
-    "Medir com o React Native DevTools / Perf Monitor"
+    "Carregar por período (ex.: últimos 30 dias) e sob demanda",
+    "Medir em aparelho de entrada"
    ]
   },
   {
    "key": "scale",
    "label": "Escalabilidade",
-   "score": 3.5,
-   "why": "Estado em memória, catálogo de treinadores no código e chat local não escalam além de um usuário em uma sessão. A modelagem de tipos de domínio é boa base, mas falta contrato de API, paginação e sincronização.",
+   "score": 5.5,
+   "why": "Postgres com RLS e índices de chave estrangeira escala bem para muitos usuários. O cliente não: carrega tudo da conta no login e mantém a fila de salvamento só em memória. O catálogo e o chat dependem de um lado do treinador que não existe.",
    "problems": [
-    "Catálogo e comentários fixos em trainers.ts (I-22)",
-    "Sem contrato de dados com o backend (I-20)"
+    "Carregamento total por conta (N-04)",
+    "Sem modo offline nem fila persistente (N-03)"
    ],
    "improve": [
-    "Contratos de API tipados por domínio",
-    "Estratégia offline-first com sincronização"
+    "Paginação por período",
+    "Fila de salvamento persistida no aparelho"
    ]
   },
   {
    "key": "maint",
    "label": "Manutenibilidade",
-   "score": 6.5,
-   "why": "Nomes claros, comentários que explicam o porquê e arquivos curtos na maioria. Há código morto do template, um componente de 714 linhas e duplicações, e sem testes cada mudança é verificada à mão.",
+   "score": 7,
+   "why": "Código morto do template removido, comentários que explicam decisões e referenciam problemas da auditoria, contratos de repositório claros. Pesam a falta de testes, o componente de dashboard com 718 linhas e a dependência de variáveis de ambiente não documentadas no build.",
    "problems": [
-    "Código e dependências não usados (I-19)",
-    "draggable-dashboard.tsx com 714 linhas (I-29)",
-    "Sem testes (I-16)"
+    "Sem testes (I-16)",
+    "draggable-dashboard.tsx com 718 linhas (I-29)"
    ],
    "improve": [
-    "Remover sobras do template",
-    "Dividir o dashboard em gesto, geometria e renderização",
-    "Testes nos módulos de domínio"
+    "Testes de domínio e de repositório local",
+    "Extrair o cálculo de soltura do dashboard"
    ]
   },
   {
    "key": "prod",
    "label": "Prontidão para produção",
-   "score": 2,
-   "why": "Sem backend, persistência, autenticação real, testes, monitoramento de erros, configuração iOS ou política de privacidade. Coerente com a fase atual, mas longe de um lançamento.",
+   "score": 4.5,
+   "why": "O backend existe e os crashes de abertura no Android foram corrigidos, mas o crash do ExpoSQLite chegou ao aparelho por OTA sem nenhum teste antes, e ainda faltam testes automatizados, CI antes da publicação, consentimento e exclusão de conta, configuração iOS e monitoramento de erros.",
    "problems": [
-    "Itens P0 de lançamento abertos (backend, auth, LGPD, persistência)",
-    "iOS sem bundleIdentifier (I-23)"
+    "OTA publicada sem verificação (N-07)",
+    "Sem LGPD (M-04)",
+    "iOS não configurado (I-23)"
    ],
    "improve": [
-    "Seguir as fases 1, 2 e 5 do roadmap"
+    "Gate de CI e smoke test do APK antes do OTA",
+    "Monitoramento de erros",
+    "Requisitos de loja"
    ]
   }
  ],
  "overall": {
-  "score": 5.2,
-  "frontPhaseScore": 6.6,
-  "maturity": "MVP inicial",
+  "score": 6.5,
+  "frontPhaseScore": 6.9,
+  "previousScore": 5.2,
+  "maturity": "MVP funcional",
   "maturityScale": [
    "Protótipo",
    "MVP inicial",
@@ -265,39 +269,45 @@ window.AUDIT = {
    "Produto pronto para produção",
    "Produto maduro"
   ],
-  "maturityWhy": "Os fluxos principais (cadastrar, registrar alimento, montar e executar treino, seguir pacote, tarefas) funcionam do início ao fim dentro de uma sessão, com interface consistente. Ainda não é um MVP funcional porque nada sobrevive ao fechamento do app, os dados de contas diferentes se misturam e parte do que a tela mostra (passos, histórico de peso, metas) é fictício. Para a fase de front-first, o nível é bom; a nota 6,6 avalia só o front para essa fase.",
-  "frontPhaseWhy": "Média de qualidade técnica, arquitetura de front, UX/UI, funcionalidades, completude do front, performance e manutenibilidade, sem contar segurança, escalabilidade e produção, que dependem do backend."
+  "maturityWhy": "Subiu um nível desde a auditoria anterior. Os fluxos principais funcionam com conta real, dados persistidos e isolados por usuário, e o modo demo continua permitindo usar o front sem servidor. Ainda não é um produto em evolução porque falta fechar ciclos básicos (editar registros, editar e completar o perfil), metas e passos seguem fictícios, não há testes nem verificação antes das atualizações, e o último build Android fechava ao abrir até o commit 25f3a9b.",
+  "frontPhaseWhy": "Média de qualidade técnica, arquitetura, UX/UI, funcionalidades, completude, performance e manutenibilidade, sem contar segurança, escalabilidade e prontidão, que medem a distância até a produção."
  },
  "architecture": {
   "layers": [
    {
     "name": "Rotas (src/app)",
-    "role": "Telas e navegadores do Expo Router. Leem contextos e chamam ações.",
-    "files": 29
+    "role": "35 arquivos: telas, layouts e o ErrorBoundary raiz. Leem contextos e chamam ações.",
+    "files": 35
    },
    {
     "name": "Componentes (src/components)",
-    "role": "UI reutilizável: ui/ (17 primitivos M3), dashboard/, diary/, exercise/, trainers/, tasks/, sliding-tabs/.",
-    "files": 59
+    "role": "UI reutilizável: ui/, auth/, dashboard/, diary/, exercise/, trainers/, tasks/, weight/, sliding-tabs/, save-error-banner.",
+    "files": 58
    },
    {
     "name": "Contextos (src/context)",
-    "role": "Estado global em useState e as ações de cada domínio. Também são a fonte de dados (sem armazenamento).",
+    "role": "session + 9 domínios + signup. Cada domínio usa useUserStore e chama os repositórios.",
     "files": 11
    },
    {
-    "name": "Domínio e serviços (src/lib)",
-    "role": "Tipos e regras puras (tasks, workouts, foods, dashboard-widgets), clientes de API (exercisedb, openfoodfacts), dados embarcados (taco-data, trainers).",
-    "files": 15
+    "name": "Dados (src/data)",
+    "role": "useUserStore, contratos de repositório, implementação local (memória) e Supabase, carregamento do perfil, tipos gerados do banco.",
+    "files": 19
    },
    {
-    "name": "Tema (src/theme)",
-    "role": "Tokens Material 3 gerados, tipografia, tema de navegação.",
-    "files": 3
+    "name": "Domínio e serviços (src/lib)",
+    "role": "Regras puras (tarefas, treinos, refeições, peso), clientes ExerciseDB e Open Food Facts, TACO, auth, cliente Supabase.",
+    "files": 21
+   },
+   {
+    "name": "Supabase (supabase/)",
+    "role": "Migrações, RLS, trigger de perfil, refeições padrão, realtime do chat, seed e teste SQL.",
+    "files": 8
    }
   ],
   "providers": [
    "SessionProvider",
+   "CatalogProvider",
    "WeightLogProvider",
    "FoodLogProvider",
    "ExerciseLogProvider",
@@ -309,75 +319,81 @@ window.AUDIT = {
   ],
   "providerDeps": [
    {
+    "from": "Todos os domínios",
+    "to": "SessionProvider",
+    "why": "useUserStore é chaveado pelo id da conta"
+   },
+   {
     "from": "WeightLogProvider",
     "to": "SessionProvider",
-    "why": "logWeight chama session.setWeight"
+    "why": "logWeight atualiza o peso do perfil na tela"
    },
    {
     "from": "CoachingProvider",
     "to": "WorkoutPlanProvider",
-    "why": "joinPackage importa treinos e define dias da semana"
+    "why": "aderir importa treinos e define a semana"
+   },
+   {
+    "from": "CoachingProvider",
+    "to": "CatalogProvider",
+    "why": "busca o pacote e o treinador"
    }
   ],
   "domains": [
    {
     "name": "Conta e perfil",
     "context": "session.tsx, signup.tsx",
-    "lib": "profile.ts, google-auth.ts",
+    "lib": "auth.ts, google-auth.ts, profile.ts, supabase.ts, data/profile.ts",
     "screens": [
      "login",
-     "signup",
-     "signup/details",
+     "signup/*",
+     "forgot-password/*",
+     "auth/callback",
      "(tabs)/profile"
     ]
    },
    {
     "name": "Alimentação",
     "context": "food-log.tsx",
-    "lib": "foods.ts, taco.ts, taco-data.ts, openfoodfacts.ts",
+    "lib": "foods.ts, taco.ts, openfoodfacts.ts, data/supabase/food-log.ts",
     "screens": [
      "(tabs)/diary",
-     "log-food",
-     "log-food/[id]",
+     "log-food/*",
      "meals"
     ]
    },
    {
     "name": "Exercício avulso",
     "context": "exercise-log.tsx",
-    "lib": "exercises.ts, exercisedb.ts",
+    "lib": "exercises.ts, exercisedb.ts, data/supabase/exercise-log.ts",
     "screens": [
      "(tabs)/exercise",
-     "log-exercise",
-     "log-exercise/[id]"
+     "log-exercise/*"
     ]
    },
    {
     "name": "Plano de treino",
     "context": "workout-plan.tsx",
-    "lib": "workouts.ts",
+    "lib": "workouts.ts, data/supabase/workout-plan.ts",
     "screens": [
-     "workouts",
-     "workouts/[id]",
+     "workouts/*",
      "workout-session"
     ]
    },
    {
     "name": "Treinadores",
-    "context": "coaching.tsx, chat.tsx",
-    "lib": "trainers.ts",
+    "context": "catalog.tsx, coaching.tsx, chat.tsx",
+    "lib": "trainers.ts, chat.ts, data/supabase/catalog.ts, coaching.ts, chat.ts",
     "screens": [
      "(tabs)/trainers",
-     "trainer/[id]",
-     "trainer/package/[id]",
-     "trainer/workout",
+     "trainer/*",
      "chat/[trainerId]"
     ]
    },
    {
     "name": "Tarefas",
     "context": "tasks.tsx",
-    "lib": "tasks.ts",
+    "lib": "tasks.ts, data/supabase/tasks.ts",
     "screens": [
      "(tabs)/tasks",
      "add-task"
@@ -386,7 +402,7 @@ window.AUDIT = {
    {
     "name": "Peso",
     "context": "weight-log.tsx",
-    "lib": "profile.ts",
+    "lib": "weight.ts, data/supabase/weight.ts",
     "screens": [
      "(tabs)/index",
      "(tabs)/profile"
@@ -403,78 +419,343 @@ window.AUDIT = {
   ],
   "external": [
    {
+    "name": "Supabase",
+    "used": "src/lib/supabase.ts, src/data/supabase/*",
+    "note": "Auth com PKCE e sessão no expo-sqlite; Postgres com RLS; Realtime no chat. Chave publicável no app; service role nunca usada."
+   },
+   {
     "name": "ExerciseDB",
     "used": "src/lib/exercisedb.ts",
-    "note": "API gratuita, sem chave, limita rajadas (429). Nomes só em inglês. Dependência crítica de um serviço de terceiros sem SLA."
+    "note": "API gratuita sem SLA, nomes só em inglês, MET estimado pelo nome."
    },
    {
     "name": "Open Food Facts",
     "used": "src/lib/openfoodfacts.ts",
-    "note": "Dados colaborativos; o cliente descarta valores impossíveis por 100 g. Envia User-Agent como a API pede."
+    "note": "Produtos do Brasil; valores impossíveis descartados."
    },
    {
     "name": "TACO embarcada",
     "used": "src/lib/taco.ts",
-    "note": "597 alimentos offline, ~37 KB. Escolha certa para o público brasileiro."
+    "note": "597 alimentos offline."
    },
    {
     "name": "Google Sign-In",
     "used": "src/lib/google-auth.ts",
-    "note": "Funciona só em build nativo; web mostra indisponível. iOS ainda com iosUrlScheme de exemplo."
+    "note": "idToken enviado ao Supabase (signInWithIdToken). Exige os client IDs no ambiente; iOS ainda com URL scheme de exemplo."
    },
    {
     "name": "randomuser.me",
-    "used": "src/lib/trainers.ts",
-    "note": "Fotos de pessoas fictícias para os treinadores de exemplo."
+    "used": "supabase/seed.sql, src/lib/trainers.ts",
+    "note": "Fotos de pessoas fictícias no catálogo de exemplo."
    }
   ],
   "pros": [
-   "Regras de domínio puras e sem React em src/lib, prontas para testes unitários (ex.: isTaskDue, getWorkoutForDate, moveWidget, insertMeal).",
-   "Tipos discriminados bem usados (TaskRepeat, PlannedExercise com DistributiveOmit, RemoteSearch).",
-   "Clientes de API com cache de promessas, descarte de respostas obsoletas e mensagens de erro em pt-BR.",
-   "Design system gerado a partir do ícone, com relatório de contraste (scripts/generate-theme.mjs --report).",
-   "Guard de sessão com Stack.Protected e tela de carregamento/erro antes das abas (use-main-flow-bootstrap).",
-   "Comentários explicam decisões (por que a busca do ExerciseDB é só ao enviar, por que ícones são importados por caminho)."
+   "Camada de repositório com contrato por domínio e duas implementações (memória e Supabase), escolhida por EXPO_PUBLIC_DATA_SOURCE.",
+   "useUserStore: dados de uma conta nunca aparecem para outra, mudanças aparecem na hora e são salvas em ordem, com banner de nova tentativa.",
+   "Schema com checks de domínio (pesos 30–400 kg, altura 100–250 cm, gramas > 0) e RLS em todas as tabelas, verificado por supabase/tests/rls.sql.",
+   "Fluxos de conta completos e cuidadosos: troca de código uma única vez, recuperação que não loga o app até a senha nova, saída global após trocar a senha.",
+   "Perfil com data de nascimento (idade sempre correta) e peso atual derivado da última pesagem.",
+   "Modo demo preserva o objetivo de front funcional sem servidor."
   ],
   "cons": [
-   "Contextos são ao mesmo tempo estado de tela, regra de negócio e banco de dados; trocar para API exige reescrever os 9.",
-   "Providers ficam acima do Stack.Protected e sobrevivem ao logout com os dados da conta anterior.",
-   "Duas fontes de verdade para o peso (profile.weightKg e weight-log).",
-   "Dados de exemplo misturados ao estado real (histórico de peso começa com MOCK_DASHBOARD.weight).",
-   "Nenhum teste e nenhum CI de qualidade.",
-   "Sobras do template Expo (componentes e dependências sem uso, README e reset-project.js)."
+   "O app só abre depois que os 9 domínios carregam; uma falha em qualquer um bloqueia tudo.",
+   "O login baixa o histórico completo de alimentos, exercícios, pesagens e chat.",
+   "A fila de salvamento fica só em memória: mudanças pendentes se perdem se o app fechar.",
+   "Ainda sem testes JavaScript e sem CI antes de publicar OTA.",
+   "11 providers aninhados que dependem da ordem.",
+   "Parte da configuração (variáveis do EAS, client IDs do Google) fica fora do repositório e falha só em tempo de execução."
   ]
  },
- "issues": [
+ "evolution": [
   {
    "id": "I-01",
    "title": "Nenhuma persistência local",
-   "severity": "crítico",
-   "kind": "comprovado",
-   "area": "Dados",
-   "evidence": "src/context/*.tsx (todos com comentário TEMPORARY: in-memory); nenhuma dependência de armazenamento em package.json",
-   "detail": "Diário, treinos, plano, tarefas, peso, chat, layout do dashboard e a própria sessão vivem em useState. Fechar o app apaga tudo. Mesmo na fase de front isso impede testes reais com o APK de preview, porque cada reabertura volta ao zero.",
-   "fix": "Persistir os contextos localmente (expo-sqlite ou seu kv-store, conforme a documentação do SDK 58) atrás de uma interface de repositório que depois aponte para a API."
+   "status": "Parcial",
+   "note": "Resolvido no modo Supabase. No modo demo/local os dados ainda ficam só em memória."
   },
   {
    "id": "I-02",
    "title": "Dados não isolados por conta",
-   "severity": "alto",
-   "kind": "comprovado",
-   "area": "Dados",
-   "evidence": "src/app/_layout.tsx:22-45 (providers acima do Stack.Protected); src/context/session.tsx signOut só limpa session e profile",
-   "detail": "Sair e entrar com outra conta mantém diário, treinos, tarefas, peso, pacote e conversas da conta anterior.",
-   "fix": "Chavear os dados pelo id da conta ou remontar os providers ao trocar de sessão (ex.: key={session})."
+   "status": "Resolvido",
+   "note": "useUserStore recomeça do vazio ao trocar de conta; repositórios locais por usuário."
   },
   {
    "id": "I-03",
-   "title": "Histórico de peso fictício para todo usuário",
+   "title": "Histórico de peso fictício",
+   "status": "Resolvido",
+   "note": "Pesagens vêm do repositório; a primeira é criada no cadastro."
+  },
+  {
+   "id": "I-04",
+   "title": "Metas fixas",
+   "status": "Aberto",
+   "note": "Meta base de 2.200 kcal, macros e 400 kcal de exercício continuam em dashboard-data.ts."
+  },
+  {
+   "id": "I-05",
+   "title": "Passos fictícios",
+   "status": "Aberto",
+   "note": "6.840 passos para todos (index.tsx:37)."
+  },
+  {
+   "id": "I-06",
+   "title": "Aderir apaga o plano sem aviso",
+   "status": "Aberto",
+   "note": "O diálogo só aparece quando já existe outro pacote."
+  },
+  {
+   "id": "I-07",
+   "title": "Desfazer conclusão antiga desalinha a fila",
+   "status": "Aberto",
+   "note": "undoCompletion ainda recua o ponteiro sempre."
+  },
+  {
+   "id": "I-08",
+   "title": "Login em inglês",
+   "status": "Resolvido",
+   "note": "Textos em pt-BR, 'Esqueci minha senha' incluído."
+  },
+  {
+   "id": "I-09",
+   "title": "E-mail não normalizado",
+   "status": "Resolvido",
+   "note": "normalizeEmail usado em login, cadastro e recuperação."
+  },
+  {
+   "id": "I-10",
+   "title": "Autenticação simulada",
+   "status": "Resolvido",
+   "note": "Supabase Auth real; o modo demo é opcional."
+  },
+  {
+   "id": "I-11",
+   "title": "Exclusões sem confirmação",
+   "status": "Aberto",
+   "note": "Excluir treino, sair do pacote, remover alimento e tarefa seguem com um toque."
+  },
+  {
+   "id": "I-12",
+   "title": "Registros não editáveis",
+   "status": "Aberto",
+   "note": "Repositórios de alimento e exercício só têm add/remove."
+  },
+  {
+   "id": "I-13",
+   "title": "Perfil não editável",
+   "status": "Parcial",
+   "note": "Data de nascimento substituiu a idade fixa, mas nada além do peso pode ser editado."
+  },
+  {
+   "id": "I-14",
+   "title": "Chat sem resposta",
+   "status": "Parcial",
+   "note": "Tempo real e aviso visível; o treinador ainda não tem como responder."
+  },
+  {
+   "id": "I-15",
+   "title": "Duas fontes de peso",
+   "status": "Resolvido",
+   "note": "Peso atual = última pesagem (data/profile.ts)."
+  },
+  {
+   "id": "I-16",
+   "title": "Nenhum teste",
+   "status": "Parcial",
+   "note": "Teste SQL de RLS; nenhum teste JavaScript."
+  },
+  {
+   "id": "I-17",
+   "title": "Erro de lint",
+   "status": "Aberto",
+   "note": "Mesmo erro em use-color-scheme.web.ts."
+  },
+  {
+   "id": "I-18",
+   "title": "Helpers duplicados",
+   "status": "Parcial",
+   "note": "EMAIL_PATTERN e createId unificados; parseNumber e initials continuam duplicados."
+  },
+  {
+   "id": "I-19",
+   "title": "Código sem uso",
+   "status": "Resolvido",
+   "note": "Removido no a645770; nenhum módulo sem importador."
+  },
+  {
+   "id": "I-20",
+   "title": "Sem camada de dados",
+   "status": "Resolvido",
+   "note": "src/data com contratos e duas implementações."
+  },
+  {
+   "id": "I-21",
+   "title": "Dependência implícita entre providers",
+   "status": "Aberto",
+   "note": "Agora 11 providers aninhados."
+  },
+  {
+   "id": "I-22",
+   "title": "Catálogo fixo no código",
+   "status": "Parcial",
+   "note": "Vem do banco no modo Supabase; o modo local usa trainers.ts e as fotos seguem de randomuser.me."
+  },
+  {
+   "id": "I-23",
+   "title": "iOS não configurado",
+   "status": "Aberto",
+   "note": "iosUrlScheme de exemplo e sem bundleIdentifier."
+  },
+  {
+   "id": "I-24",
+   "title": "Seis abas",
+   "status": "Aberto",
+   "note": "Mesmas 6 abas."
+  },
+  {
+   "id": "I-25",
+   "title": "Busca de exercícios em inglês",
+   "status": "Parcial",
+   "note": "Filtros por categoria adicionados; busca continua só ao enviar e em inglês."
+  },
+  {
+   "id": "I-26",
+   "title": "Ícone errado em Tentar novamente",
+   "status": "Aberto",
+   "note": "log-exercise/index.tsx ainda usa Plus."
+  },
+  {
+   "id": "I-27",
+   "title": "Datas futuras inconsistentes",
+   "status": "Aberto",
+   "note": "Diário e exercícios avulsos aceitam o futuro; o treino não."
+  },
+  {
+   "id": "I-28",
+   "title": "0 kcal sem MET",
+   "status": "Aberto",
+   "note": "Visível na captura de exercício manual."
+  },
+  {
+   "id": "I-29",
+   "title": "Dashboard com 714 linhas",
+   "status": "Aberto",
+   "note": "Agora 718 linhas."
+  },
+  {
+   "id": "I-30",
+   "title": "Gramas sem limite",
+   "status": "Aberto",
+   "note": "App aceita qualquer valor > 0; o banco aceita até 999.999,9 g."
+  },
+  {
+   "id": "I-31",
+   "title": "Typecheck depende de arquivo gerado",
+   "status": "Aberto",
+   "note": "expo-env.d.ts continua no .gitignore."
+  },
+  {
+   "id": "I-32",
+   "title": "Sessão de treino perdida ao fechar",
+   "status": "Aberto",
+   "note": "Estado só na tela."
+  },
+  {
+   "id": "I-33",
+   "title": "Sair do pacote apaga o histórico",
+   "status": "Aberto",
+   "note": "leavePackage remove os treinos; conclusões perdem a referência."
+  }
+ ],
+ "issues": [
+  {
+   "id": "N-01",
+   "title": "Quem entra com Google nunca informa os dados corporais",
    "severity": "alto",
    "kind": "comprovado",
-   "area": "Peso",
-   "evidence": "src/context/weight-log.tsx: useState(MOCK_DASHBOARD.weight)",
-   "detail": "Uma conta nova com 60 kg vê no gráfico pesagens de 84,6 a 82,1 kg de julho a outubro, que nunca aconteceram, e a variação calculada a partir delas.",
-   "fix": "Começar o histórico vazio ou só com o peso do cadastro; manter os dados de exemplo apenas em um modo demo explícito."
+   "area": "Conta",
+   "evidence": "supabase/migrations/20261102000300_new_user_profile.sql:3-6 ('the app asks for the rest later'); nenhuma tela de completar perfil em src/app; perfil não editável (src/app/(tabs)/profile.tsx)",
+   "detail": "O trigger cria o perfil só com o nome para contas do Google. Nascimento, sexo, altura e peso ficam nulos e não há fluxo para preencher: o perfil mostra traços e qualquer cálculo usa valores de exemplo.",
+   "fix": "Tela de completar perfil logo após o primeiro login (reaproveitando signup/details) e edição de perfil."
+  },
+  {
+   "id": "N-02",
+   "title": "Cálculo de kcal usa 82 kg de exemplo quando falta o peso",
+   "severity": "médio",
+   "kind": "comprovado",
+   "area": "Regras",
+   "evidence": "MOCK_PROFILE.weightKg como fallback em app/log-exercise/[id].tsx:42, app/workout-session.tsx:74, components/exercise/workout-card.tsx:43, components/weight/weight-dialog.tsx:41",
+   "detail": "Sem pesagem (caso de N-01), as calorias de cardio são estimadas para uma pessoa de 82 kg sem nenhum aviso, e o saldo calórico do dia fica errado.",
+   "fix": "Exigir o peso antes de estimar, ou mostrar a estimativa como indisponível com atalho para registrar o peso."
+  },
+  {
+   "id": "N-03",
+   "title": "Mudanças ainda não salvas se perdem ao fechar o app",
+   "severity": "médio",
+   "kind": "comprovado",
+   "area": "Dados",
+   "evidence": "src/data/use-user-store.ts: a fila (queue) é um useRef em memória",
+   "detail": "Sem internet ou com o servidor lento, o app mostra a mudança e guarda o salvamento na fila. Se o app for fechado antes, a mudança some sem aviso. Também não há modo offline de leitura.",
+   "fix": "Persistir a fila no expo-sqlite e reenviar ao abrir; avisar quando houver pendências."
+  },
+  {
+   "id": "N-04",
+   "title": "Login baixa todo o histórico da conta",
+   "severity": "médio",
+   "kind": "comprovado",
+   "area": "Performance",
+   "evidence": "src/data/supabase/client.ts selectAll; food-log.ts, exercise-log.ts, weight.ts e chat.ts carregam todas as linhas do usuário",
+   "detail": "Cada abertura percorre todas as páginas de alimentos, exercícios, pesagens e mensagens. Com meses de uso, a abertura fica lenta e consome dados móveis.",
+   "fix": "Carregar uma janela (ex.: 30 dias) e buscar o resto sob demanda ao navegar no seletor de dia."
+  },
+  {
+   "id": "N-05",
+   "title": "Uma falha em qualquer domínio bloqueia o app inteiro",
+   "severity": "médio",
+   "kind": "comprovado",
+   "area": "Resiliência",
+   "evidence": "src/hooks/use-user-data-status.ts; src/app/(tabs)/_layout.tsx mostra a tela de erro se qualquer store falhar",
+   "detail": "Se o chat ou o catálogo não carregarem, o diário e o treino também ficam inacessíveis.",
+   "fix": "Bloquear só no perfil; cada aba mostra o próprio estado de carregamento e erro."
+  },
+  {
+   "id": "N-06",
+   "title": "Configuração de ambiente fora do repositório",
+   "severity": "médio",
+   "kind": "comprovado",
+   "area": "Entrega",
+   "evidence": ".env.example lista 7 variáveis; o build do EAS depende das variáveis cadastradas no expo.dev; o .env.local do autor não tinha os client IDs do Google",
+   "detail": "Um build sem as variáveis abre normalmente mas falha no login (Supabase não configurado) ou no Google. Nada valida isso antes de publicar.",
+   "fix": "Checagem das variáveis obrigatórias no início do build ou do app, e documentação no README."
+  },
+  {
+   "id": "N-07",
+   "title": "OTA publicada sem verificação levou um crash ao aparelho",
+   "severity": "alto",
+   "kind": "comprovado",
+   "area": "Entrega",
+   "evidence": ".eas/workflows/preview.yml (OTA a cada push na main); logcat do autor de 03/11 a 05/11 com o mesmo r8-map-id e 'Cannot find native module ExpoSQLite'; corrigido em 25f3a9b",
+   "detail": "O mesmo binário recebeu várias atualizações de JavaScript que dependiam de um módulo nativo incompatível. A causa (runtime do expo-modules-core) foi corrigida, mas o processo continua publicando sem lint, testes ou abertura do app.",
+   "fix": "Job de lint, typecheck e testes antes do update, e um teste de fumaça do APK (abrir e chegar ao login) antes de liberar para o canal."
+  },
+  {
+   "id": "N-08",
+   "title": "Texto de recuperação fala em código, o fluxo usa link",
+   "severity": "baixo",
+   "kind": "comprovado",
+   "area": "UX",
+   "evidence": "src/app/forgot-password/index.tsx: 'Não foi possível enviar o código'",
+   "detail": "As outras telas do fluxo falam em link.",
+   "fix": "Trocar por 'Não foi possível enviar o link'."
+  },
+  {
+   "id": "N-09",
+   "title": "Reenviar confirmação não checa o modo demo nem a configuração",
+   "severity": "baixo",
+   "kind": "comprovado",
+   "area": "Conta",
+   "evidence": "src/context/session.tsx resendConfirmation (sem IS_AUTH_MOCKED nem assertConfigured, ao contrário das outras ações)",
+   "detail": "Sem chaves ou no modo demo, a tela de confirmação mostra um erro genérico em vez da mensagem clara usada nas outras ações.",
+   "fix": "Aplicar as mesmas guardas de requestPasswordReset."
   },
   {
    "id": "I-04",
@@ -482,9 +763,9 @@ window.AUDIT = {
    "severity": "alto",
    "kind": "comprovado",
    "area": "Metas",
-   "evidence": "src/lib/dashboard-data.ts (goal 2200 kcal, macros, 400 kcal de exercício, 10.000 passos); src/app/signup/details.tsx descrição 'Usamos esses dados para estimar suas calorias'",
-   "detail": "Idade, sexo, altura e peso coletados no cadastro não são usados em nenhuma conta. Todo usuário recebe 2.200 kcal.",
-   "fix": "Calcular TMB (Mifflin-St Jeor) × fator de atividade ± objetivo e permitir ajuste manual."
+   "evidence": "src/lib/dashboard-data.ts; src/app/signup/details.tsx ('Usamos esses dados para estimar suas calorias')",
+   "detail": "Continua igual: 2.200 kcal para todos, mesmo com nascimento, sexo, altura e peso no banco.",
+   "fix": "Calcular TMB × atividade ± objetivo e permitir ajuste."
   },
   {
    "id": "I-05",
@@ -492,9 +773,9 @@ window.AUDIT = {
    "severity": "médio",
    "kind": "comprovado",
    "area": "Dashboard",
-   "evidence": "src/app/(tabs)/index.tsx:37 TODO; components/dashboard/activity-tiles.tsx StepsTile recebe MOCK_DASHBOARD.steps",
-   "detail": "O card mostra 6.840 passos para qualquer pessoa, sem indicação de exemplo.",
-   "fix": "Esconder o widget até haver fonte real ou mostrá-lo como 'Conectar passos'."
+   "evidence": "src/app/(tabs)/index.tsx:37-38 (MOCK_DASHBOARD)",
+   "detail": "6.840 passos para qualquer conta, sem indicação de exemplo.",
+   "fix": "Ocultar ou mostrar 'Conectar passos'."
   },
   {
    "id": "I-06",
@@ -502,49 +783,9 @@ window.AUDIT = {
    "severity": "alto",
    "kind": "comprovado",
    "area": "Treinadores",
-   "evidence": "src/context/coaching.tsx joinPackage (setWeekday em todos os WEEKDAYS); src/app/trainer/package/[id].tsx join() só confirma se já houver pacote",
-   "detail": "Quem montou o próprio Treino A na segunda e adere ao primeiro pacote perde a atribuição de todos os dias da semana sem diálogo de confirmação.",
-   "fix": "Mostrar o diálogo de substituição também quando houver dias definidos pelo usuário, ou só preencher dias livres."
-  },
-  {
-   "id": "I-07",
-   "title": "Desfazer conclusão antiga desalinha a fila",
-   "severity": "médio",
-   "kind": "comprovado",
-   "area": "Treinos",
-   "evidence": "src/context/workout-plan.tsx undoCompletion; components/exercise/workout-card.tsx canLog = date <= today",
-   "detail": "No modo fila, desfazer a conclusão de um dia anterior volta o ponteiro uma posição, mesmo que treinos posteriores já tenham sido feitos. O ponteiro é um índice único, não derivado do histórico.",
-   "fix": "Derivar o próximo treino da última conclusão registrada ou só permitir desfazer a mais recente."
-  },
-  {
-   "id": "I-08",
-   "title": "Login com textos em inglês e erros de grafia",
-   "severity": "médio",
-   "kind": "comprovado",
-   "area": "UX",
-   "evidence": "src/app/login.tsx: 'Sign in', 'Show/Hide', 'Your password', 'you@example.com', 'Enter a valid email address.', 'Faca login', 'Bem vindo'",
-   "detail": "Primeira tela do app em idioma misto; o resto do app está em pt-BR.",
-   "fix": "Revisar e traduzir todos os textos ('Entrar', 'Mostrar', 'Faça login', 'Bem-vindo')."
-  },
-  {
-   "id": "I-09",
-   "title": "Login não normaliza o e-mail como o cadastro",
-   "severity": "médio",
-   "kind": "comprovado",
-   "area": "Conta",
-   "evidence": "src/app/signup/index.tsx (toLowerCase); src/app/login.tsx (só trim); src/context/session.tsx accounts[email]",
-   "detail": "Quem se cadastrou como maria@x.com e entra como Maria@x.com recebe o perfil genérico 'Usuário Treina'.",
-   "fix": "Normalizar o e-mail em um único helper usado por login e cadastro."
-  },
-  {
-   "id": "I-10",
-   "title": "Autenticação simulada",
-   "severity": "baixo",
-   "kind": "comprovado",
-   "area": "Segurança",
-   "evidence": "src/context/session.tsx IS_AUTH_MOCKED = true; TODOs nas linhas 57, 66 e 78",
-   "detail": "Esperado na fase de front: qualquer e-mail entra, a senha do cadastro é descartada e o idToken do Google não é verificado. Vira crítico no lançamento.",
-   "fix": "Fase 5 do roadmap; até lá, manter a flag e esconder o que depende de servidor."
+   "evidence": "src/context/coaching.tsx:63-71; src/app/trainer/package/[id].tsx:61-63",
+   "detail": "Sem pacote anterior, os dias definidos pelo usuário são sobrescritos sem diálogo.",
+   "fix": "Confirmar sempre que houver dias com treino."
   },
   {
    "id": "I-11",
@@ -552,9 +793,9 @@ window.AUDIT = {
    "severity": "médio",
    "kind": "comprovado",
    "area": "UX",
-   "evidence": "src/app/workouts/[id].tsx deleteWorkout; components/tasks/task-section.tsx onRemove; components/diary/meal-section.tsx removeEntry; src/app/trainer/package/[id].tsx Sair do pacote",
-   "detail": "Um toque na lixeira apaga treino, tarefa com subtarefas ou alimento. Sair do pacote remove todos os treinos dele.",
-   "fix": "Snackbar com 'Desfazer' para itens simples e diálogo para ações de alto impacto (excluir treino, sair do pacote)."
+   "evidence": "src/app/workouts/[id].tsx:49; src/app/trainer/package/[id].tsx:168; meal-section.tsx; exercise-list.tsx:61; task-section.tsx",
+   "detail": "Agora os dados são permanentes no servidor, o que torna o toque acidental mais grave.",
+   "fix": "Snackbar com Desfazer e diálogo nas ações grandes."
   },
   {
    "id": "I-12",
@@ -562,9 +803,9 @@ window.AUDIT = {
    "severity": "alto",
    "kind": "comprovado",
    "area": "Funcionalidade",
-   "evidence": "src/context/food-log.tsx, exercise-log.tsx, tasks.tsx expõem só add/remove; workout-plan.tsx sem updateExercise",
-   "detail": "Corrigir a quantidade de um alimento, o peso de uma série, o nome de uma tarefa ou o exercício de um treino exige apagar e recriar.",
-   "fix": "Adicionar update em cada contexto e reaproveitar as telas de criação no modo edição."
+   "evidence": "src/data/types.ts: FoodLogRepository e ExerciseLogRepository só têm add/remove; workout sem edição de exercício",
+   "detail": "Corrigir uma quantidade exige apagar e recriar.",
+   "fix": "Adicionar update e reaproveitar as telas de criação."
   },
   {
    "id": "I-13",
@@ -572,39 +813,149 @@ window.AUDIT = {
    "severity": "médio",
    "kind": "comprovado",
    "area": "Conta",
-   "evidence": "src/context/session.tsx (só setWeight); src/app/(tabs)/profile.tsx",
-   "detail": "Nome, idade, sexo e altura ficam como no cadastro. A idade é um número fixo e não envelhece (Profile.age).",
-   "fix": "Tela de edição de perfil; guardar data de nascimento em vez da idade."
-  },
-  {
-   "id": "I-14",
-   "title": "Chat sem resposta e sem aviso",
-   "severity": "médio",
-   "kind": "comprovado",
-   "area": "Treinadores",
-   "evidence": "src/context/chat.tsx ('trainers never answer'); src/app/chat/[trainerId].tsx texto vazio 'tire suas dúvidas'",
-   "detail": "O usuário envia mensagens a um treinador que nunca responde; a tela não informa que é uma prévia.",
-   "fix": "Marcar como prévia ou simular respostas no modo demo até existir backend em tempo real."
-  },
-  {
-   "id": "I-15",
-   "title": "Duas fontes de verdade para o peso",
-   "severity": "médio",
-   "kind": "comprovado",
-   "area": "Peso",
-   "evidence": "src/context/weight-log.tsx logWeight → session.setWeight; src/lib/profile.ts MOCK_PROFILE.weightKg",
-   "detail": "O peso atual existe no perfil e no histórico. Hoje são sincronizados à mão; ao persistir ou editar uma pesagem antiga, divergem.",
-   "fix": "Peso atual = última pesagem; perfil não guarda peso."
+   "evidence": "src/app/(tabs)/profile.tsx (só peso e meta)",
+   "detail": "Nome, nascimento, sexo e altura ficam como no cadastro ou nulos (N-01).",
+   "fix": "Tela de edição de perfil."
   },
   {
    "id": "I-16",
-   "title": "Nenhum teste automatizado",
+   "title": "Sem testes JavaScript",
    "severity": "alto",
    "kind": "comprovado",
    "area": "Qualidade",
-   "evidence": "package.json sem jest nem script de teste; nenhum *.test.* no repositório",
-   "detail": "Regras com casos de borda (repetição de tarefas, fila de treinos, mover widgets, sincronização de subtarefas) não têm rede de segurança.",
-   "fix": "jest-expo + testes de src/lib primeiro, depois de contextos com @testing-library/react-native."
+   "evidence": "package.json sem test runner; só supabase/tests/rls.sql",
+   "detail": "A camada nova (fila de salvamento, troca de conta, fluxos de auth) tem casos de borda sem cobertura.",
+   "fix": "jest-expo: src/lib, useUserStore e repositório local."
+  },
+  {
+   "id": "I-07",
+   "title": "Desfazer conclusão antiga desalinha a fila",
+   "severity": "médio",
+   "kind": "comprovado",
+   "area": "Treinos",
+   "evidence": "src/context/workout-plan.tsx:225-237",
+   "detail": "Sem mudança desde a auditoria anterior.",
+   "fix": "Derivar o próximo treino da última conclusão."
+  },
+  {
+   "id": "I-33",
+   "title": "Sair do pacote apaga o histórico ligado a ele",
+   "severity": "médio",
+   "kind": "comprovado",
+   "area": "Treinadores",
+   "evidence": "src/context/coaching.tsx:58-61",
+   "detail": "Agora apaga também no servidor.",
+   "fix": "Arquivar treinos ou guardar snapshot na conclusão."
+  },
+  {
+   "id": "I-28",
+   "title": "Calorias 0 sem MET",
+   "severity": "médio",
+   "kind": "comprovado",
+   "area": "Regras",
+   "evidence": "app/workout-session.tsx:145; components/exercise/workout-card.tsx:59",
+   "detail": "Exercícios manuais entram com 0 kcal (visível na captura).",
+   "fix": "MET padrão por categoria ou intensidade informada."
+  },
+  {
+   "id": "I-32",
+   "title": "Sessão de treino perdida ao fechar o app",
+   "severity": "médio",
+   "kind": "comprovado",
+   "area": "Treinos",
+   "evidence": "src/app/workout-session.tsx:77-78",
+   "detail": "Tempo e séries ficam só no estado da tela.",
+   "fix": "Persistir a sessão e oferecer retomar."
+  },
+  {
+   "id": "I-24",
+   "title": "Seis destinos na barra de navegação",
+   "severity": "médio",
+   "kind": "comprovado",
+   "area": "UX",
+   "evidence": "src/constants/tabs.ts",
+   "detail": "O Material 3 prevê de 3 a 5 destinos.",
+   "fix": "Levar Tarefas para o Início ou o Perfil para o cabeçalho."
+  },
+  {
+   "id": "I-23",
+   "title": "Configuração iOS incompleta",
+   "severity": "médio",
+   "kind": "comprovado",
+   "area": "Entrega",
+   "evidence": "app.json:38 (iosUrlScheme de exemplo); sem ios.bundleIdentifier",
+   "detail": "Sem mudança.",
+   "fix": "bundleIdentifier, URL scheme e job iOS."
+  },
+  {
+   "id": "I-25",
+   "title": "Busca de exercícios em inglês e só ao enviar",
+   "severity": "médio",
+   "kind": "comprovado",
+   "area": "UX",
+   "evidence": "src/app/log-exercise/index.tsx:204, 257",
+   "detail": "Os filtros por categoria ajudam, mas a busca continua exigindo inglês.",
+   "fix": "Termos em pt-BR mapeados e debounce."
+  },
+  {
+   "id": "I-21",
+   "title": "Dependência implícita entre 11 providers",
+   "severity": "baixo",
+   "kind": "comprovado",
+   "area": "Arquitetura",
+   "evidence": "src/app/_layout.tsx",
+   "detail": "Reordenar quebra em execução.",
+   "fix": "Provider de composição."
+  },
+  {
+   "id": "I-29",
+   "title": "Dashboard com 718 linhas",
+   "severity": "baixo",
+   "kind": "comprovado",
+   "area": "Código",
+   "evidence": "src/components/dashboard/draggable-dashboard.tsx",
+   "detail": "Gestos, geometria, lixeira e acessibilidade juntos.",
+   "fix": "Extrair o cálculo de soltura (testável)."
+  },
+  {
+   "id": "I-18",
+   "title": "Helpers ainda duplicados",
+   "severity": "baixo",
+   "kind": "comprovado",
+   "area": "Código",
+   "evidence": "parseNumber em log-food/[id].tsx:19 e log-exercise/[id].tsx:33; initials (trainers.ts:673) e getInitials (profile.ts:85)",
+   "detail": "Menos duplicação que antes, mas persiste.",
+   "fix": "Mover para src/lib."
+  },
+  {
+   "id": "I-27",
+   "title": "Registro em datas futuras inconsistente",
+   "severity": "baixo",
+   "kind": "comprovado",
+   "area": "Regras",
+   "evidence": "day-selector sem limite; workout-card bloqueia (canLog)",
+   "detail": "Sem mudança.",
+   "fix": "Definir a regra e aplicar igual."
+  },
+  {
+   "id": "I-30",
+   "title": "Quantidade de alimento sem limite realista",
+   "severity": "baixo",
+   "kind": "comprovado",
+   "area": "Validação",
+   "evidence": "src/app/log-food/[id].tsx:46; schema: grams numeric(7,1)",
+   "detail": "Aceita 99.999 g.",
+   "fix": "Limite e aviso."
+  },
+  {
+   "id": "I-26",
+   "title": "Ícone '+' em Tentar novamente",
+   "severity": "baixo",
+   "kind": "comprovado",
+   "area": "UX",
+   "evidence": "src/app/log-exercise/index.tsx:273-275",
+   "detail": "Sem mudança.",
+   "fix": "RotateCw."
   },
   {
    "id": "I-17",
@@ -613,138 +964,8 @@ window.AUDIT = {
    "kind": "comprovado",
    "area": "Qualidade",
    "evidence": "src/hooks/use-color-scheme.web.ts:11",
-   "detail": "setState síncrono em useEffect (código herdado do template).",
-   "fix": "Usar useSyncExternalStore ou o padrão recomendado pela regra."
-  },
-  {
-   "id": "I-18",
-   "title": "Helpers duplicados",
-   "severity": "baixo",
-   "kind": "comprovado",
-   "area": "Código",
-   "evidence": "parseNumber em log-food/[id].tsx e log-exercise/[id].tsx + parseDecimal em lib/profile.ts; EMAIL_PATTERN em login.tsx e lib/profile.ts; createId em 6 contextos; initials (trainers.ts) e getInitials (profile.ts); componente Field em log-exercise/[id].tsx e workout-session.tsx",
-   "detail": "Mesmas regras escritas mais de uma vez com pequenas diferenças (parseNumber não faz trim antes do replace).",
-   "fix": "Mover para src/lib/format e src/lib/ids; um Field compartilhado em components/ui."
-  },
-  {
-   "id": "I-19",
-   "title": "Código e dependências sem uso",
-   "severity": "baixo",
-   "kind": "comprovado",
-   "area": "Código",
-   "evidence": "Sem import: components/coming-soon.tsx, external-link.tsx, hint-row.tsx, web-badge.tsx, ui/collapsible.tsx; pacotes @expo/ui, expo-glass-effect, expo-symbols, expo-device; scripts/reset-project.js; README do template",
-   "detail": "Aumenta o tempo de instalação, a superfície de atualização do SDK e confunde quem chega ao projeto.",
-   "fix": "Remover e reescrever o README com instruções do projeto."
-  },
-  {
-   "id": "I-20",
-   "title": "Sem camada de acesso a dados",
-   "severity": "alto",
-   "kind": "comprovado",
-   "area": "Arquitetura",
-   "evidence": "Todos os contextos criam e alteram arrays com setState diretamente (ex.: food-log.tsx addEntry, workout-plan.tsx importWorkouts)",
-   "detail": "Para a estratégia front-first este é o ponto mais importante: o contrato com o backend não existe, então cada tela depende do formato interno do contexto e a integração exigirá reescrita.",
-   "fix": "Interfaces de repositório por domínio (ex.: FoodLogRepository.list/add/update/remove) com implementação local agora e HTTP depois; considerar TanStack Query para cache e estados de carregamento."
-  },
-  {
-   "id": "I-21",
-   "title": "Dependência implícita entre providers",
-   "severity": "baixo",
-   "kind": "comprovado",
-   "area": "Arquitetura",
-   "evidence": "weight-log.tsx e coaching.tsx ('Must sit inside ...'); _layout.tsx com 9 níveis de aninhamento",
-   "detail": "Reordenar providers quebra em tempo de execução, não de compilação.",
-   "fix": "Um provider de composição ou um store único com fatias por domínio."
-  },
-  {
-   "id": "I-22",
-   "title": "Catálogo de treinadores fixo no código",
-   "severity": "médio",
-   "kind": "comprovado",
-   "area": "Treinadores",
-   "evidence": "src/lib/trainers.ts (677 linhas, 4 treinadores, fotos de randomuser.me, números de seguidores e notas inventados)",
-   "detail": "Esperado na fase, mas os números (seguidores, alunos, nota) aparecem como reais e as fotos são de pessoas fictícias de um serviço externo.",
-   "fix": "Mover para JSON de fixture servido pelo repositório mock; marcar como exemplo no modo demo."
-  },
-  {
-   "id": "I-23",
-   "title": "Configuração iOS incompleta",
-   "severity": "médio",
-   "kind": "comprovado",
-   "area": "Entrega",
-   "evidence": "app.json:40 iosUrlScheme 'com.googleusercontent.apps.YOUR_IOS_CLIENT_ID'; sem ios.bundleIdentifier; .eas/workflows/preview.yml só Android",
-   "detail": "Build iOS não está pronto e o Google Sign-In no iOS não funcionaria com o valor de exemplo.",
-   "fix": "Definir bundleIdentifier, URL scheme real e um job iOS no workflow quando houver conta Apple."
-  },
-  {
-   "id": "I-24",
-   "title": "Seis destinos na barra de navegação",
-   "severity": "médio",
-   "kind": "comprovado",
-   "area": "UX",
-   "evidence": "src/constants/tabs.ts (Início, Diário, Exercícios, Treinador, Tarefas, Perfil)",
-   "detail": "A barra de navegação do Material 3 prevê de 3 a 5 destinos; com 6, os rótulos ficam apertados em telas pequenas e o peso de cada aba diminui.",
-   "fix": "Levar Tarefas para a tela inicial (já existe o widget) ou Perfil para o cabeçalho."
-  },
-  {
-   "id": "I-25",
-   "title": "Busca de exercícios inconsistente com a de alimentos",
-   "severity": "médio",
-   "kind": "comprovado",
-   "area": "UX",
-   "evidence": "src/app/log-exercise/index.tsx (busca só ao enviar, 'Tente um termo em inglês'); src/hooks/use-food-search.ts (ao digitar com debounce)",
-   "detail": "Duas buscas parecidas com comportamentos diferentes, e a de exercícios exige inglês num app em português.",
-   "fix": "Dicionário pt→en de termos comuns e busca com debounce respeitando o limite da API."
-  },
-  {
-   "id": "I-26",
-   "title": "Ícone errado no botão de tentar novamente",
-   "severity": "baixo",
-   "kind": "comprovado",
-   "area": "UX",
-   "evidence": "src/app/log-exercise/index.tsx ListFooterComponent: icon={Plus}",
-   "detail": "O mesmo botão na busca de alimentos usa RotateCw.",
-   "fix": "Trocar por RotateCw."
-  },
-  {
-   "id": "I-27",
-   "title": "Registro em datas futuras inconsistente",
-   "severity": "baixo",
-   "kind": "comprovado",
-   "area": "Regras",
-   "evidence": "components/exercise/day-selector.tsx sem limite; exercise-section.tsx e meal-section.tsx permitem adicionar; workout-card.tsx bloqueia (canLog)",
-   "detail": "Dá para registrar alimento e exercício avulso em dias futuros, mas não concluir um treino.",
-   "fix": "Decidir a regra (planejar refeições pode fazer sentido) e aplicá-la igual em todos os diários."
-  },
-  {
-   "id": "I-28",
-   "title": "Calorias de exercício pouco confiáveis",
-   "severity": "médio",
-   "kind": "comprovado",
-   "area": "Regras",
-   "evidence": "src/lib/exercisedb.ts estimateMet (regex sobre o nome); workout-session.tsx e workout-card.tsx registram 0 kcal quando não há MET",
-   "detail": "Exercícios digitados à mão ou sem correspondência na tabela entram com 0 kcal no treino, e o saldo calórico da tela inicial fica errado.",
-   "fix": "Pedir MET ou intensidade ao criar exercício manual; usar um MET padrão por categoria."
-  },
-  {
-   "id": "I-29",
-   "title": "Componente de dashboard com 714 linhas",
-   "severity": "baixo",
-   "kind": "comprovado",
-   "area": "Código",
-   "evidence": "src/components/dashboard/draggable-dashboard.tsx",
-   "detail": "Gestos, geometria, auto-rolagem, lixeira e acessibilidade no mesmo arquivo.",
-   "fix": "Extrair o cálculo de alvo de soltura (função pura, testável) e a lixeira."
-  },
-  {
-   "id": "I-30",
-   "title": "Quantidade de alimento sem limite",
-   "severity": "baixo",
-   "kind": "comprovado",
-   "area": "Validação",
-   "evidence": "src/app/log-food/[id].tsx valid = gramsValue > 0",
-   "detail": "Aceita 99.999 g; um erro de digitação distorce o dia inteiro.",
-   "fix": "Limite razoável (ex.: 5.000 g) com mensagem."
+   "detail": "Sem mudança.",
+   "fix": "useSyncExternalStore."
   },
   {
    "id": "I-31",
@@ -752,224 +973,251 @@ window.AUDIT = {
    "severity": "baixo",
    "kind": "comprovado",
    "area": "Qualidade",
-   "evidence": "tsconfig.json inclui expo-env.d.ts, que está no .gitignore",
-   "detail": "Em um clone novo, tsc falha até rodar expo start. Um CI precisaria gerar o arquivo.",
-   "fix": "Gerar o arquivo no passo de CI ou declarar os tipos de CSS em um .d.ts versionado."
-  },
-  {
-   "id": "I-32",
-   "title": "Sessão de treino perdida ao sair do app",
-   "severity": "médio",
-   "kind": "comprovado",
-   "area": "Treinos",
-   "evidence": "src/app/workout-session.tsx (startedAt e performed em useState da tela)",
-   "detail": "Se o sistema encerrar o app no meio do treino (comum ao trocar para música ou câmera), o tempo e as séries somem.",
-   "fix": "Persistir a sessão em andamento e oferecer retomar."
-  },
-  {
-   "id": "I-33",
-   "title": "Sair do pacote apaga o histórico ligado a ele",
-   "severity": "médio",
-   "kind": "comprovado",
-   "area": "Treinadores",
-   "evidence": "src/context/coaching.tsx leavePackage → removeWorkout; src/lib/workouts.ts getWorkoutForDate procura o treino concluído pelo id",
-   "detail": "As conclusões continuam apontando para treinos removidos; o dia concluído deixa de mostrar o treino e o resumo da sessão.",
-   "fix": "Arquivar treinos de pacotes em vez de apagá-los ou guardar um snapshot na conclusão."
+   "evidence": "tsconfig.json inclui expo-env.d.ts (ignorado)",
+   "detail": "Um CI precisaria gerar o arquivo.",
+   "fix": "Gerar no CI ou versionar os tipos de CSS."
   }
  ],
  "hypotheses": [
   {
    "id": "H-01",
-   "title": "Filtros por render vão pesar com histórico",
-   "detail": "useFoodDay, useExerciseDay e ExerciseTile filtram todos os registros a cada render (ExerciseTile faz filter com some dentro, O(n·m)). Irrelevante hoje com dados de uma sessão; com meses persistidos pode afetar a troca de dia. Não medido."
+   "title": "Filtros por render sobre o histórico",
+   "detail": "useFoodDay, useExerciseDay e o ExerciseTile filtram todas as entradas a cada render. Com o histórico inteiro carregado (N-04), isso tende a pesar com o tempo. Não medido."
   },
   {
    "id": "H-02",
-   "title": "Valores de contexto recriados a cada render",
-   "detail": "Os providers passam objetos novos em value. Com o React Compiler ativo isso pode ser memoizado automaticamente; não foi verificado em execução."
+   "title": "Realtime do chat depende só da RLS para filtrar",
+   "detail": "A assinatura filtra por trainer_id e confia na RLS de chat_messages para limitar ao usuário. A política existe e está coberta pelo teste SQL, mas o comportamento do Realtime com RLS não foi verificado contra um banco real."
   },
   {
    "id": "H-03",
-   "title": "Conflito entre arrastar widgets e swipe de abas",
-   "detail": "Existe swipe-lock para isso (sliding-tabs/swipe-lock.tsx), mas a interação não foi testada em dispositivo."
+   "title": "Redirecionamentos de e-mail em produção",
+   "detail": "supabase/config.toml define site_url localhost e treina://** para desenvolvimento local. A configuração equivalente no projeto remoto não está no repositório e não pôde ser conferida."
   }
  ],
  "missing": [
   {
-   "name": "Persistência local dos dados",
+   "name": "Completar perfil após Google e editar perfil",
    "priority": "P0",
-   "area": "Gestão de dados",
-   "why": "Sem ela o front não pode ser testado por usuários reais nem demonstrado de um dia para o outro; é pré-requisito para histórico, progresso e qualquer métrica de retenção."
-  },
-  {
-   "name": "Isolamento de dados por conta",
-   "priority": "P0",
-   "area": "Privacidade",
-   "why": "Dados de saúde de uma pessoa aparecem para a próxima que entrar no mesmo aparelho (I-02)."
-  },
-  {
-   "name": "Camada de repositório e contratos de API",
-   "priority": "P0",
-   "area": "Escalabilidade",
-   "why": "É o que permite à estratégia front-first terminar em integração, e não em reescrita (I-20)."
-  },
-  {
-   "name": "Backend com autenticação real e sessão segura",
-   "priority": "P0",
-   "area": "Segurança",
-   "why": "Bloqueia o lançamento: hoje qualquer pessoa entra com qualquer e-mail."
+   "area": "Conta",
+   "why": "Sem isso, contas do Google ficam sem dados corporais e os cálculos usam valores de exemplo (N-01, N-02)."
   },
   {
    "name": "Consentimento, política de privacidade, exportar e excluir conta",
    "priority": "P0",
-   "area": "Segurança e privacidade",
-   "why": "O app coleta peso, alimentação e dados corporais, que a LGPD trata como dados sensíveis de saúde; as lojas exigem exclusão de conta dentro do app."
+   "area": "Privacidade",
+   "why": "Os dados de saúde agora ficam no servidor; LGPD e as lojas exigem consentimento e exclusão de conta no app."
+  },
+  {
+   "name": "Testes e CI antes de cada OTA",
+   "priority": "P0",
+   "area": "Qualidade",
+   "why": "Um crash de abertura chegou ao aparelho por OTA sem nenhum teste (N-07)."
   },
   {
    "name": "Metas calculadas a partir do perfil",
    "priority": "P1",
    "area": "Personalização",
-   "why": "O cadastro promete estimar calorias e não estima; sem isso o anel de calorias e os macros não têm significado para o usuário (I-04)."
+   "why": "O cadastro coleta os dados e promete estimar calorias, mas todos recebem 2.200 kcal (I-04)."
   },
   {
-   "name": "Edição de registros, treinos, tarefas e perfil",
+   "name": "Edição de registros e de exercícios do treino",
    "priority": "P1",
-   "area": "Fluxos incompletos",
-   "why": "Corrigir erro de digitação é a ação mais comum em um diário; hoje exige apagar e recriar (I-12, I-13)."
+   "area": "Fluxos",
+   "why": "Corrigir é a ação mais comum num diário; hoje exige apagar e recriar (I-12)."
   },
   {
-   "name": "Tela de configurações",
+   "name": "Desfazer e confirmação em exclusões",
    "priority": "P1",
-   "area": "Personalização",
-   "why": "Não há lugar para metas, unidades, notificações, conta, privacidade e sair; 'Sair' fica solto no perfil."
+   "area": "UX",
+   "why": "Exclusões agora são permanentes no servidor (I-11)."
   },
   {
-   "name": "Recuperação de senha",
+   "name": "Fila de salvamento persistida e leitura offline",
    "priority": "P1",
-   "area": "Autenticação",
-   "why": "Fluxo obrigatório de qualquer login por e-mail e senha; ausente na tela de login."
+   "area": "Dados",
+   "why": "Mudanças pendentes se perdem ao fechar o app (N-03); academia costuma ter sinal fraco."
   },
   {
-   "name": "Histórico e progressão de treinos",
+   "name": "Carregamento por período",
+   "priority": "P1",
+   "area": "Performance",
+   "why": "O login baixa todo o histórico (N-04)."
+  },
+  {
+   "name": "Histórico e evolução de cargas",
    "priority": "P1",
    "area": "Relatórios",
-   "why": "O app já registra séries, cargas e sensação, mas não mostra a evolução; é o principal motivo para quem treina voltar ao app."
-  },
-  {
-   "name": "Testes automatizados e CI",
-   "priority": "P1",
-   "area": "Qualidade",
-   "why": "As regras de repetição, fila e sincronização já têm casos de borda reais (I-07); sem testes, a integração com backend vai regredir sem ninguém ver."
+   "why": "A sessão já registra séries, cargas e sensação, mas não há onde ver a evolução."
   },
   {
    "name": "Monitoramento de erros",
    "priority": "P1",
    "area": "Operação",
-   "why": "Com OTA ativa, um erro publicado chega a todos os usuários; hoje só há console.warn."
+   "why": "O crash do ExpoSQLite só foi descoberto com relatório de bugs manual."
+  },
+  {
+   "name": "Configurações",
+   "priority": "P1",
+   "area": "Personalização",
+   "why": "Não há lugar para metas, conta, privacidade e notificações."
   },
   {
    "name": "Timer de descanso e registro por série",
    "priority": "P2",
    "area": "Treino",
-   "why": "A sessão registra um único número de séries, repetições e carga por exercício; quem treina varia carga por série e cronometra descanso."
+   "why": "A sessão registra um valor por exercício."
   },
   {
    "name": "Recentes, favoritos e copiar refeição",
    "priority": "P2",
    "area": "Retenção",
-   "why": "Reduz o atrito diário do registro de alimentos, que é repetitivo."
+   "why": "Reduz o registro repetitivo."
   },
   {
-   "name": "Leitura de código de barras",
+   "name": "Leitor de código de barras",
    "priority": "P2",
    "area": "Integrações",
-   "why": "O Open Food Facts já é indexado por código de barras (id off:<barcode>); a câmera completaria o fluxo para produtos industrializados."
+   "why": "O Open Food Facts já indexa por código."
   },
   {
-   "name": "Lembretes e notificações locais",
+   "name": "Lembretes e notificações",
    "priority": "P2",
    "area": "Notificações",
-   "why": "Tarefas repetitivas e treinos do dia sem lembrete dependem de o usuário abrir o app sozinho."
+   "why": "Treinos e hábitos dependem de o usuário lembrar; o chat precisa de push quando o treinador responder."
   },
   {
    "name": "Passos via Health Connect / HealthKit",
    "priority": "P2",
    "area": "Integrações",
-   "why": "O widget de passos já existe com dado fictício; precisa de fonte real ou deve sair."
+   "why": "O widget mostra número fictício."
   },
   {
-   "name": "Relatório semanal de progresso",
+   "name": "Relatório semanal",
    "priority": "P2",
    "area": "Relatórios",
-   "why": "Junta peso, calorias médias e aderência ao plano, que hoje só aparecem dia a dia."
+   "why": "Junta peso, calorias e aderência ao plano."
   },
   {
-   "name": "Avaliar e comentar pacotes",
+   "name": "Lado do treinador (responder, publicar pacotes)",
+   "priority": "P2",
+   "area": "Marketplace",
+   "why": "O chat e o catálogo dependem dele para deixar de ser só de ida."
+  },
+  {
+   "name": "Avaliar pacotes",
    "priority": "P3",
    "area": "Engajamento",
-   "why": "Os comentários exibidos são fixos; deixar o aluno avaliar após concluir o programa dá credibilidade ao catálogo."
-  },
-  {
-   "name": "Painel e onboarding do treinador",
-   "priority": "P3",
-   "area": "Marketplace",
-   "why": "Para o catálogo deixar de ser fixo, treinadores precisam publicar pacotes e responder alunos."
+   "why": "Os comentários do catálogo são de exemplo."
   },
   {
    "name": "Pagamento de pacotes",
    "priority": "P3",
    "area": "Monetização",
-   "why": "Só se o modelo de negócio prever pacotes pagos; não há indício no código, então depende de decisão de produto."
+   "why": "Só se o modelo de negócio previr; não há indício no código."
   }
  ],
  "flows": [
   {
-   "name": "Primeiro acesso e cadastro",
+   "name": "Primeiro acesso e cadastro por e-mail",
    "steps": [
     {
-     "label": "Splash animado",
+     "label": "Splash até ler a sessão",
      "kind": "ok"
     },
     {
      "label": "Login",
-     "kind": "friction",
-     "note": "Textos em inglês; sem recuperar senha"
-    },
-    {
-     "label": "Criar conta: nome, e-mail, senha",
      "kind": "ok"
     },
     {
-     "label": "Sobre você: idade, sexo, altura, peso",
-     "kind": "friction",
-     "note": "Dados não usados para metas"
-    },
-    {
-     "label": "Carregando",
+     "label": "Sua conta (nome, e-mail, senha, confirmação)",
      "kind": "ok"
     },
     {
-     "label": "Início com dados de exemplo",
+     "label": "Sobre você (nascimento, sexo, altura, peso)",
+     "kind": "friction",
+     "note": "Dados não usados nas metas"
+    },
+    {
+     "label": "Confirme seu e-mail (reenvio com contagem)",
+     "kind": "friction",
+     "note": "Exige abrir o e-mail no mesmo celular"
+    },
+    {
+     "label": "Link → auth/callback → abas",
+     "kind": "ok"
+    },
+    {
+     "label": "Início com metas e passos fictícios",
      "kind": "break",
-     "note": "Passos e histórico de peso fictícios"
+     "note": "2.200 kcal e 6.840 passos para todos"
     },
     {
-     "label": "Onboarding de objetivo",
-     "kind": "missing",
-     "note": "Não existe"
+     "label": "Onboarding",
+     "kind": "missing"
     }
    ],
-   "notes": "O cadastro é curto e bem validado, mas termina em uma tela inicial que mostra números que o usuário não registrou e metas que não são dele."
+   "notes": "O fluxo de conta ficou completo e bem tratado. O valor do produto ainda não aparece no fim dele, porque as metas não são pessoais."
+  },
+  {
+   "name": "Entrar com Google",
+   "steps": [
+    {
+     "label": "Continuar com Google",
+     "kind": "ok"
+    },
+    {
+     "label": "idToken → Supabase",
+     "kind": "ok"
+    },
+    {
+     "label": "Perfil só com o nome",
+     "kind": "break",
+     "note": "Nascimento, sexo, altura e peso nulos"
+    },
+    {
+     "label": "Completar perfil",
+     "kind": "missing",
+     "note": "Prometido no trigger, não existe"
+    },
+    {
+     "label": "Calorias com 82 kg de exemplo",
+     "kind": "break"
+    }
+   ],
+   "notes": "Caminho mais curto de entrada e o que deixa o perfil incompleto (N-01, N-02)."
+  },
+  {
+   "name": "Recuperar senha",
+   "steps": [
+    {
+     "label": "Esqueci minha senha (e-mail já preenchido)",
+     "kind": "ok"
+    },
+    {
+     "label": "Verifique seu e-mail (não revela se existe conta)",
+     "kind": "ok"
+    },
+    {
+     "label": "Link → nova senha (app continua deslogado)",
+     "kind": "ok"
+    },
+    {
+     "label": "Login com aviso 'Senha alterada'",
+     "kind": "ok"
+    },
+    {
+     "label": "Link expirado → pedir novo",
+     "kind": "ok"
+    }
+   ],
+   "notes": "Fluxo completo e seguro; só a mensagem de erro fala em 'código' (N-08)."
   },
   {
    "name": "Registrar uma refeição",
    "steps": [
     {
      "label": "Diário",
-     "kind": "ok"
-    },
-    {
-     "label": "Adicionar alimento na refeição",
      "kind": "ok"
     },
     {
@@ -981,257 +1229,159 @@ window.AUDIT = {
      "kind": "ok"
     },
     {
-     "label": "Adicionar → volta ao diário",
+     "label": "Salvo na hora, enviado em fila",
      "kind": "ok"
     },
     {
      "label": "Corrigir quantidade",
-     "kind": "missing",
-     "note": "Só apagar e recriar"
-    },
-    {
-     "label": "Repetir refeição de ontem",
      "kind": "missing"
-    }
-   ],
-   "notes": "Fluxo mais maduro do app. Faltam edição e atalhos para registros repetidos."
-  },
-  {
-   "name": "Montar e executar um treino",
-   "steps": [
-    {
-     "label": "Exercícios → Planejamento",
-     "kind": "ok"
     },
     {
-     "label": "Novo treino (Treino A)",
-     "kind": "ok"
-    },
-    {
-     "label": "Adicionar exercício (busca ExerciseDB)",
-     "kind": "friction",
-     "note": "Busca só ao enviar, termos em inglês"
-    },
-    {
-     "label": "Definir dias ou fila",
-     "kind": "ok"
-    },
-    {
-     "label": "Iniciar treino (cronômetro)",
-     "kind": "ok"
-    },
-    {
-     "label": "Concluir exercícios e sensação",
-     "kind": "friction",
-     "note": "Sem descanso nem carga por série"
-    },
-    {
-     "label": "Ver evolução das cargas",
-     "kind": "missing"
-    }
-   ],
-   "notes": "Planejamento flexível (semanal ou fila) e sessão cronometrada bem feitos; falta o retorno de progresso que justifica registrar."
-  },
-  {
-   "name": "Seguir um treinador",
-   "steps": [
-    {
-     "label": "Aba Treinador → buscar",
-     "kind": "ok"
-    },
-    {
-     "label": "Perfil do treinador",
-     "kind": "ok"
-    },
-    {
-     "label": "Pacote: treinos e comentários",
-     "kind": "ok"
-    },
-    {
-     "label": "Aderir ao treino",
+     "label": "Fechar o app sem internet",
      "kind": "break",
-     "note": "Sobrescreve dias do plano próprio sem aviso"
-    },
-    {
-     "label": "Planejamento com treinos bloqueados",
-     "kind": "ok"
-    },
-    {
-     "label": "Conversar",
-     "kind": "break",
-     "note": "Treinador nunca responde"
-    },
-    {
-     "label": "Avaliar o pacote",
-     "kind": "missing"
+     "note": "Mudança pendente se perde"
     }
    ],
-   "notes": "É o diferencial do produto, mas ainda sem a outra ponta (treinador real, respostas, avaliações)."
+   "notes": "Melhor fluxo do app; faltam edição e fila persistente."
   },
   {
-   "name": "Tarefas do dia",
+   "name": "Montar e executar treino",
    "steps": [
     {
-     "label": "Tarefas → +",
+     "label": "Planejamento (semanal ou fila)",
      "kind": "ok"
     },
     {
-     "label": "Nome, repetição, subtarefas",
-     "kind": "ok"
-    },
-    {
-     "label": "Marcar feito por dia",
-     "kind": "ok"
-    },
-    {
-     "label": "Editar tarefa",
-     "kind": "missing"
-    },
-    {
-     "label": "Lembrete no horário",
-     "kind": "missing"
-    },
-    {
-     "label": "Excluir",
+     "label": "Adicionar exercício (filtros de categoria)",
      "kind": "friction",
-     "note": "Sem confirmação"
-    }
-   ],
-   "notes": "Lógica de repetição sólida, mas a feature é genérica e não se liga a metas de saúde."
-  },
-  {
-   "name": "Peso e meta",
-   "steps": [
+     "note": "Busca em inglês"
+    },
     {
-     "label": "Perfil ou card de peso",
+     "label": "Iniciar treino",
      "kind": "ok"
     },
     {
-     "label": "Registrar peso de hoje",
-     "kind": "ok"
+     "label": "Concluir e registrar sensação",
+     "kind": "friction",
+     "note": "Sem descanso nem séries"
     },
     {
-     "label": "Definir meta",
-     "kind": "ok"
-    },
-    {
-     "label": "Gráfico de tendência",
-     "kind": "break",
-     "note": "Começa com histórico fictício"
-    },
-    {
-     "label": "Registrar peso de outro dia",
+     "label": "Ver evolução",
      "kind": "missing"
     }
    ],
-   "notes": "Dialog bem validado (30 a 400 kg), mas só registra a data de hoje e mistura histórico de exemplo."
+   "notes": "Sem mudança relevante de fluxo desde a auditoria anterior; agora persiste."
   },
   {
-   "name": "Sair e trocar de conta",
+   "name": "Seguir treinador e conversar",
    "steps": [
     {
-     "label": "Perfil → Sair",
-     "kind": "friction",
-     "note": "Sem confirmação"
-    },
-    {
-     "label": "Login com outra conta",
+     "label": "Catálogo do banco",
      "kind": "ok"
     },
     {
-     "label": "Dados da conta anterior aparecem",
+     "label": "Pacote",
+     "kind": "ok"
+    },
+    {
+     "label": "Aderir",
      "kind": "break",
-     "note": "Providers não são limpos"
+     "note": "Sobrescreve o plano próprio sem aviso"
+    },
+    {
+     "label": "Chat em tempo real com aviso",
+     "kind": "friction",
+     "note": "Treinador ainda não responde"
+    },
+    {
+     "label": "Avaliar pacote",
+     "kind": "missing"
     }
    ],
-   "notes": "Falha de privacidade comprovada no código (I-02)."
+   "notes": "O aviso no chat corrigiu a expectativa; o lado do treinador segue ausente."
   },
   {
    "name": "Recuperação de erros",
    "steps": [
     {
-     "label": "Falha ao preparar app → Tentar de novo / Sair",
+     "label": "Falha ao carregar → Tentar de novo / Sair",
+     "kind": "friction",
+     "note": "Qualquer domínio bloqueia o app todo"
+    },
+    {
+     "label": "Falha ao salvar → banner 'Tentar novamente'",
      "kind": "ok"
     },
     {
-     "label": "Busca de alimentos offline → mensagem + Tentar novamente",
+     "label": "Erro de tela → 'Algo deu errado'",
      "kind": "ok"
     },
     {
-     "label": "ExerciseDB 429 → mensagem",
-     "kind": "ok"
-    },
-    {
-     "label": "App fechado no meio do treino",
+     "label": "Módulo nativo ausente",
      "kind": "break",
-     "note": "Sessão perdida"
-    },
-    {
-     "label": "Reabrir app",
-     "kind": "break",
-     "note": "Todos os dados perdidos"
+     "note": "Fecha antes do ErrorBoundary (caso ExpoSQLite)"
     }
    ],
-   "notes": "Erros de rede são bem tratados; perda de estado não."
+   "notes": "Bem melhor que antes; o caso nativo depende de processo de entrega (N-07)."
   }
  ],
  "benchmark": {
-  "caveat": "Não há documento de posicionamento no repositório. O público foi inferido do código: brasileiros (pt-BR, tabela TACO, produtos filtrados por Brasil) que treinam com acompanhamento de personal trainers que divulgam programas no Instagram. As referências abaixo vêm de conhecimento público sobre esses apps e não foram verificadas nesta auditoria; preços e recursos premium mudam com frequência.",
+  "caveat": "Continua sem documento de posicionamento no repositório. O público foi inferido do código: brasileiros que treinam com acompanhamento de personal trainers que divulgam programas no Instagram. As referências vêm de conhecimento público e não foram verificadas nesta auditoria.",
   "competitors": [
    {
     "name": "MyFitnessPal",
     "segment": "Diário alimentar",
-    "strengths": "Base de alimentos enorme, leitor de código de barras, metas calculadas, refeições salvas, integrações com wearables.",
-    "treinaVs": "Treina tem TACO offline, mais confiável para comida brasileira genérica; falta código de barras, recentes, metas calculadas e edição.",
-    "opportunity": "Diário rápido com TACO + produtos BR, sem anúncios e ligado ao treino."
+    "strengths": "Base enorme, código de barras, metas calculadas, refeições salvas.",
+    "treinaVs": "Treina tem TACO offline e agora persiste os dados, mas não calcula metas nem permite editar registros.",
+    "opportunity": "Diário rápido com TACO + produtos BR, ligado ao treino."
    },
    {
     "name": "FatSecret / Tecnonutri",
-    "segment": "Contagem de calorias no Brasil",
-    "strengths": "Base brasileira, comunidade, diário fotográfico.",
-    "treinaVs": "Mesmo público; Treina ainda não tem histórico nem relatórios.",
-    "opportunity": "Unir dieta e treino em um único painel, o que esses apps fazem pouco."
+    "segment": "Calorias no Brasil",
+    "strengths": "Base brasileira, comunidade.",
+    "treinaVs": "Mesmo público; Treina não tem histórico nem relatórios.",
+    "opportunity": "Unir dieta e treino num painel só."
    },
    {
     "name": "Hevy / Strong",
-    "segment": "Registro de musculação",
-    "strengths": "Registro por série, timer de descanso, histórico e recordes pessoais, rotinas compartilháveis.",
-    "treinaVs": "Treina tem plano semanal ou fila e sessão cronometrada, mas registra um único valor por exercício e não mostra evolução.",
-    "opportunity": "Progressão de carga por exercício e relatório de volume semanal."
+    "segment": "Musculação",
+    "strengths": "Registro por série, descanso, recordes, histórico.",
+    "treinaVs": "Treina tem fila e sessão cronometrada, sem séries nem evolução.",
+    "opportunity": "Progressão de carga por exercício."
    },
    {
     "name": "MFIT Personal / Tecnofit / Trainerize",
-    "segment": "Plataforma personal ↔ aluno",
-    "strengths": "Prescrição pelo treinador, chat, cobrança recorrente, avaliação física.",
-    "treinaVs": "Treina tem o lado do aluno (pacotes, adesão, chat) mas não o lado do treinador.",
-    "opportunity": "Marketplace de programas de influenciadores com execução guiada dentro do app; o diferencial mais claro do Treina."
+    "segment": "Personal ↔ aluno",
+    "strengths": "Prescrição, chat, cobrança.",
+    "treinaVs": "Treina tem o lado do aluno (pacotes, adesão, chat em tempo real), não o do treinador.",
+    "opportunity": "Programas de influenciadores com execução guiada no app."
    },
    {
     "name": "Samsung Health / Google Fit / Apple Saúde",
-    "segment": "Atividade e passos",
+    "segment": "Atividade",
     "strengths": "Passos e sono automáticos.",
     "treinaVs": "Treina mostra passos fictícios.",
-    "opportunity": "Integrar em vez de competir: ler passos e gasto via Health Connect / HealthKit."
+    "opportunity": "Integrar via Health Connect / HealthKit."
    }
   ],
   "differentiators": [
-   "Diário, treino e treinador no mesmo app, com o treino do pacote virando o 'treino do dia' automaticamente.",
-   "TACO embarcada: busca instantânea e offline de alimentos brasileiros.",
-   "Plano em fila, para quem não treina em dias fixos.",
-   "Tela inicial personalizável por arrastar."
+   "Diário, treino e treinador no mesmo app, com o treino do pacote virando o treino do dia.",
+   "TACO embarcada para comida brasileira, offline.",
+   "Plano em fila para quem não treina em dias fixos.",
+   "Modo demo que permite usar o app inteiro sem conta (útil para testes e demonstrações)."
   ],
   "doNotCopy": [
-   "Feed social e desafios públicos: não há sinal no produto de que seja o objetivo, e custa moderação.",
-   "Base própria de alimentos colaborativa: TACO + Open Food Facts já cobrem bem o caso brasileiro.",
-   "Tarefas genéricas como app de produtividade: é melhor transformar em hábitos de saúde do que competir com apps de tarefas."
+   "Feed social e desafios públicos: custam moderação e não há sinal de que sejam objetivo.",
+   "Base própria colaborativa de alimentos: TACO + Open Food Facts já cobrem o caso brasileiro.",
+   "Tarefas genéricas de produtividade: melhor transformar em hábitos de saúde."
   ]
  },
  "gallery": {
-  "note": "Capturas do app real, exportado para web (expo export -p web) e navegado com Playwright num viewport de 390 × 844 em 2 de novembro de 2026. Os dados foram criados pela própria interface: cadastro, alimentos, adesão a um pacote, treino próprio, tarefas e uma mensagem. A versão web é uma aproximação do app nativo: fontes, sombras e gestos podem diferir no Android e no iOS. O ambiente da auditoria bloqueia ExerciseDB, Open Food Facts e randomuser.me, por isso essas partes aparecem em estado de erro ou com iniciais no lugar das fotos.",
+  "note": "Capturas do app exportado para web (expo export -p web) em modo demo (EXPO_PUBLIC_AUTH_MODE=demo, dados em memória), navegado com Playwright num viewport de 390 × 844 em 12/11/2026. As telas logadas usaram dados criados pela interface; as de recuperação de senha e confirmação foram abertas pelo endereço, sem e-mail real. A versão web aproxima o app nativo. O ambiente da auditoria bloqueia ExerciseDB, Open Food Facts e randomuser.me.",
   "missing": [
    {
     "screen": "bootstrap",
-    "why": "A tela de carregamento aparece por um único quadro, porque prepareMainFlow ainda resolve na hora, e a tela de erro só surge se ele falhar. Não dá para capturar nenhuma das duas sem alterar o código."
+    "why": "No modo demo os dados carregam na hora, então a tela de carregamento dura um quadro e a de erro só aparece se um domínio falhar. Não dá para capturar sem alterar o código."
    }
   ],
   "images": [
@@ -1239,157 +1389,187 @@ window.AUDIT = {
     "screen": "login",
     "file": "screens/login.jpg",
     "id": "login",
-    "caption": "Login com os textos em inglês e 'Faca login' sem cedilha (I-08)."
+    "caption": "Login em pt-BR com 'Esqueci minha senha' (I-08 resolvido)."
    },
    {
     "screen": "signup-account",
     "file": "screens/signup-account.jpg",
     "id": "signup-account",
-    "caption": "Etapa 1 do cadastro preenchida."
+    "caption": "Etapa 1 de 3, agora com confirmação de senha."
    },
    {
     "screen": "signup-details",
     "file": "screens/signup-details.jpg",
     "id": "signup-details",
-    "caption": "Etapa 2: idade, sexo, altura e peso. A descrição promete estimar calorias (I-04)."
+    "caption": "Etapa 2: data de nascimento no lugar da idade. A descrição ainda promete estimar calorias (I-04)."
+   },
+   {
+    "screen": "signup-confirm",
+    "file": "screens/signup-confirm.jpg",
+    "id": "signup-confirm",
+    "caption": "Etapa 3: confirmar o e-mail, com reenvio e contagem regressiva."
+   },
+   {
+    "screen": "forgot-password",
+    "file": "screens/forgot-password.jpg",
+    "id": "forgot-password",
+    "caption": "Recuperação de senha. No modo demo, avisa que não está disponível."
+   },
+   {
+    "screen": "forgot-check-email",
+    "file": "screens/forgot-check-email.jpg",
+    "id": "forgot-check-email",
+    "caption": "Confirmação de envio que não revela se a conta existe."
+   },
+   {
+    "screen": "forgot-new-password",
+    "file": "screens/forgot-new-password.jpg",
+    "id": "forgot-new-password",
+    "caption": "Nova senha aberta sem código: estado de link inválido com 'Pedir novo link'."
+   },
+   {
+    "screen": "auth-callback",
+    "file": "screens/auth-callback.jpg",
+    "id": "auth-callback",
+    "caption": "Callback de confirmação sem código: link expirado ou já usado."
    },
    {
     "screen": "home",
     "file": "screens/home.jpg",
     "id": "home",
-    "caption": "Início depois de registrar alimentos: calorias e macros reais, meta fixa de 2.200 kcal e 6.840 passos fictícios (I-04, I-05)."
+    "caption": "Início com dados reais de alimentação e exercício; meta fixa de 2.200 kcal e 6.840 passos fictícios (I-04, I-05)."
    },
    {
     "screen": "home",
     "file": "screens/home-edit.jpg",
     "id": "home-edit",
-    "caption": "Modo de edição da tela inicial, com botão de remover em cada widget."
+    "caption": "Modo de edição da tela inicial, agora salvo por conta."
    },
    {
     "screen": "home",
     "file": "screens/home-dark.jpg",
     "id": "home-dark",
-    "caption": "Tema escuro gerado pelo design system, numa conta nova sem registros."
+    "caption": "Tema escuro numa conta nova."
    },
    {
     "screen": "diary",
     "file": "screens/diary.jpg",
     "id": "diary",
-    "caption": "Diário com café da manhã e almoço registrados."
+    "caption": "Diário com café da manhã e almoço."
    },
    {
     "screen": "log-food",
     "file": "screens/log-food.jpg",
     "id": "log-food",
-    "caption": "Busca 'pao frances': resultados da TACO na hora. A parte online aparece com erro porque o ambiente da auditoria bloqueia o Open Food Facts."
+    "caption": "Busca com resultados da TACO; a parte online aparece com erro porque o ambiente da auditoria bloqueia o Open Food Facts."
    },
    {
     "screen": "food-details",
     "file": "screens/food-details.jpg",
     "id": "food-details",
-    "caption": "Quantidade em gramas, troca de refeição e nutrientes recalculados."
+    "caption": "Quantidade, refeição e nutrientes."
    },
    {
     "screen": "meals",
     "file": "screens/meals.jpg",
     "id": "meals",
-    "caption": "Refeições do diário, refeições padrão e personalizada."
+    "caption": "Refeições do diário."
    },
    {
     "screen": "exercise",
     "file": "screens/exercise.jpg",
     "id": "exercise",
-    "caption": "Exercícios com o treino do dia vindo do pacote de Ana Souza."
+    "caption": "Aba Exercícios: treino do dia (descanso) e lista única de exercícios, com botão flutuante."
    },
    {
     "screen": "log-exercise",
     "file": "screens/log-exercise.jpg",
     "id": "log-exercise",
-    "caption": "Catálogo do ExerciseDB em estado de erro: a API está bloqueada no ambiente da auditoria."
+    "caption": "Filtros por categoria (novos); o catálogo aparece com erro porque o ambiente bloqueia o ExerciseDB."
    },
    {
     "screen": "exercise-details",
     "file": "screens/exercise-details.jpg",
     "id": "exercise-details",
-    "caption": "Exercício digitado à mão: 30 minutos e 0 kcal, porque não há MET (I-28)."
+    "caption": "Exercício manual com categoria escolhida e 0 kcal, sem MET (I-28)."
    },
    {
     "screen": "workouts",
     "file": "screens/workouts.jpg",
     "id": "workouts",
-    "caption": "Planejamento depois de aderir ao pacote: treinos do treinador distribuídos na semana."
+    "caption": "Planejamento após aderir ao pacote."
    },
    {
     "screen": "workout",
     "file": "screens/workout.jpg",
     "id": "workout",
-    "caption": "Treino próprio com um exercício de cardio manual."
+    "caption": "Treino próprio com exercício manual."
    },
    {
     "screen": "session",
     "file": "screens/session.jpg",
     "id": "session",
-    "caption": "Sessão cronometrada com o primeiro exercício concluído."
+    "caption": "Sessão cronometrada com um exercício concluído."
    },
    {
     "screen": "session",
     "file": "screens/dialog-leave-session.jpg",
     "id": "dialog-leave-session",
-    "caption": "Confirmação ao sair da sessão no meio do treino."
+    "caption": "Confirmação ao sair da sessão."
    },
    {
     "screen": "trainers",
     "file": "screens/trainers.jpg",
     "id": "trainers",
-    "caption": "Lista de treinadores. As fotos (randomuser.me) estão bloqueadas no ambiente, então aparecem as iniciais."
+    "caption": "Catálogo de treinadores (fotos de exemplo bloqueadas no ambiente, iniciais no lugar)."
    },
    {
     "screen": "trainer",
     "file": "screens/trainer.jpg",
     "id": "trainer",
-    "caption": "Perfil do treinador com números fixos e pacotes."
+    "caption": "Perfil do treinador."
    },
    {
     "screen": "package",
     "file": "screens/package.jpg",
     "id": "package",
-    "caption": "Pacote com treinos, comentários fixos e botão de aderir."
+    "caption": "Pacote com treinos, comentários e 'Aderir ao treino'."
    },
    {
     "screen": "package-workout",
     "file": "screens/package-workout.jpg",
     "id": "package-workout",
-    "caption": "Treino do pacote com notas do treinador."
+    "caption": "Treino do pacote com notas."
    },
    {
     "screen": "chat",
     "file": "screens/chat.jpg",
     "id": "chat",
-    "caption": "Mensagem enviada ao treinador; nunca haverá resposta (I-14)."
+    "caption": "Chat com aviso de que o treinador ainda não responde (I-14 parcial)."
    },
    {
     "screen": "tasks",
     "file": "screens/tasks.jpg",
     "id": "tasks",
-    "caption": "Tarefa diária com subtarefas e uma tarefa avulsa."
+    "caption": "Tarefas com subtarefas."
    },
    {
     "screen": "add-task",
     "file": "screens/add-task.jpg",
     "id": "add-task",
-    "caption": "Nova tarefa com repetição diária e duas subtarefas."
+    "caption": "Nova tarefa com repetição diária."
    },
    {
     "screen": "profile",
     "file": "screens/profile.jpg",
     "id": "profile",
-    "caption": "Perfil da conta criada no cadastro."
+    "caption": "Perfil com idade pela data de nascimento."
    },
    {
     "screen": "profile",
     "file": "screens/dialog-weight.jpg",
     "id": "dialog-weight",
-    "caption": "Diálogo de registrar peso."
+    "caption": "Registrar peso, agora com data da medição."
    }
   ]
  },
@@ -1402,32 +1582,30 @@ window.AUDIT = {
    "files": [
     "src/app/login.tsx",
     "src/context/session.tsx",
-    "src/lib/google-auth.ts"
+    "src/lib/auth.ts",
+    "src/components/ui/password-field.tsx"
    ],
-   "objective": "Entrar com e-mail e senha ou com Google.",
-   "context": "Primeira tela de quem não tem sessão.",
+   "objective": "Entrar com e-mail e senha ou Google.",
+   "context": "Quem não tem sessão salva.",
    "importance": "Alta",
    "works": [
-    "Login simulado por e-mail entra com qualquer valor",
-    "Google Sign-In em build nativo (web mostra indisponível)",
-    "Mostrar/ocultar senha",
-    "Estados de carregamento separados para e-mail e Google",
-    "Link para criar conta"
+    "Supabase Auth com e-mail e senha",
+    "Google via idToken (build nativo)",
+    "Conta não confirmada leva à tela de confirmação",
+    "Esqueci minha senha com o e-mail já preenchido",
+    "Aviso 'Senha alterada' após recuperação",
+    "Modo demo entra sem servidor"
    ],
    "partial": [
-    "Validação de e-mail e senha existe, mas fica desligada por IS_AUTH_MOCKED"
+    "Google depende dos client IDs no ambiente; sem eles mostra erro"
    ],
    "visual": [],
-   "redundant": [
-    "EMAIL_PATTERN redefinido aqui e em src/lib/profile.ts"
-   ],
+   "redundant": [],
    "ux": [
-    "- Textos em inglês: 'Sign in', 'Show', 'Your password', 'you@example.com' e mensagens de erro",
-    "- 'Faca login' sem cedilha e 'Bem vindo' sem hífen",
-    "- Sem 'Esqueci minha senha'",
-    "+ Erro anunciado com accessibilityRole='alert'",
-    "+ Botão Google segue a identidade visual do Google nos dois temas",
-    "+ KeyboardAvoidingView e retorno do teclado encadeando campos"
+    "+ Todo em pt-BR e com grafia correta",
+    "+ Mostrar senha com ícone e rótulo de acessibilidade",
+    "+ Erros anunciados como alerta",
+    "- Sem indicação visual de modo demo quando ativo"
    ],
    "states": {
     "loading": "sim",
@@ -1436,31 +1614,27 @@ window.AUDIT = {
     "success": "sim (guard troca a tela)"
    },
    "tech": [
-    "Não normaliza o e-mail para minúsculas, ao contrário do cadastro (I-09)",
-    "Estado de envio por booleanos separados; simples e correto",
-    "Erro do Google tipado (GoogleSignInError) com mensagem própria"
+    "normalizeEmail e EMAIL_PATTERN compartilhados com cadastro e recuperação",
+    "Formulário remontado por key após troca de senha: simples e correto"
    ],
    "opportunities": [
-    "Traduzir e revisar todos os textos",
-    "Adicionar recuperação de senha antes do backend, já com a tela pronta",
-    "Usar um helper único de normalização e validação de e-mail"
+    "Selo 'Modo demo' quando IS_AUTH_MOCKED",
+    "Validar as variáveis do Google no início do app"
    ],
    "issues": [
-    "I-08",
-    "I-09",
-    "I-10"
+    "N-06"
    ],
    "scores": {
-    "tech": 6,
-    "ux": 5,
-    "complete": 4,
-    "maturity": 3
+    "tech": 8,
+    "ux": 8,
+    "complete": 8,
+    "maturity": 7
    },
    "justify": {
-    "tech": "Estrutura limpa e estados corretos, mas validação duplicada e e-mail não normalizado.",
-    "ux": "Idioma misto e erros de grafia na primeira impressão do app.",
-    "complete": "Falta recuperação de senha e a validação está desligada.",
-    "maturity": "Depende inteiramente do mock de autenticação."
+    "tech": "Estados e erros bem tratados, helpers compartilhados.",
+    "ux": "Claro e consistente; resolveu os problemas de idioma.",
+    "complete": "Cobre e-mail, Google, recuperação e conta não confirmada.",
+    "maturity": "Depende de configuração de ambiente não validada."
    }
   },
   {
@@ -1473,25 +1647,24 @@ window.AUDIT = {
     "src/components/signup/step-screen.tsx",
     "src/context/signup.tsx"
    ],
-   "objective": "Coletar nome, e-mail e senha (etapa 1 de 2).",
-   "context": "Novo usuário vindo do login.",
+   "objective": "Nome, e-mail, senha e confirmação (etapa 1 de 3).",
+   "context": "Novo usuário.",
    "importance": "Alta",
    "works": [
-    "Exige nome e sobrenome",
-    "Valida e-mail e senha com pelo menos 6 caracteres",
-    "Guarda os dados ao voltar da etapa 2 (SignupProvider)",
-    "Indicador de etapa com rótulo de acessibilidade"
+    "Exige nome completo",
+    "Valida e-mail e senha mínima",
+    "Confirmação de senha",
+    "Mostrar senha nos dois campos",
+    "Dados preservados ao voltar"
    ],
-   "partial": [
-    "A senha é coletada e descartada em session.signUp"
-   ],
+   "partial": [],
    "visual": [],
    "redundant": [],
    "ux": [
-    "+ Mensagens de erro claras em pt-BR",
-    "+ Foco passa automaticamente entre campos",
-    "- Erro único no rodapé em vez de junto ao campo",
-    "- Sem mostrar senha, ao contrário do login"
+    "+ Indicador de 3 etapas",
+    "+ Foco encadeado entre campos",
+    "- Erro único no rodapé",
+    "- Sem termos de uso e consentimento"
    ],
    "states": {
     "loading": "n/a",
@@ -1500,29 +1673,24 @@ window.AUDIT = {
     "success": "sim"
    },
    "tech": [
-    "Validação simples e correta",
-    "StepScreen reaproveitado entre as duas etapas",
-    "Exigir sobrenome pode barrar nomes de uma palavra (hipótese de produto, não erro de código)"
+    "StepScreen reaproveitado em cadastro e recuperação"
    ],
    "opportunities": [
-    "Erros por campo",
-    "Botão de mostrar senha",
-    "Termos de uso e consentimento de dados de saúde nesta etapa"
+    "Consentimento de dados de saúde nesta etapa",
+    "Erros por campo"
    ],
-   "issues": [
-    "I-10"
-   ],
+   "issues": [],
    "scores": {
-    "tech": 7,
+    "tech": 8,
     "ux": 7,
     "complete": 7,
-    "maturity": 5
+    "maturity": 7
    },
    "justify": {
-    "tech": "Código curto, reaproveita StepScreen e valida bem.",
-    "ux": "Fluxo claro e em português; erro centralizado no rodapé.",
-    "complete": "Cumpre a etapa; faltam termos e consentimento.",
-    "maturity": "A senha não tem destino até existir backend."
+    "tech": "Curto e reaproveitável.",
+    "ux": "Claro; erro centralizado.",
+    "complete": "Falta consentimento.",
+    "maturity": "Integrado ao Auth real."
    }
   },
   {
@@ -1532,28 +1700,26 @@ window.AUDIT = {
    "group": "Autenticação",
    "files": [
     "src/app/signup/details.tsx",
-    "src/components/ui/picker-field.tsx",
-    "src/lib/profile.ts"
+    "src/lib/profile.ts",
+    "supabase/migrations/20261102000300_new_user_profile.sql"
    ],
-   "objective": "Coletar idade, sexo, altura e peso (etapa 2 de 2) e criar a conta.",
+   "objective": "Nascimento, sexo, altura e peso (etapa 2 de 3).",
    "context": "Continuação do cadastro.",
    "importance": "Alta",
    "works": [
-    "Seletores de idade (13 a 120) e altura (100 a 250 cm)",
-    "Peso validado entre 30 e 400 kg com vírgula ou ponto",
-    "Redireciona para a etapa 1 se aberta sem ela",
-    "Cria a conta e entra direto"
+    "Data de nascimento DD/MM/AAAA validada (dia real, idade mínima)",
+    "Altura em seletor, peso 30–400 kg",
+    "Dados enviados no signUp e gravados pelo trigger (perfil e primeira pesagem)"
    ],
    "partial": [
-    "A descrição promete estimar calorias, mas os dados não são usados em nenhuma meta (I-04)"
+    "A descrição promete estimar calorias, mas as metas são fixas (I-04)"
    ],
    "visual": [],
    "redundant": [],
    "ux": [
-    "+ Seletores evitam digitação inválida",
-    "+ Opção 'Não informar' para sexo",
-    "- Não pergunta objetivo (perder, manter, ganhar) nem nível de atividade, necessários para a promessa da própria tela",
-    "- Guarda idade e não data de nascimento"
+    "+ Data de nascimento no lugar da idade",
+    "- Sem objetivo nem nível de atividade",
+    "- Data digitada à mão, sem seletor de data"
    ],
    "states": {
     "loading": "sim",
@@ -1562,59 +1728,307 @@ window.AUDIT = {
     "success": "sim"
    },
    "tech": [
-    "Redirect de proteção bem pensado para web",
-    "Arredondamento do peso a 0,1 kg",
-    "Profile.age fixo envelhece errado com o tempo (I-13)"
+    "parseDate rejeita datas impossíveis",
+    "Trigger ignora valores inválidos sem falhar (testado em rls.sql)"
    ],
    "opportunities": [
-    "Adicionar objetivo e nível de atividade",
-    "Usar os dados para calcular metas",
-    "Trocar idade por data de nascimento"
+    "Objetivo e atividade",
+    "Usar os dados nas metas",
+    "Reaproveitar a tela para completar perfil do Google"
    ],
    "issues": [
     "I-04",
-    "I-13"
+    "N-01"
+   ],
+   "scores": {
+    "tech": 8,
+    "ux": 7,
+    "complete": 6,
+    "maturity": 7
+   },
+   "justify": {
+    "tech": "Validação boa no app e no banco.",
+    "ux": "Promessa da tela não cumprida.",
+    "complete": "Faltam objetivo e atividade.",
+    "maturity": "Persistido de verdade."
+   }
+  },
+  {
+   "id": "signup-confirm",
+   "name": "Confirme seu e-mail",
+   "route": "/signup/confirm",
+   "group": "Autenticação",
+   "files": [
+    "src/app/signup/confirm.tsx",
+    "src/components/auth/*"
+   ],
+   "objective": "Pedir que o usuário abra o link de confirmação (etapa 3 de 3).",
+   "context": "Após o cadastro, ou ao entrar com conta não confirmada.",
+   "importance": "Alta",
+   "works": [
+    "Texto diferente para recém-cadastrado e para conta antiga não confirmada",
+    "Reenviar com contagem regressiva",
+    "Redireciona ao cadastro se aberta sem e-mail"
+   ],
+   "partial": [
+    "Reenviar não checa modo demo nem configuração (N-09)"
+   ],
+   "visual": [],
+   "redundant": [],
+   "ux": [
+    "+ Explica que o link deve ser aberto no mesmo celular",
+    "- 'Já confirmei, entrar' só volta ao login; o usuário digita a senha de novo"
+   ],
+   "states": {
+    "loading": "sim (reenvio)",
+    "empty": "n/a",
+    "error": "sim",
+    "success": "sim (contagem)"
+   },
+   "tech": [
+    "Componente ResendEmail compartilhado com a recuperação"
+   ],
+   "opportunities": [
+    "Abrir o app de e-mail",
+    "Manter o e-mail e a senha para entrar direto após confirmar"
+   ],
+   "issues": [
+    "N-09"
    ],
    "scores": {
     "tech": 7,
     "ux": 7,
-    "complete": 6,
-    "maturity": 5
+    "complete": 7,
+    "maturity": 7
    },
    "justify": {
-    "tech": "Validação e proteção de rota corretas.",
-    "ux": "Boa entrada de dados, mas a promessa da tela não se cumpre.",
-    "complete": "Faltam objetivo e atividade para o cálculo de metas.",
-    "maturity": "Dados ficam só na memória da sessão."
+    "tech": "Simples; uma guarda faltando.",
+    "ux": "Clara, com um passo a mais no fim.",
+    "complete": "Cobre os dois casos de entrada.",
+    "maturity": "Depende do e-mail real (não testado)."
+   }
+  },
+  {
+   "id": "forgot-password",
+   "name": "Esqueceu a senha?",
+   "route": "/forgot-password",
+   "group": "Autenticação",
+   "files": [
+    "src/app/forgot-password/index.tsx"
+   ],
+   "objective": "Pedir o link de redefinição.",
+   "context": "A partir do login.",
+   "importance": "Média",
+   "works": [
+    "E-mail preenchido a partir do login",
+    "Validação e envio pelo Supabase",
+    "No modo demo, avisa que não está disponível"
+   ],
+   "partial": [],
+   "visual": [],
+   "redundant": [],
+   "ux": [
+    "+ Etapa 1 de 3 clara",
+    "- Mensagem de erro fala em 'código' (N-08)"
+   ],
+   "states": {
+    "loading": "sim",
+    "empty": "n/a",
+    "error": "sim",
+    "success": "sim (próxima etapa)"
+   },
+   "tech": [
+    "Mesmos helpers de e-mail do login"
+   ],
+   "opportunities": [
+    "Corrigir o texto"
+   ],
+   "issues": [
+    "N-08"
+   ],
+   "scores": {
+    "tech": 8,
+    "ux": 8,
+    "complete": 8,
+    "maturity": 7
+   },
+   "justify": {
+    "tech": "Curta e correta.",
+    "ux": "Objetiva.",
+    "complete": "Faz o que promete.",
+    "maturity": "E-mail real não testado."
+   }
+  },
+  {
+   "id": "forgot-check-email",
+   "name": "Verifique seu e-mail",
+   "route": "/forgot-password/check-email",
+   "group": "Autenticação",
+   "files": [
+    "src/app/forgot-password/check-email.tsx"
+   ],
+   "objective": "Confirmar o envio sem revelar se a conta existe.",
+   "context": "Após pedir o link.",
+   "importance": "Baixa",
+   "works": [
+    "Texto que não confirma a existência da conta",
+    "Reenviar com contagem",
+    "Voltar para o login"
+   ],
+   "partial": [],
+   "visual": [],
+   "redundant": [],
+   "ux": [
+    "+ Cuidado de privacidade bem comunicado"
+   ],
+   "states": {
+    "loading": "sim",
+    "empty": "n/a",
+    "error": "sim",
+    "success": "sim"
+   },
+   "tech": [
+    "Reaproveita ResendEmail e StepScreen"
+   ],
+   "opportunities": [],
+   "issues": [],
+   "scores": {
+    "tech": 8,
+    "ux": 8,
+    "complete": 8,
+    "maturity": 7
+   },
+   "justify": {
+    "tech": "Reaproveitamento limpo.",
+    "ux": "Clara.",
+    "complete": "Completa.",
+    "maturity": "E-mail real não testado."
+   }
+  },
+  {
+   "id": "forgot-new-password",
+   "name": "Nova senha",
+   "route": "/forgot-password/new-password",
+   "group": "Autenticação",
+   "files": [
+    "src/app/forgot-password/new-password.tsx",
+    "src/context/session.tsx (startPasswordReset, resetPassword)"
+   ],
+   "objective": "Definir a senha nova a partir do link.",
+   "context": "Aberta pelo link do e-mail.",
+   "importance": "Média",
+   "works": [
+    "Troca o código uma única vez",
+    "App continua deslogado durante a troca",
+    "Confirmação de senha",
+    "Sai de todos os aparelhos após trocar",
+    "Estado de link inválido ou expirado com 'Pedir novo link'"
+   ],
+   "partial": [],
+   "visual": [],
+   "redundant": [],
+   "ux": [
+    "+ Estados de abrindo, inválido e pronto bem distintos"
+   ],
+   "states": {
+    "loading": "sim",
+    "empty": "n/a",
+    "error": "sim",
+    "success": "sim (login com aviso)"
+   },
+   "tech": [
+    "Fluxo de recuperação isolado por ref (recovery) para não logar o app",
+    "Mapeia error_code do Supabase para mensagens"
+   ],
+   "opportunities": [],
+   "issues": [],
+   "scores": {
+    "tech": 9,
+    "ux": 8,
+    "complete": 9,
+    "maturity": 7
+   },
+   "justify": {
+    "tech": "Melhor tratamento de fluxo do app.",
+    "ux": "Estados claros.",
+    "complete": "Cobre sucesso e expiração.",
+    "maturity": "Não testado com e-mail real."
+   }
+  },
+  {
+   "id": "auth-callback",
+   "name": "Confirmação pelo link",
+   "route": "/auth/callback",
+   "group": "Autenticação",
+   "files": [
+    "src/app/auth/callback.tsx"
+   ],
+   "objective": "Trocar o código do link de confirmação pela sessão.",
+   "context": "Aberta pelo e-mail de confirmação.",
+   "importance": "Média",
+   "works": [
+    "Troca o código e entra",
+    "Link expirado ou sem código mostra erro com 'Ir para o login'"
+   ],
+   "partial": [],
+   "visual": [],
+   "redundant": [],
+   "ux": [
+    "+ Mensagem clara de link usado ou expirado"
+   ],
+   "states": {
+    "loading": "sim",
+    "empty": "n/a",
+    "error": "sim",
+    "success": "sim"
+   },
+   "tech": [
+    "Fica fora dos dois guards, de propósito (comentado no layout)"
+   ],
+   "opportunities": [
+    "Oferecer reenviar o link a partir do erro"
+   ],
+   "issues": [],
+   "scores": {
+    "tech": 8,
+    "ux": 7,
+    "complete": 7,
+    "maturity": 7
+   },
+   "justify": {
+    "tech": "Simples e correta.",
+    "ux": "Erro claro, sem atalho para reenviar.",
+    "complete": "Faz o essencial.",
+    "maturity": "Não testado com e-mail real."
    }
   },
   {
    "id": "bootstrap",
-   "name": "Carregando o app / erro de carregamento",
+   "name": "Carregando / erro de carregamento",
    "route": "(tabs)/_layout",
    "group": "Autenticação",
    "files": [
     "src/app/(tabs)/_layout.tsx",
     "src/hooks/use-main-flow-bootstrap.ts",
-    "src/lib/prepare-main-flow.ts",
+    "src/hooks/use-user-data-status.ts",
     "src/components/main-flow-loading.tsx"
    ],
-   "objective": "Preparar os dados do usuário antes de mostrar as abas.",
-   "context": "Logo após cada login.",
-   "importance": "Média",
+   "objective": "Carregar perfil e os 9 domínios antes das abas.",
+   "context": "A cada login ou abertura com sessão.",
+   "importance": "Alta",
    "works": [
-    "Estados loading, ready e error",
-    "Tentar de novo e Sair na tela de erro",
-    "Ignora respostas após logout (cancelled)"
+    "Carrega o perfil (profiles + última pesagem)",
+    "Espera os 9 domínios",
+    "Tentar de novo e Sair"
    ],
    "partial": [
-    "prepareMainFlow está vazio por enquanto, de propósito"
+    "Qualquer domínio que falhe bloqueia o app inteiro (N-05)"
    ],
    "visual": [],
    "redundant": [],
    "ux": [
-    "+ Mensagem de erro útil em pt-BR",
-    "+ Sempre abre na primeira aba"
+    "+ Mensagem útil",
+    "- Tela de carregamento cresce com o histórico (N-04)"
    ],
    "states": {
     "loading": "sim",
@@ -1623,25 +2037,28 @@ window.AUDIT = {
     "success": "sim"
    },
    "tech": [
-    "Padrão correto para o futuro carregamento do backend",
-    "console.warn como único registro de erro"
+    "Agrega status de todos os stores",
+    "Carrega o histórico completo de cada domínio"
    ],
    "opportunities": [
-    "Ligar ao monitoramento de erros",
-    "Carregar perfil e metas aqui quando houver API"
+    "Bloquear só no perfil",
+    "Carregar por período"
    ],
-   "issues": [],
+   "issues": [
+    "N-04",
+    "N-05"
+   ],
    "scores": {
     "tech": 7,
-    "ux": 7,
-    "complete": 5,
-    "maturity": 5
+    "ux": 6,
+    "complete": 7,
+    "maturity": 6
    },
    "justify": {
-    "tech": "Hook pequeno, cancelável e com retry.",
-    "ux": "Estados claros com saída para o usuário.",
-    "complete": "Ainda não carrega nada.",
-    "maturity": "Pronto para receber a integração."
+    "tech": "Correto, mas tudo-ou-nada.",
+    "ux": "Espera e falhas globais.",
+    "complete": "Carrega o necessário e mais.",
+    "maturity": "Não escala com o histórico."
    }
   },
   {
@@ -1651,76 +2068,60 @@ window.AUDIT = {
    "group": "Abas",
    "files": [
     "src/app/(tabs)/index.tsx",
-    "src/components/dashboard/draggable-dashboard.tsx",
-    "src/components/dashboard/*.tsx",
+    "src/components/dashboard/*",
     "src/context/dashboard-layout.tsx",
-    "src/lib/dashboard-widgets.ts",
     "src/lib/dashboard-data.ts"
    ],
-   "objective": "Resumo do dia: calorias, macros, passos, exercício, tarefas e peso.",
-   "context": "Tela de abertura do app.",
+   "objective": "Resumo do dia.",
+   "context": "Tela de abertura.",
    "importance": "Alta",
    "works": [
-    "Calorias consumidas e macros vêm do diário real",
-    "Calorias e minutos de exercício vêm do registro real",
-    "Progresso do treino do dia",
-    "Tarefas do dia com marcação",
-    "Modo edição: adicionar, remover e reordenar widgets por arrastar, com lixeira e ações de acessibilidade",
-    "Dois widgets por linha em versão compacta, três ou mais viram carrossel"
+    "Calorias consumidas, macros, exercício e peso reais",
+    "Layout personalizável e agora persistido",
+    "Card de peso com período configurável"
    ],
    "partial": [
-    "Card de peso usa histórico com dados de exemplo (I-03)",
-    "Metas de calorias, macros e exercício são fixas (I-04)"
+    "Metas fixas (I-04)"
    ],
    "visual": [
-    "Passos: 6.840 de 10.000 para qualquer usuário (I-05)"
+    "Passos 6.840 de 10.000 para todos (I-05)"
    ],
-   "redundant": [
-    "Remover widget existe por arrastar à lixeira e pelo botão na barra de edição; aceitável como alternativa acessível"
-   ],
+   "redundant": [],
    "ux": [
-    "+ Hierarquia clara: 'Hoje' e cards por importância",
-    "+ Estado vazio com ação 'Adicionar itens'",
-    "+ Prévia não interativa no modo edição evita toques acidentais",
-    "- Números fictícios ao lado de números reais, sem distinção",
-    "- Sem navegação para outros dias no dashboard"
+    "+ Layout salvo por conta",
+    "+ Estado vazio com ação",
+    "- Números fictícios ao lado de reais"
    ],
    "states": {
-    "loading": "n/a",
+    "loading": "via bootstrap",
     "empty": "sim",
-    "error": "n/a",
+    "error": "via bootstrap",
     "success": "sim"
    },
    "tech": [
-    "Arrastar com Reanimated, auto-rolagem e trava do swipe de abas: implementação avançada",
-    "draggable-dashboard.tsx com 714 linhas (I-29)",
-    "moveWidget é função pura e testável",
-    "Layout não persiste (I-01)"
+    "draggable-dashboard.tsx com 718 linhas (I-29)",
+    "Bug do NaN da lixeira corrigido (bc153f6)"
    ],
    "opportunities": [
-    "Esconder ou marcar widgets sem dado real",
-    "Calcular metas do perfil",
-    "Persistir o layout",
-    "Tocar em um card leva à aba correspondente"
+    "Metas calculadas",
+    "Ocultar passos sem fonte"
    ],
    "issues": [
-    "I-03",
     "I-04",
     "I-05",
-    "I-29",
-    "I-01"
+    "I-29"
    ],
    "scores": {
     "tech": 7,
     "ux": 7,
-    "complete": 5,
-    "maturity": 5
+    "complete": 6,
+    "maturity": 6
    },
    "justify": {
-    "tech": "Engenharia sofisticada no arrastar, mas concentrada em um arquivo grande.",
-    "ux": "Visual organizado e personalizável; confunde ao misturar dado real e fictício.",
-    "complete": "Metade dos números ainda não vem de dados do usuário.",
-    "maturity": "Funciona na sessão, mas perde o layout ao reiniciar."
+    "tech": "Sofisticado, num arquivo grande.",
+    "ux": "Bom, com dados fictícios.",
+    "complete": "Metas e passos não são do usuário.",
+    "maturity": "Persistido; ainda mistura exemplo e real."
    }
   },
   {
@@ -1731,62 +2132,57 @@ window.AUDIT = {
    "files": [
     "src/app/(tabs)/diary.tsx",
     "src/components/diary/meal-section.tsx",
-    "src/context/food-log.tsx"
+    "src/context/food-log.tsx",
+    "src/data/supabase/food-log.ts"
    ],
-   "objective": "Ver e registrar alimentos por refeição em cada dia.",
-   "context": "Uso diário, várias vezes ao dia.",
+   "objective": "Registrar alimentos por refeição.",
+   "context": "Várias vezes ao dia.",
    "importance": "Alta",
    "works": [
-    "Seletor de dia (Hoje, Ontem, Amanhã)",
-    "Totais de kcal e macros do dia",
-    "Seções por refeição com total e lista",
+    "Totais do dia, seções por refeição",
     "Remover alimento",
-    "Refeições removidas continuam aparecendo nos dias em que têm alimentos"
+    "Persistido por conta"
    ],
    "partial": [
-    "Sem editar quantidade ou mudar de refeição (I-12)"
+    "Sem edição (I-12)"
    ],
    "visual": [],
    "redundant": [],
    "ux": [
-    "+ Rótulos encolhem em vez de quebrar em telas estreitas",
-    "+ Botão de adicionar por refeição já leva a refeição certa",
-    "- Remover sem confirmação nem desfazer (I-11)",
-    "- Totais sem comparação com a meta do dia",
-    "- Aceita registro em datas futuras (I-27)"
+    "+ Leitura rápida",
+    "- Remover sem desfazer (I-11)",
+    "- Sem comparação com a meta"
    ],
    "states": {
-    "loading": "n/a",
+    "loading": "via bootstrap",
     "empty": "sim",
-    "error": "n/a",
+    "error": "banner de salvamento",
     "success": "sim"
    },
    "tech": [
-    "useFoodDay recalcula seções a cada render (H-01)",
-    "sumNutrients descarta fibra no total do dia"
+    "Mudança mostrada na hora e salva em fila"
    ],
    "opportunities": [
-    "Mostrar quanto falta para a meta",
-    "Editar registro ao tocar",
-    "Copiar refeição de outro dia",
-    "Recentes e favoritos"
+    "Editar ao tocar",
+    "Copiar refeição",
+    "Mostrar quanto falta"
    ],
    "issues": [
     "I-11",
     "I-12",
-    "I-27"
+    "N-03"
    ],
    "scores": {
-    "tech": 7,
+    "tech": 8,
     "ux": 8,
     "complete": 7,
-    "maturity": 6
+    "maturity": 7
    },
    "justify": {
-    "tech": "Modelagem cuidadosa (mealName guardado para refeições removidas).",
-    "ux": "Leitura rápida e ações bem posicionadas.",
-    "complete": "Falta editar e comparar com a meta.",
-    "maturity": "Fluxo completo dentro da sessão."
+    "tech": "Boa modelagem e persistência.",
+    "ux": "Clara.",
+    "complete": "Sem edição.",
+    "maturity": "Real, sem fila persistente."
    }
   },
   {
@@ -1796,28 +2192,22 @@ window.AUDIT = {
    "group": "Modais",
    "files": [
     "src/app/log-food/index.tsx",
-    "src/hooks/use-food-search.ts",
-    "src/lib/taco.ts",
-    "src/lib/openfoodfacts.ts"
+    "src/hooks/use-food-search.ts"
    ],
-   "objective": "Encontrar um alimento genérico ou produto industrializado.",
-   "context": "Aberto a partir de uma refeição do diário.",
+   "objective": "Achar alimento genérico ou produto.",
+   "context": "A partir de uma refeição.",
    "importance": "Alta",
    "works": [
-    "TACO filtra a cada tecla, offline, com busca por prefixo sem acento",
-    "Open Food Facts após 600 ms e 3 letras, só produtos do Brasil",
-    "Respostas obsoletas ignoradas",
-    "Erro com Tentar novamente",
-    "Lista única das duas fontes"
+    "TACO a cada tecla",
+    "Open Food Facts após pausa",
+    "Erro com tentar novamente"
    ],
    "partial": [],
    "visual": [],
    "redundant": [],
    "ux": [
-    "+ Estado vazio ilustrado e foco automático na busca",
-    "+ Indicador de carregamento só para a parte online",
-    "- Não diferencia visualmente TACO e produto de marca além do detalhe",
-    "- Sem recentes quando o campo está vazio"
+    "+ Todos os estados",
+    "- Sem recentes"
    ],
    "states": {
     "loading": "sim",
@@ -1826,27 +2216,24 @@ window.AUDIT = {
     "success": "sim"
    },
    "tech": [
-    "Hook bem resolvido com chave por tentativa e debounce",
-    "Cache de promessas e descarte de falhas para permitir retry",
-    "Filtro de valores impossíveis por 100 g"
+    "Debounce, cache e descarte de respostas obsoletas"
    ],
    "opportunities": [
-    "Recentes e favoritos no estado vazio",
-    "Leitor de código de barras",
-    "Selo da fonte do dado"
+    "Recentes e favoritos",
+    "Código de barras"
    ],
    "issues": [],
    "scores": {
     "tech": 8,
     "ux": 8,
     "complete": 8,
-    "maturity": 6
+    "maturity": 7
    },
    "justify": {
-    "tech": "Melhor código do projeto: debounce, cache, descarte e validação de dados externos.",
-    "ux": "Rápida e com todos os estados.",
-    "complete": "Faltam atalhos de recorrência.",
-    "maturity": "Produtos online somem da memória ao reiniciar."
+    "tech": "Excelente.",
+    "ux": "Rápida.",
+    "complete": "Faltam atalhos.",
+    "maturity": "Estável."
    }
   },
   {
@@ -1855,44 +2242,39 @@ window.AUDIT = {
    "route": "/log-food/[id]",
    "group": "Modais",
    "files": [
-    "src/app/log-food/[id].tsx",
-    "src/lib/foods.ts"
+    "src/app/log-food/[id].tsx"
    ],
-   "objective": "Definir gramas e refeição e ver os nutrientes antes de adicionar.",
+   "objective": "Gramas e refeição antes de adicionar.",
    "context": "Após escolher o alimento.",
    "importance": "Alta",
    "works": [
-    "Porção do rótulo e 100 g como atalhos",
-    "Troca de refeição por chips",
-    "Nutrientes recalculados ao digitar, incluindo fibra quando existe",
-    "Fecha o modal inteiro ao salvar"
+    "Porção e 100 g",
+    "Troca de refeição",
+    "Nutrientes recalculados"
    ],
    "partial": [
-    "Sem limite superior de gramas (I-30)"
+    "Sem limite de gramas (I-30)"
    ],
    "visual": [],
    "redundant": [
-    "parseNumber local duplica parseDecimal de lib/profile (I-18)"
+    "parseNumber duplicado (I-18)"
    ],
    "ux": [
-    "+ Prévia imediata dos nutrientes",
-    "+ Botão desabilitado com valor inválido",
-    "- Sem medidas caseiras (colher, unidade, xícara), comuns na TACO"
+    "+ Prévia imediata",
+    "- Sem medidas caseiras"
    ],
    "states": {
     "loading": "n/a",
-    "empty": "sim (alimento não encontrado)",
+    "empty": "sim",
     "error": "parcial",
     "success": "sim"
    },
    "tech": [
-    "Depende do cache em memória para produtos do Open Food Facts; após reload mostra 'não encontrado'",
-    "Validação mínima de entrada"
+    "Produto online some após recarregar (cache em memória)"
    ],
    "opportunities": [
     "Medidas caseiras",
-    "Modo edição para registros existentes",
-    "Limite e aviso para quantidades altas"
+    "Modo edição"
    ],
    "issues": [
     "I-18",
@@ -1902,13 +2284,13 @@ window.AUDIT = {
     "tech": 7,
     "ux": 7,
     "complete": 7,
-    "maturity": 6
+    "maturity": 7
    },
    "justify": {
-    "tech": "Correto e simples; duplica helper.",
-    "ux": "Clara, mas só em gramas.",
-    "complete": "Faltam medidas caseiras e edição.",
-    "maturity": "Funciona de ponta a ponta na sessão."
+    "tech": "Correto; helper duplicado.",
+    "ux": "Só gramas.",
+    "complete": "Sem edição.",
+    "maturity": "Persiste."
    }
   },
   {
@@ -1917,38 +2299,33 @@ window.AUDIT = {
    "route": "/meals",
    "group": "Modais",
    "files": [
-    "src/app/meals.tsx",
-    "src/lib/foods.ts (insertMeal)"
+    "src/app/meals.tsx"
    ],
-   "objective": "Escolher quais refeições aparecem no diário.",
-   "context": "Configuração ocasional.",
+   "objective": "Escolher as refeições do diário.",
+   "context": "Configuração.",
    "importance": "Baixa",
    "works": [
-    "Remover refeição (sempre mantém pelo menos uma)",
-    "Adicionar refeições padrão na ordem do dia",
-    "Refeição personalizada com detecção de nome duplicado",
-    "Digitar o nome de uma refeição padrão adiciona a padrão"
+    "Adicionar padrão ou personalizada",
+    "Remover (mínimo uma)",
+    "Persistido (refeições padrão criadas pelo banco)"
    ],
    "partial": [],
    "visual": [],
    "redundant": [],
    "ux": [
-    "+ Explica que alimentos de refeições removidas continuam no diário",
-    "- Não permite reordenar nem renomear refeições",
-    "- Remoção sem confirmação"
+    "- Sem reordenar ou renomear"
    ],
    "states": {
     "loading": "n/a",
     "empty": "n/a",
-    "error": "sim (duplicado)",
+    "error": "sim",
     "success": "sim"
    },
    "tech": [
-    "insertMeal mantém a ordem do dia: regra pura e testável"
+    "insertMeal mantém a ordem do dia"
    ],
    "opportunities": [
-    "Reordenar e renomear",
-    "Horário sugerido por refeição para lembretes"
+    "Reordenar e renomear"
    ],
    "issues": [
     "I-11"
@@ -1957,13 +2334,13 @@ window.AUDIT = {
     "tech": 8,
     "ux": 7,
     "complete": 8,
-    "maturity": 6
+    "maturity": 7
    },
    "justify": {
-    "tech": "Regras pequenas e bem pensadas.",
-    "ux": "Simples; faltam reordenar e renomear.",
-    "complete": "Cumpre o objetivo.",
-    "maturity": "Configuração perdida ao reiniciar."
+    "tech": "Simples.",
+    "ux": "Sem reordenar.",
+    "complete": "Cumpre.",
+    "maturity": "Persistido."
    }
   },
   {
@@ -1974,66 +2351,55 @@ window.AUDIT = {
    "files": [
     "src/app/(tabs)/exercise.tsx",
     "src/components/exercise/workout-card.tsx",
-    "src/components/exercise/exercise-section.tsx",
-    "src/context/exercise-log.tsx"
+    "src/components/exercise/exercise-list.tsx"
    ],
-   "objective": "Ver o treino do dia e os exercícios registrados.",
+   "objective": "Treino do dia e exercícios registrados.",
    "context": "Dias de treino.",
    "importance": "Alta",
    "works": [
-    "Seletor de dia e totais (kcal, minutos, quantidade)",
-    "Treino do dia conforme plano semanal ou fila",
-    "Marcar exercícios do treino individualmente",
-    "Concluir sem cronômetro ou iniciar sessão",
-    "Desfazer conclusão",
-    "Seções cardio e musculação com registros avulsos",
-    "Acesso ao planejamento"
+    "Totais do dia",
+    "Treino do dia (semanal ou fila) com descanso explícito",
+    "Lista única de exercícios do dia",
+    "Botão flutuante de adicionar"
    ],
    "partial": [
-    "Futuro só mostra prévia do treino, mas exercícios avulsos podem ser registrados no futuro (I-27)"
+    "Desfazer conclusão antiga desalinha a fila (I-07)"
    ],
    "visual": [],
-   "redundant": [
-    "Duas formas de concluir (cronometrado e sem cronômetro) é proposital e útil"
-   ],
+   "redundant": [],
    "ux": [
-    "+ Treino do dia em destaque acima dos registros",
-    "+ Resumo de sessão (duração e sensação) no card concluído",
-    "- Total de 'Minutos' conta só cardio",
-    "- Registros avulsos sem edição"
+    "+ Lista única no lugar das duas seções",
+    "- Remover sem desfazer"
    ],
    "states": {
-    "loading": "n/a",
+    "loading": "via bootstrap",
     "empty": "sim",
-    "error": "n/a",
+    "error": "banner",
     "success": "sim"
    },
    "tech": [
-    "getWorkoutForDate centraliza a regra do dia",
-    "Desfazer em dia antigo desalinha a fila (I-07)",
-    "Calorias 0 quando não há MET (I-28)"
+    "Calorias 0 sem MET (I-28)",
+    "Peso de exemplo quando falta (N-02)"
    ],
    "opportunities": [
-    "Mostrar histórico de cargas do exercício",
-    "Minutos totais incluindo musculação via duração da sessão"
+    "Histórico de cargas"
    ],
    "issues": [
     "I-07",
-    "I-12",
-    "I-27",
-    "I-28"
+    "I-28",
+    "N-02"
    ],
    "scores": {
     "tech": 7,
     "ux": 7,
     "complete": 7,
-    "maturity": 6
+    "maturity": 7
    },
    "justify": {
-    "tech": "Regra do dia bem isolada; bug de fila e calorias zeradas.",
-    "ux": "Boa hierarquia; métricas incompletas.",
-    "complete": "Faltam edição e histórico.",
-    "maturity": "Funciona na sessão."
+    "tech": "Regras isoladas; bugs antigos.",
+    "ux": "Mais simples que antes.",
+    "complete": "Sem edição e histórico.",
+    "maturity": "Persistido."
    }
   },
   {
@@ -2045,26 +2411,23 @@ window.AUDIT = {
     "src/app/log-exercise/index.tsx",
     "src/lib/exercisedb.ts"
    ],
-   "objective": "Escolher um exercício do catálogo ExerciseDB ou digitar um próprio.",
-   "context": "Registro avulso ou montagem de treino.",
+   "objective": "Escolher exercício do catálogo ou digitar.",
+   "context": "Registro ou montagem de treino.",
    "importance": "Alta",
    "works": [
-    "Catálogo paginado por categoria com carregamento ao rolar",
-    "Busca remota ao enviar",
-    "Adicionar manualmente com o nome digitado",
-    "Miniatura sem animação para economizar",
-    "Tratamento de 429 e falha de rede"
+    "Filtros Todos, Cardiovascular e Musculação",
+    "Catálogo paginado",
+    "Busca ao enviar",
+    "Adicionar manualmente"
    ],
    "partial": [
-    "Termos e nomes só em inglês (I-25)"
+    "Busca em inglês (I-25)"
    ],
    "visual": [],
    "redundant": [],
    "ux": [
-    "+ Duas ações claras sob a busca (buscar ou adicionar manualmente)",
-    "- Busca não acontece ao digitar, diferente da de alimentos",
-    "- Ícone '+' em 'Tentar novamente' (I-26)",
-    "- Nomes em inglês num app em pt-BR"
+    "+ Filtros por categoria",
+    "- Ícone '+' em tentar novamente (I-26)"
    ],
    "states": {
     "loading": "sim",
@@ -2073,14 +2436,11 @@ window.AUDIT = {
     "success": "sim"
    },
    "tech": [
-    "useCatalog com eslint-disable de exhaustive-deps justificado",
-    "Respostas obsoletas ignoradas com contador",
-    "Dependência de API gratuita de terceiros sem SLA"
+    "API gratuita sem SLA"
    ],
    "opportunities": [
-    "Tradução de nomes e músculos",
-    "Busca com debounce respeitando o limite",
-    "Filtros por músculo e equipamento"
+    "Termos em pt-BR",
+    "Debounce"
    ],
    "issues": [
     "I-25",
@@ -2093,10 +2453,10 @@ window.AUDIT = {
     "maturity": 6
    },
    "justify": {
-    "tech": "Paginação e erros bem tratados.",
-    "ux": "Barreira de idioma e busca diferente do resto.",
-    "complete": "Cobre catálogo, busca e manual.",
-    "maturity": "Depende de serviço externo frágil."
+    "tech": "Paginação e erros bons.",
+    "ux": "Barreira de idioma.",
+    "complete": "Cobre os casos.",
+    "maturity": "Depende de serviço externo."
    }
   },
   {
@@ -2105,30 +2465,27 @@ window.AUDIT = {
    "route": "/log-exercise/[id]",
    "group": "Modais",
    "files": [
-    "src/app/log-exercise/[id].tsx",
-    "src/lib/exercises.ts"
+    "src/app/log-exercise/[id].tsx"
    ],
-   "objective": "Definir duração e calorias (cardio) ou séries, repetições e carga (musculação).",
-   "context": "Após escolher o exercício.",
+   "objective": "Duração e calorias ou séries, repetições e carga.",
+   "context": "Após escolher.",
    "importance": "Alta",
    "works": [
-    "GIF de demonstração",
-    "Estimativa de kcal por MET com o peso do perfil",
-    "Calorias editáveis",
-    "Modo 'adicionar ao treino' sem calorias"
+    "Escolha de categoria para exercício manual",
+    "Estimativa por MET",
+    "Modo adicionar ao treino"
    ],
    "partial": [
-    "Exercício manual sem MET entra com 0 kcal (I-28)",
-    "Sempre abre com 30 min ou 3 × 10, mesmo para exercício já feito antes"
+    "0 kcal sem MET (I-28)",
+    "Peso de exemplo (N-02)"
    ],
    "visual": [],
    "redundant": [
-    "Field local duplicado em workout-session (I-18)"
+    "parseNumber duplicado"
    ],
    "ux": [
-    "+ Dica 'Estimativa para X kg' deixa claro de onde vem o número",
-    "- Uma carga para todas as séries",
-    "- Sem lembrar o último valor usado"
+    "+ Categoria explícita",
+    "- Uma carga para todas as séries"
    ],
    "states": {
     "loading": "n/a",
@@ -2137,29 +2494,28 @@ window.AUDIT = {
     "success": "sim"
    },
    "tech": [
-    "Validação inline em uma expressão longa de difícil leitura",
-    "Dois destinos (diário ou treino) na mesma tela via workoutId: funciona, mas aumenta ramificações"
+    "Fallback para MOCK_PROFILE.weightKg"
    ],
    "opportunities": [
-    "Lembrar últimos valores",
-    "Carga por série",
-    "Intensidade para exercícios manuais"
+    "Intensidade para manuais",
+    "Últimos valores usados"
    ],
    "issues": [
-    "I-18",
-    "I-28"
+    "I-28",
+    "N-02",
+    "I-18"
    ],
    "scores": {
     "tech": 6,
     "ux": 6,
     "complete": 7,
-    "maturity": 5
+    "maturity": 6
    },
    "justify": {
-    "tech": "Funciona, mas concentra ramificações e duplica Field.",
-    "ux": "Clara, porém genérica demais para musculação.",
-    "complete": "Cobre os dois tipos de exercício.",
-    "maturity": "Calorias pouco confiáveis em casos comuns."
+    "tech": "Fallback silencioso.",
+    "ux": "Genérica para musculação.",
+    "complete": "Dois tipos cobertos.",
+    "maturity": "Calorias pouco confiáveis."
    }
   },
   {
@@ -2169,44 +2525,39 @@ window.AUDIT = {
    "group": "Modais",
    "files": [
     "src/app/workouts/index.tsx",
-    "src/context/workout-plan.tsx",
-    "src/lib/workouts.ts"
+    "src/context/workout-plan.tsx"
    ],
-   "objective": "Criar treinos e definir quando acontecem (semanal ou fila).",
-   "context": "Configuração do plano de treino.",
+   "objective": "Criar treinos e agendar (semanal ou fila).",
+   "context": "Configuração do plano.",
    "importance": "Alta",
    "works": [
-    "Criar treino com nome automático (Treino A, B…)",
-    "Modo semanal com diálogo por dia",
-    "Modo fila: adicionar, mover, remover e escolher o próximo",
-    "Treinos de treinador identificados com avatar"
+    "Criar treino",
+    "Semanal com diálogo por dia",
+    "Fila com mover, remover e próximo",
+    "Persistido"
    ],
    "partial": [
-    "Botão Confirmar só volta (o plano já salva ao mudar); pode sugerir que algo não salvo se perde"
+    "Ponteiro da fila frágil (I-07)"
    ],
    "visual": [],
    "redundant": [
-    "'Confirmar' é redundante com salvar automático"
+    "'Confirmar' só volta"
    ],
    "ux": [
-    "+ Explicação de cada modo em uma frase",
-    "+ Acessibilidade boa na fila (dicas e rótulos)",
-    "- Reordenar só por setas, sem arrastar",
-    "- Dias da semana ficam desabilitados até existir um treino; a dica fica em outra seção"
+    "+ Explicação de cada modo",
+    "- Reordenar só por setas"
    ],
    "states": {
-    "loading": "n/a",
+    "loading": "via bootstrap",
     "empty": "sim",
-    "error": "n/a",
+    "error": "banner",
     "success": "sim"
    },
    "tech": [
-    "Lógica de fila com casos de borda cuidados (removeFromQueue, moveInQueue)",
-    "Ponteiro único da fila é frágil (I-07)"
+    "Salva o plano inteiro a cada mudança"
    ],
    "opportunities": [
-    "Renomear 'Confirmar' para 'Concluir' ou remover",
-    "Arrastar para reordenar como no dashboard"
+    "Arrastar para reordenar"
    ],
    "issues": [
     "I-07"
@@ -2215,13 +2566,13 @@ window.AUDIT = {
     "tech": 7,
     "ux": 7,
     "complete": 7,
-    "maturity": 6
+    "maturity": 7
    },
    "justify": {
-    "tech": "Regras de fila bem pensadas, mas sem testes.",
-    "ux": "Flexível e explicada.",
-    "complete": "Cobre os dois modos.",
-    "maturity": "Plano perdido ao reiniciar."
+    "tech": "Regras boas, sem testes.",
+    "ux": "Flexível.",
+    "complete": "Dois modos.",
+    "maturity": "Persistido."
    }
   },
   {
@@ -2230,43 +2581,38 @@ window.AUDIT = {
    "route": "/workouts/[id]",
    "group": "Modais",
    "files": [
-    "src/app/workouts/[id].tsx",
-    "src/components/trainers/workout-source.tsx"
+    "src/app/workouts/[id].tsx"
    ],
-   "objective": "Renomear o treino e gerenciar seus exercícios.",
+   "objective": "Nome e exercícios do treino.",
    "context": "Dentro do planejamento.",
    "importance": "Média",
    "works": [
-    "Renomear com salvamento imediato",
+    "Renomear",
     "Adicionar musculação ou cardio",
     "Remover exercício",
     "Excluir treino",
-    "Treino de treinador bloqueado com explicação"
+    "Treino de treinador bloqueado"
    ],
    "partial": [
-    "Não edita séries, repetições ou carga de um exercício já adicionado (I-12)",
-    "Não reordena exercícios"
+    "Não edita nem reordena exercícios (I-12)"
    ],
    "visual": [],
    "redundant": [],
    "ux": [
-    "- Excluir treino sem confirmação (I-11)",
-    "- Nome pode ficar vazio",
-    "+ Notas do treinador aparecem junto ao exercício"
+    "- Excluir sem confirmação (I-11)"
    ],
    "states": {
     "loading": "n/a",
     "empty": "sim",
-    "error": "sim (não encontrado)",
+    "error": "sim",
     "success": "sim"
    },
    "tech": [
-    "updateWorkout ignora silenciosamente treinos de treinador: correto, mas sem feedback se chamado"
+    "Sem updateExercise"
    ],
    "opportunities": [
-    "Editar e reordenar exercícios",
-    "Duplicar treino",
-    "Confirmação ao excluir"
+    "Editar e reordenar",
+    "Duplicar treino"
    ],
    "issues": [
     "I-11",
@@ -2276,13 +2622,13 @@ window.AUDIT = {
     "tech": 6,
     "ux": 6,
     "complete": 5,
-    "maturity": 5
+    "maturity": 6
    },
    "justify": {
-    "tech": "Simples, mas falta updateExercise no contexto.",
-    "ux": "Ações destrutivas sem proteção.",
-    "complete": "Edição parcial do treino.",
-    "maturity": "Depende de apagar e recriar."
+    "tech": "Simples, incompleta.",
+    "ux": "Destrutiva sem proteção.",
+    "complete": "Edição parcial.",
+    "maturity": "Persistido."
    }
   },
   {
@@ -2291,63 +2637,55 @@ window.AUDIT = {
    "route": "/workout-session",
    "group": "Modais",
    "files": [
-    "src/app/workout-session.tsx",
-    "src/components/ui/feeling-picker.tsx"
+    "src/app/workout-session.tsx"
    ],
-   "objective": "Executar o treino com cronômetro e registrar o que foi feito.",
-   "context": "Durante o treino, com o celular na mão.",
+   "objective": "Executar o treino com cronômetro.",
+   "context": "Durante o treino.",
    "importance": "Alta",
    "works": [
-    "Cronômetro desde a abertura, baseado em timestamps",
-    "Valores planejados pré-preenchidos e editáveis",
-    "Concluir ou desfazer cada exercício",
-    "Revisão com escala de sensação 0 a 5",
-    "Confirmação ao sair no meio, inclusive gesto de voltar (usePreventRemove)",
-    "Substitui registros rápidos anteriores do mesmo exercício"
+    "Cronômetro",
+    "Concluir exercícios com valores reais",
+    "Sensação 0 a 5",
+    "Confirmação ao sair"
    ],
    "partial": [
-    "Sessão perdida se o app for encerrado (I-32)"
+    "Sessão perdida ao fechar (I-32)"
    ],
    "visual": [],
    "redundant": [],
    "ux": [
-    "+ Diálogo de saída explica o que será descartado",
-    "+ Cronômetro com rótulo de acessibilidade",
-    "- Sem timer de descanso",
-    "- Uma linha por exercício, sem séries individuais",
-    "- Tela não fica ligada (sem keep-awake)"
+    "+ Saída protegida",
+    "- Sem descanso, séries ou tela ligada"
    ],
    "states": {
     "loading": "n/a",
-    "empty": "sim (treino não encontrado)",
+    "empty": "sim",
     "error": "parcial",
     "success": "sim"
    },
    "tech": [
-    "Uso correto de usePreventRemove e ref para ação pendente",
-    "Validação de inteiros e decimais separada",
-    "Field duplicado (I-18)"
+    "usePreventRemove correto",
+    "Peso de exemplo (N-02)"
    ],
    "opportunities": [
-    "Timer de descanso entre séries",
-    "Registro por série com última carga",
-    "Manter a tela ligada (expo-keep-awake)",
-    "Retomar sessão interrompida"
+    "Descanso",
+    "Séries",
+    "Retomar"
    ],
    "issues": [
-    "I-18",
-    "I-32"
+    "I-32",
+    "N-02"
    ],
    "scores": {
     "tech": 7,
     "ux": 7,
     "complete": 6,
-    "maturity": 5
+    "maturity": 6
    },
    "justify": {
-    "tech": "Fluxo de saída e tempo bem resolvidos.",
-    "ux": "Boa base; falta o que se usa durante a série.",
-    "complete": "Sem descanso nem séries.",
+    "tech": "Bem resolvida.",
+    "ux": "Falta o essencial da série.",
+    "complete": "Sem descanso.",
     "maturity": "Estado só na tela."
    }
   },
@@ -2358,55 +2696,48 @@ window.AUDIT = {
    "group": "Abas",
    "files": [
     "src/app/(tabs)/trainers.tsx",
-    "src/components/trainers/trainer-card.tsx",
-    "src/lib/trainers.ts"
+    "src/context/catalog.tsx",
+    "src/data/supabase/catalog.ts"
    ],
-   "objective": "Encontrar treinadores e seus programas.",
-   "context": "Descoberta de conteúdo.",
+   "objective": "Encontrar treinadores.",
+   "context": "Descoberta.",
    "importance": "Média",
    "works": [
-    "Busca por nome sem acento",
-    "Estado vazio com o termo buscado",
-    "Abrir perfil"
+    "Catálogo vindo do banco (Supabase) ou de trainers.ts (local)",
+    "Busca sem acento"
    ],
    "partial": [],
    "visual": [
-    "Lista fixa de 4 treinadores com fotos de randomuser.me e números inventados (I-22)"
+    "Dados e fotos de exemplo (seed)"
    ],
    "redundant": [],
    "ux": [
-    "+ Busca simples e imediata",
-    "- Sem filtros por especialidade, nível ou objetivo",
-    "- Rótulo da aba no singular ('Treinador') para uma lista"
+    "- Sem filtros"
    ],
    "states": {
-    "loading": "n/a",
+    "loading": "via bootstrap",
     "empty": "sim",
-    "error": "n/a",
+    "error": "via bootstrap",
     "success": "sim"
    },
    "tech": [
-    "searchTrainers busca só no nome",
-    "Dados de fixture dentro do código"
+    "CatalogProvider com status próprio"
    ],
    "opportunities": [
-    "Filtros por objetivo e nível",
-    "Destacar o treinador que o usuário segue"
+    "Filtros por objetivo"
    ],
-   "issues": [
-    "I-22"
-   ],
+   "issues": [],
    "scores": {
-    "tech": 6,
+    "tech": 7,
     "ux": 7,
-    "complete": 4,
-    "maturity": 3
+    "complete": 6,
+    "maturity": 5
    },
    "justify": {
-    "tech": "Simples e correto para fixture.",
-    "ux": "Limpa, mas sem filtros.",
-    "complete": "Catálogo estático.",
-    "maturity": "Totalmente dependente de dados de exemplo."
+    "tech": "Catálogo real.",
+    "ux": "Sem filtros.",
+    "complete": "Conteúdo de exemplo.",
+    "maturity": "Sem lado do treinador."
    }
   },
   {
@@ -2415,56 +2746,47 @@ window.AUDIT = {
    "route": "/trainer/[id]",
    "group": "Treinadores",
    "files": [
-    "src/app/trainer/[id].tsx",
-    "src/components/trainers/trainer-avatar.tsx"
+    "src/app/trainer/[id].tsx"
    ],
-   "objective": "Apresentar o treinador e seus pacotes.",
-   "context": "Decisão de seguir um programa.",
+   "objective": "Apresentar o treinador.",
+   "context": "Decisão.",
    "importance": "Média",
    "works": [
-    "Foto, especialidade, números e bio",
-    "Abrir Instagram",
-    "Conversar (abre o chat)",
-    "Lista de pacotes com 'Você aderiu'"
+    "Dados do banco",
+    "Instagram",
+    "Conversar",
+    "Pacotes"
    ],
    "partial": [],
    "visual": [
-    "Seguidores, alunos e nota são valores fixos"
+    "Seguidores, alunos e nota de exemplo"
    ],
    "redundant": [],
    "ux": [
-    "+ Rótulos de acessibilidade descritivos nos números",
-    "+ CTA principal claro",
-    "- 'Conversar' leva a um chat que não responde (I-14)"
+    "+ Rótulos de acessibilidade"
    ],
    "states": {
-    "loading": "n/a",
-    "empty": "sim (não encontrado)",
+    "loading": "via bootstrap",
+    "empty": "sim",
     "error": "n/a",
     "success": "sim"
    },
    "tech": [
-    "Linking.openURL sem tratar falha",
-    "Formatação compacta pt-BR (254,9 mil)"
+    "Linking sem tratar falha"
    ],
-   "opportunities": [
-    "Esconder 'Conversar' até haver resposta real ou marcar como prévia"
-   ],
-   "issues": [
-    "I-14",
-    "I-22"
-   ],
+   "opportunities": [],
+   "issues": [],
    "scores": {
-    "tech": 6,
+    "tech": 7,
     "ux": 7,
-    "complete": 4,
-    "maturity": 3
+    "complete": 6,
+    "maturity": 5
    },
    "justify": {
-    "tech": "Correto; pequenos pontos sem tratamento de erro.",
+    "tech": "Correto.",
     "ux": "Bem apresentado.",
-    "complete": "Conteúdo e chat ainda simulados.",
-    "maturity": "Depende do backend para ter sentido."
+    "complete": "Conteúdo de exemplo.",
+    "maturity": "Sem lado do treinador."
    }
   },
   {
@@ -2476,62 +2798,55 @@ window.AUDIT = {
     "src/app/trainer/package/[id].tsx",
     "src/context/coaching.tsx"
    ],
-   "objective": "Mostrar treinos, comentários e permitir aderir ao programa.",
-   "context": "Decisão de compra ou adesão.",
+   "objective": "Aderir a um programa.",
+   "context": "Decisão.",
    "importance": "Alta",
    "works": [
-    "Detalhes de nível, semanas e treinos",
-    "Comentários com estrelas e média",
-    "Aderir copia treinos para o plano e distribui na semana",
+    "Treinos e comentários",
+    "Aderir copia para o plano",
     "Diálogo ao trocar de pacote",
-    "Sair do pacote e ver planejamento"
+    "Adesão persistida (coaching_memberships)"
    ],
    "partial": [
-    "Aderir sem pacote anterior apaga os dias do plano próprio sem aviso (I-06)",
-    "Sair do pacote apaga o histórico ligado a ele (I-33)",
-    "Duração em semanas não é acompanhada"
+    "Sobrescreve plano próprio sem aviso (I-06)",
+    "Sair apaga histórico (I-33)"
    ],
    "visual": [
-    "Comentários fixos; não é possível avaliar"
+    "Comentários de exemplo"
    ],
    "redundant": [],
    "ux": [
-    "+ Diálogo de substituição bem escrito",
-    "+ Rodapé fixo com a ação principal",
-    "- 'Sair do pacote' sem confirmação",
-    "- Nenhuma informação de preço, acesso ou vigência"
+    "- Sair sem confirmação"
    ],
    "states": {
-    "loading": "n/a",
+    "loading": "via bootstrap",
     "empty": "sim",
-    "error": "sim (não encontrado)",
+    "error": "sim",
     "success": "sim"
    },
    "tech": [
-    "joinPackage chama leavePackage e importWorkouts em sequência com updates funcionais: correto",
-    "Regra de distribuição na semana isolada em packageWeek"
+    "Composição de contextos com store.latest para mudanças seguidas"
    ],
    "opportunities": [
-    "Confirmar quando houver plano próprio",
-    "Progresso no programa (semana 3 de 8)",
-    "Avaliação pelo aluno"
+    "Confirmar sempre",
+    "Progresso no programa"
    ],
    "issues": [
     "I-06",
-    "I-11",
-    "I-33"
+    "I-33",
+    "I-11"
    ],
    "scores": {
-    "tech": 6,
-    "ux": 7,
-    "complete": 5,
-    "maturity": 4
+    "tech": 7,
+    "ux": 6,
+    "complete": 6,
+    "maturity": 6
    },
    "justify": {
-    "tech": "Boa composição de contextos, mas com perda de dados em dois caminhos.",
-    "ux": "Clara, com uma ação destrutiva desprotegida.",
-    "complete": "Sem acompanhamento do programa nem avaliação.",
-    "maturity": "Diferencial ainda unilateral."
+    "tech": "Boa composição, dois bugs de dados.",
+    "ux": "Ações destrutivas.",
+    "complete": "Sem progresso nem avaliação.",
+    "maturity": "Persistido."
    }
   },
   {
@@ -2540,47 +2855,44 @@ window.AUDIT = {
    "route": "/trainer/workout",
    "group": "Treinadores",
    "files": [
-    "src/app/trainer/workout.tsx",
-    "src/components/trainers/workout-exercise-list.tsx"
+    "src/app/trainer/workout.tsx"
    ],
-   "objective": "Ver descrição e exercícios de um treino antes de aderir.",
-   "context": "Avaliação do pacote.",
+   "objective": "Ver um treino do pacote.",
+   "context": "Avaliação.",
    "importance": "Baixa",
    "works": [
-    "Descrição, exercícios e notas do treinador"
+    "Descrição e exercícios com notas"
    ],
    "partial": [],
    "visual": [],
    "redundant": [],
    "ux": [
-    "+ Leitura simples",
-    "- Sem GIF ou demonstração dos exercícios do pacote"
+    "- Sem demonstração"
    ],
    "states": {
     "loading": "n/a",
-    "empty": "sim (não encontrado)",
+    "empty": "sim",
     "error": "n/a",
     "success": "sim"
    },
    "tech": [
-    "Identifica o treino por índice no array (index=String(i)); frágil se o pacote mudar no backend"
+    "Treino identificado por índice"
    ],
    "opportunities": [
-    "Usar id estável do treino",
-    "Demonstração dos exercícios"
+    "Id estável"
    ],
    "issues": [],
    "scores": {
     "tech": 7,
     "ux": 7,
     "complete": 6,
-    "maturity": 4
+    "maturity": 6
    },
    "justify": {
-    "tech": "Pequena e reaproveita a lista.",
+    "tech": "Simples.",
     "ux": "Objetiva.",
-    "complete": "Sem demonstração.",
-    "maturity": "Rota por índice precisa mudar com API."
+    "complete": "Sem demo.",
+    "maturity": "Índice frágil."
    }
   },
   {
@@ -2590,55 +2902,52 @@ window.AUDIT = {
    "group": "Treinadores",
    "files": [
     "src/app/chat/[trainerId].tsx",
-    "src/context/chat.tsx"
+    "src/context/chat.tsx",
+    "src/data/supabase/chat.ts"
    ],
-   "objective": "Tirar dúvidas com o treinador.",
+   "objective": "Tirar dúvidas.",
    "context": "Durante o programa.",
    "importance": "Média",
    "works": [
-    "Enviar mensagens com horário",
-    "Campo que cresce até 5 linhas",
-    "Composer acompanha o teclado (useAnimatedKeyboard)",
-    "Lista invertida com estado vazio"
+    "Mensagens persistidas",
+    "Realtime (recebe inserções)",
+    "Aviso de que o treinador ainda não responde"
    ],
-   "partial": [],
-   "visual": [
-    "Conversa só de ida: o treinador nunca responde (I-14)"
+   "partial": [
+    "Sem a outra ponta (I-14)"
    ],
+   "visual": [],
    "redundant": [],
    "ux": [
-    "+ Detalhe de campo que cresce e encolhe como no Instagram",
-    "- Nenhum aviso de que é prévia",
-    "- Sem status de envio ou leitura"
+    "+ Expectativa ajustada pelo aviso",
+    "- Sem status de envio"
    ],
    "states": {
-    "loading": "n/a",
+    "loading": "sim",
     "empty": "sim",
-    "error": "n/a",
-    "success": "parcial"
+    "error": "parcial",
+    "success": "sim"
    },
    "tech": [
-    "Medição do texto com cópia oculta para contornar limitação do Android: solução engenhosa e comentada",
-    "Limite de 1.000 caracteres"
+    "Canal com tópico único por montagem",
+    "Depende da RLS para filtrar (H-02)"
    ],
    "opportunities": [
-    "Marcar como prévia ou resposta automática no modo demo",
-    "Contrato de mensagens pronto para tempo real"
+    "App do treinador",
+    "Push"
    ],
-   "issues": [
-    "I-14"
-   ],
+   "issues": [],
    "scores": {
-    "tech": 7,
+    "tech": 8,
     "ux": 7,
-    "complete": 2,
-    "maturity": 2
+    "complete": 4,
+    "maturity": 5
    },
    "justify": {
-    "tech": "Composer bem feito e comentado.",
-    "ux": "Boa interface, sem expectativa ajustada.",
-    "complete": "Sem a outra ponta da conversa.",
-    "maturity": "Não cumpre o objetivo sem backend."
+    "tech": "Realtime bem feito.",
+    "ux": "Honesto.",
+    "complete": "Só de ida.",
+    "maturity": "Falta o treinador."
    }
   },
   {
@@ -2648,64 +2957,55 @@ window.AUDIT = {
    "group": "Abas",
    "files": [
     "src/app/(tabs)/tasks.tsx",
-    "src/components/tasks/task-section.tsx",
-    "src/context/tasks.tsx",
-    "src/lib/tasks.ts"
+    "src/context/tasks.tsx"
    ],
-   "objective": "Checklist diário com tarefas repetidas e avulsas.",
-   "context": "Rotina diária.",
+   "objective": "Checklist diário.",
+   "context": "Rotina.",
    "importance": "Média",
    "works": [
-    "Tarefas que repetem a cada N dias ou semanas",
-    "Tarefas avulsas ficam até serem feitas",
-    "Subtarefas sincronizadas com a tarefa",
-    "Contador feito/total",
-    "Adicionar subtarefa pela linha"
+    "Repetição, subtarefas, marcação por dia",
+    "Persistido"
    ],
    "partial": [
-    "Sem editar tarefa (I-12)"
+    "Sem edição pela interface"
    ],
    "visual": [],
    "redundant": [
-    "Widget Tarefas no Início repete esta aba"
+    "Widget no Início"
    ],
    "ux": [
-    "+ Checkbox com role e estado de acessibilidade",
-    "- Excluir sem confirmação (I-11)",
-    "- Sem horário ou lembrete",
-    "- Não se conecta a metas de saúde: é um gerenciador de tarefas genérico dentro de um app de treino"
+    "- Excluir sem confirmação",
+    "- Sem lembretes",
+    "- Genérica para um app de treino"
    ],
    "states": {
-    "loading": "n/a",
+    "loading": "via bootstrap",
     "empty": "sim",
-    "error": "n/a",
+    "error": "banner",
     "success": "sim"
    },
    "tech": [
-    "Regras de repetição puras, com cuidado com horário de verão (daysBetween arredondado)",
-    "Lógica de subtarefas espelhada em contexto e lib"
+    "Repositório com update usado nas marcações"
    ],
    "opportunities": [
-    "Reposicionar como hábitos (água, sono, suplementos, alongamento)",
-    "Lembretes",
-    "Data de término"
+    "Reposicionar como hábitos",
+    "Lembretes"
    ],
    "issues": [
     "I-11",
-    "I-12",
     "I-24"
    ],
    "scores": {
     "tech": 7,
     "ux": 7,
     "complete": 6,
-    "maturity": 5
+    "maturity": 6
    },
    "justify": {
-    "tech": "Domínio bem modelado.",
-    "ux": "Funciona, mas sem lembretes e com exclusão desprotegida.",
-    "complete": "Sem edição e horário.",
-    "maturity": "Valor de produto ainda indefinido."
+    "tech": "Bem modelada.",
+    "ux": "Sem lembretes.",
+    "complete": "Sem edição.",
+    "maturity": "Valor de produto indefinido."
    }
   },
   {
@@ -2716,22 +3016,20 @@ window.AUDIT = {
    "files": [
     "src/app/add-task.tsx"
    ],
-   "objective": "Criar tarefa com repetição e subtarefas, ou uma subtarefa.",
-   "context": "A partir da aba Tarefas.",
+   "objective": "Criar tarefa ou subtarefa.",
+   "context": "Da aba Tarefas.",
    "importance": "Média",
    "works": [
-    "Repetição: não repete, todo dia, toda semana, personalizada",
-    "Data de início = dia selecionado",
-    "Subtarefas adicionadas na criação, incluindo a digitada e não confirmada",
-    "Modo subtarefa com explicação"
+    "Repetições",
+    "Subtarefas na criação",
+    "Modo subtarefa"
    ],
    "partial": [],
    "visual": [],
    "redundant": [],
    "ux": [
-    "+ Radio group acessível",
-    "+ Mostra 'Começa em quinta-feira, 6 de novembro'",
-    "- Intervalo personalizado inválido só desabilita o botão, sem mensagem"
+    "+ Radio acessível",
+    "- Intervalo inválido sem mensagem"
    ],
    "states": {
     "loading": "n/a",
@@ -2740,24 +3038,22 @@ window.AUDIT = {
     "success": "sim"
    },
    "tech": [
-    "Uma tela atende dois casos via parentId; ok neste tamanho",
-    "key={index} na lista de subtarefas do rascunho"
+    "key={index} nas subtarefas do rascunho"
    ],
    "opportunities": [
-    "Mensagem para intervalo inválido",
-    "Dias específicos da semana (seg, qua, sex)"
+    "Dias específicos da semana"
    ],
    "issues": [],
    "scores": {
     "tech": 7,
     "ux": 7,
     "complete": 6,
-    "maturity": 5
+    "maturity": 6
    },
    "justify": {
-    "tech": "Clara e enxuta.",
-    "ux": "Bom formulário; feedback de erro silencioso.",
-    "complete": "Falta repetição por dias da semana e horário.",
+    "tech": "Enxuta.",
+    "ux": "Erro silencioso.",
+    "complete": "Sem horário.",
     "maturity": "Sem modo edição."
    }
   },
@@ -2768,87 +3064,76 @@ window.AUDIT = {
    "group": "Abas",
    "files": [
     "src/app/(tabs)/profile.tsx",
-    "src/components/weight/weight-dialog.tsx",
-    "src/context/weight-log.tsx"
+    "src/components/weight/weight-dialog.tsx"
    ],
-   "objective": "Dados pessoais, peso, meta e sair.",
-   "context": "Consulta ocasional.",
+   "objective": "Dados, peso, meta e sair.",
+   "context": "Consulta.",
    "importance": "Média",
    "works": [
-    "Iniciais, nome, e-mail e sexo",
-    "Idade, peso e altura",
-    "Registrar peso de hoje e definir/remover meta (diálogo validado)",
-    "Progresso até a meta",
-    "Sair"
+    "Idade pela data de nascimento",
+    "Valores ausentes mostrados como traço",
+    "Registrar peso com data",
+    "Meta de peso"
    ],
    "partial": [
-    "Nada além do peso pode ser editado (I-13)"
+    "Não edita nome, nascimento, sexo nem altura (I-13)"
    ],
    "visual": [],
-   "redundant": [
-    "Registrar peso também existe no card do Início; aceitável"
-   ],
+   "redundant": [],
    "ux": [
-    "+ Diálogo de peso com validação 30 a 400 kg e erro anunciado",
-    "- Sem configurações, privacidade, notificações ou excluir conta",
-    "- 'Sair' sem confirmação",
-    "- Usa MOCK_PROFILE como fallback de tela"
+    "- Sem configurações, privacidade ou excluir conta",
+    "- 'Sair' sem confirmação"
    ],
    "states": {
-    "loading": "n/a",
-    "empty": "sim (sem meta)",
+    "loading": "via bootstrap",
+    "empty": "sim",
     "error": "sim (diálogo)",
     "success": "sim"
    },
    "tech": [
-    "Fallback para MOCK_PROFILE em vez de estado de erro",
-    "Peso duplicado entre perfil e histórico (I-15)"
+    "Fallback para MOCK_PROFILE se não houver perfil"
    ],
    "opportunities": [
-    "Editar perfil",
-    "Tela de configurações",
-    "Exportar dados e excluir conta"
+    "Editar e completar perfil",
+    "Configurações"
    ],
    "issues": [
     "I-13",
-    "I-15",
-    "I-03"
+    "N-01"
    ],
    "scores": {
-    "tech": 6,
+    "tech": 7,
     "ux": 6,
     "complete": 4,
-    "maturity": 4
+    "maturity": 5
    },
    "justify": {
-    "tech": "Diálogo bom; modelo de peso duplicado.",
-    "ux": "Informativo, sem área de conta.",
-    "complete": "Faltam edição e configurações.",
-    "maturity": "Depende de perfil mock."
+    "tech": "Melhorou com nulos tratados.",
+    "ux": "Sem área de conta.",
+    "complete": "Sem edição.",
+    "maturity": "Perfil do Google incompleto."
    }
   }
  ],
  "features": [
   {
    "id": "F-01",
-   "name": "Login por e-mail e Google",
+   "name": "Login por e-mail e Google (Supabase Auth)",
    "importance": "ESSENCIAL",
-   "state": "Com problemas identificados",
-   "quality": 5,
-   "priority": "P1",
-   "problem": "Identificar o usuário e proteger seus dados.",
-   "fit": "Sim, todo app com dados pessoais precisa.",
-   "implementation": "Mock por e-mail; Google real no Android; textos em inglês; e-mail não normalizado.",
-   "intuitive": "Sim, padrão conhecido.",
-   "missingStep": "Recuperar senha.",
-   "absence": "Sem conta não há como sincronizar dados entre aparelhos.",
+   "state": "Completa",
+   "quality": 8,
+   "priority": "P2",
+   "problem": "Identificar o usuário e proteger os dados.",
+   "fit": "Sim.",
+   "implementation": "Real, com PKCE e sessão no aparelho; Google depende dos client IDs no ambiente.",
+   "intuitive": "Sim.",
+   "missingStep": "Validar a configuração do Google no build.",
+   "absence": "Sem sincronização entre aparelhos.",
    "screens": [
     "login"
    ],
    "issues": [
-    "I-08",
-    "I-09",
-    "I-10"
+    "N-06"
    ],
    "images": [
     "login"
@@ -2856,67 +3141,122 @@ window.AUDIT = {
   },
   {
    "id": "F-02",
-   "name": "Cadastro em duas etapas com dados corporais",
+   "name": "Cadastro em 3 etapas com confirmação de e-mail",
    "importance": "ESSENCIAL",
-   "state": "Parcialmente implementada",
+   "state": "Com problemas identificados",
    "quality": 7,
    "priority": "P1",
-   "problem": "Criar conta e coletar dados para personalização.",
+   "problem": "Criar conta verificada e coletar dados corporais.",
    "fit": "Sim.",
-   "implementation": "Bem validado, mas os dados corporais não alimentam nenhum cálculo.",
+   "implementation": "Completo e validado no app e no banco; os dados corporais não alimentam metas.",
    "intuitive": "Sim.",
-   "missingStep": "Objetivo e nível de atividade; termos e consentimento.",
-   "absence": "Sem os dados corporais não há metas pessoais.",
+   "missingStep": "Objetivo, atividade, consentimento.",
+   "absence": "Contas não verificadas e sem dados para personalizar.",
    "screens": [
     "signup-account",
-    "signup-details"
+    "signup-details",
+    "signup-confirm",
+    "auth-callback"
    ],
    "issues": [
-    "I-04"
+    "I-04",
+    "N-09"
    ],
    "images": [
     "signup-account",
-    "signup-details"
+    "signup-details",
+    "signup-confirm",
+    "auth-callback"
    ]
   },
   {
    "id": "F-03",
-   "name": "Preparação pós-login com erro e retry",
+   "name": "Recuperação de senha por link",
+   "importance": "IMPORTANTE",
+   "state": "Completa",
+   "quality": 9,
+   "priority": "P3",
+   "problem": "Recuperar acesso sem suporte.",
+   "fit": "Sim, obrigatório para login com senha.",
+   "implementation": "Cuidadosa: não revela contas, não loga o app no meio, sai de todos os aparelhos.",
+   "intuitive": "Sim.",
+   "missingStep": "Nenhuma.",
+   "absence": "Usuário bloqueado ao esquecer a senha.",
+   "screens": [
+    "forgot-password",
+    "forgot-check-email",
+    "forgot-new-password"
+   ],
+   "issues": [
+    "N-08"
+   ],
+   "images": [
+    "forgot-password",
+    "forgot-check-email",
+    "forgot-new-password"
+   ]
+  },
+  {
+   "id": "F-04",
+   "name": "Modo demo (sem servidor)",
    "importance": "COMPLEMENTAR",
    "state": "Completa",
    "quality": 7,
    "priority": "P3",
-   "problem": "Evitar abas vazias enquanto os dados carregam.",
-   "fit": "Sim, já prepara a integração.",
-   "implementation": "Correta; hoje não carrega nada.",
-   "intuitive": "Sim.",
-   "missingStep": "Nenhuma na fase.",
-   "absence": "Telas piscariam vazias após o login.",
+   "problem": "Usar e demonstrar o front sem backend.",
+   "fit": "Sim, alinhado ao foco front-first.",
+   "implementation": "Entra com qualquer e-mail, dados por conta em memória; perde tudo ao fechar.",
+   "intuitive": "Não há indicação visual de que está ativo.",
+   "missingStep": "Selo de modo demo.",
+   "absence": "Testes do front dependeriam do Supabase.",
    "screens": [
-    "bootstrap"
+    "login"
    ],
    "issues": [],
    "images": [],
-   "noImage": "Sem captura: a tela de carregamento dura um quadro (prepareMainFlow resolve na hora)."
+   "noImage": "Sem imagem própria: o modo demo é o mesmo login, sem indicação visual (todas as capturas foram feitas nele)."
   },
   {
-   "id": "F-04",
+   "id": "F-05",
+   "name": "Persistência por conta com fila de salvamento",
+   "importance": "ESSENCIAL",
+   "state": "Com problemas identificados",
+   "quality": 7,
+   "priority": "P1",
+   "problem": "Guardar os dados e mostrar mudanças sem esperar o servidor.",
+   "fit": "Sim.",
+   "implementation": "Store por conta, salvamento em ordem e banner de nova tentativa; fila só em memória e histórico completo no login.",
+   "intuitive": "Transparente para o usuário.",
+   "missingStep": "Fila persistida e carregamento por período.",
+   "absence": "Nada sobreviveria ao fechar o app.",
+   "screens": [
+    "bootstrap"
+   ],
+   "issues": [
+    "N-03",
+    "N-04",
+    "N-05"
+   ],
+   "images": [],
+   "noImage": "Sem interface própria: funciona por trás das telas; o banner de erro de salvamento só aparece quando o servidor falha."
+  },
+  {
+   "id": "F-06",
    "name": "Dashboard do dia",
    "importance": "ESSENCIAL",
    "state": "Parcialmente implementada",
    "quality": 6,
    "priority": "P0",
-   "problem": "Mostrar em uma tela como está o dia.",
-   "fit": "Sim, é a tela de abertura.",
-   "implementation": "Calorias e exercício reais; passos, metas e histórico de peso fictícios.",
+   "problem": "Ver o dia numa tela.",
+   "fit": "Sim.",
+   "implementation": "Calorias, macros, exercício e peso reais; metas e passos fictícios.",
    "intuitive": "Sim.",
-   "missingStep": "Metas pessoais; ver outros dias.",
-   "absence": "O usuário teria de abrir cada aba para saber como está.",
+   "missingStep": "Metas pessoais.",
+   "absence": "Abrir cada aba para saber o dia.",
    "screens": [
     "home"
    ],
    "issues": [
-    "I-03",
     "I-04",
     "I-05"
    ],
@@ -2925,42 +3265,41 @@ window.AUDIT = {
    ]
   },
   {
-   "id": "F-05",
-   "name": "Personalização do dashboard por arrastar",
+   "id": "F-07",
+   "name": "Personalização do dashboard",
    "importance": "COMPLEMENTAR",
    "state": "Completa",
-   "quality": 7,
+   "quality": 8,
    "priority": "P3",
-   "problem": "Deixar o usuário escolher o que vê primeiro.",
-   "fit": "Útil, mas não central nesta fase.",
-   "implementation": "Avançada, acessível e sem persistência; 714 linhas.",
-   "intuitive": "Sim, com modo edição explícito.",
-   "missingStep": "Persistir o layout.",
-   "absence": "Baixo: um layout padrão bem escolhido atenderia a maioria.",
+   "problem": "Escolher o que ver primeiro.",
+   "fit": "Útil.",
+   "implementation": "Arrastar acessível, agora salvo por conta.",
+   "intuitive": "Sim.",
+   "missingStep": "Nenhuma.",
+   "absence": "Baixo.",
    "screens": [
     "home"
    ],
    "issues": [
-    "I-29",
-    "I-01"
+    "I-29"
    ],
    "images": [
     "home-edit"
    ]
   },
   {
-   "id": "F-06",
-   "name": "Diário alimentar por refeição",
+   "id": "F-08",
+   "name": "Diário alimentar",
    "importance": "ESSENCIAL",
    "state": "Parcialmente implementada",
    "quality": 8,
    "priority": "P1",
-   "problem": "Registrar o que foi comido e acompanhar calorias e macros.",
-   "fit": "Sim, pilar do produto.",
-   "implementation": "Fluxo completo de adicionar e remover; sem edição.",
+   "problem": "Registrar o que foi comido.",
+   "fit": "Sim.",
+   "implementation": "Persistido; sem edição.",
    "intuitive": "Sim.",
-   "missingStep": "Editar, copiar refeição, recentes.",
-   "absence": "O app perde metade da proposta.",
+   "missingStep": "Editar, copiar refeição.",
+   "absence": "Metade da proposta.",
    "screens": [
     "diary",
     "food-details"
@@ -2975,18 +3314,18 @@ window.AUDIT = {
    ]
   },
   {
-   "id": "F-07",
+   "id": "F-09",
    "name": "Busca de alimentos TACO + Open Food Facts",
    "importance": "ESSENCIAL",
    "state": "Completa",
    "quality": 8,
    "priority": "P2",
-   "problem": "Encontrar rápido alimentos brasileiros e produtos de marca.",
-   "fit": "Sim, combinação muito adequada ao público.",
-   "implementation": "Melhor implementação do projeto.",
+   "problem": "Achar alimentos brasileiros e produtos.",
+   "fit": "Sim.",
+   "implementation": "Melhor implementação do app.",
    "intuitive": "Sim.",
    "missingStep": "Código de barras.",
-   "absence": "Registro manual de nutrientes, inviável no dia a dia.",
+   "absence": "Registro manual inviável.",
    "screens": [
     "log-food"
    ],
@@ -2996,17 +3335,17 @@ window.AUDIT = {
    ]
   },
   {
-   "id": "F-08",
+   "id": "F-10",
    "name": "Refeições configuráveis",
    "importance": "COMPLEMENTAR",
    "state": "Completa",
    "quality": 8,
    "priority": "P3",
-   "problem": "Adaptar o diário à rotina (pré e pós-treino, ceia).",
-   "fit": "Sim, combina com quem treina.",
-   "implementation": "Correta.",
+   "problem": "Adaptar o diário à rotina.",
+   "fit": "Sim.",
+   "implementation": "Persistido; refeições padrão criadas pelo banco.",
    "intuitive": "Sim.",
-   "missingStep": "Reordenar e renomear.",
+   "missingStep": "Reordenar.",
    "absence": "Baixo.",
    "screens": [
     "meals"
@@ -3017,18 +3356,18 @@ window.AUDIT = {
    ]
   },
   {
-   "id": "F-09",
-   "name": "Registro de exercício avulso (ExerciseDB)",
+   "id": "F-11",
+   "name": "Exercício avulso (ExerciseDB)",
    "importance": "IMPORTANTE",
    "state": "Com problemas identificados",
    "quality": 6,
    "priority": "P2",
    "problem": "Registrar atividade fora do plano.",
    "fit": "Sim.",
-   "implementation": "Catálogo e busca funcionam; inglês e calorias pouco confiáveis.",
-   "intuitive": "Parcial, pela barreira de idioma.",
-   "missingStep": "Edição; busca em português.",
-   "absence": "Atividades fora do plano não entrariam no saldo calórico.",
+   "implementation": "Filtros por categoria novos; inglês, 0 kcal sem MET e peso de exemplo.",
+   "intuitive": "Parcial.",
+   "missingStep": "Edição; pt-BR.",
+   "absence": "Atividades fora do saldo.",
    "screens": [
     "exercise",
     "log-exercise",
@@ -3036,29 +3375,31 @@ window.AUDIT = {
    ],
    "issues": [
     "I-25",
-    "I-28"
+    "I-28",
+    "N-02"
    ],
    "images": [
-    "exercise-details",
-    "log-exercise"
+    "log-exercise",
+    "exercise-details"
    ]
   },
   {
-   "id": "F-10",
+   "id": "F-12",
    "name": "Plano de treino semanal ou em fila",
    "importance": "ESSENCIAL",
    "state": "Com problemas identificados",
    "quality": 7,
    "priority": "P1",
-   "problem": "Saber qual treino fazer hoje.",
-   "fit": "Sim; o modo fila é um diferencial real.",
-   "implementation": "Boa, com bug de ponteiro ao desfazer e sem editar exercícios.",
-   "intuitive": "Sim, com explicação de cada modo.",
+   "problem": "Saber o treino de hoje.",
+   "fit": "Sim; a fila é diferencial.",
+   "implementation": "Persistido; bug do desfazer e sem editar exercícios.",
+   "intuitive": "Sim.",
    "missingStep": "Editar e reordenar exercícios.",
-   "absence": "O app vira só um registro, sem orientação.",
+   "absence": "Sem orientação.",
    "screens": [
     "workouts",
-    "workout"
+    "workout",
+    "exercise"
    ],
    "issues": [
     "I-07",
@@ -3066,22 +3407,23 @@ window.AUDIT = {
    ],
    "images": [
     "workouts",
-    "workout"
+    "workout",
+    "exercise"
    ]
   },
   {
-   "id": "F-11",
+   "id": "F-13",
    "name": "Sessão de treino cronometrada",
    "importance": "IMPORTANTE",
    "state": "Parcialmente implementada",
    "quality": 7,
    "priority": "P2",
-   "problem": "Guiar e registrar o treino em execução.",
+   "problem": "Guiar e registrar o treino.",
    "fit": "Sim.",
-   "implementation": "Cronômetro e saída protegida bons; sem descanso, séries ou retomada.",
+   "implementation": "Cronômetro e saída protegida; sem descanso, séries ou retomada.",
    "intuitive": "Sim.",
-   "missingStep": "Timer de descanso, séries individuais, tela ligada.",
-   "absence": "O registro voltaria a ser manual e depois do treino.",
+   "missingStep": "Descanso e séries.",
+   "absence": "Registro manual depois.",
    "screens": [
     "session"
    ],
@@ -3094,66 +3436,41 @@ window.AUDIT = {
    ]
   },
   {
-   "id": "F-12",
-   "name": "Treino do dia no card de Exercícios",
+   "id": "F-14",
+   "name": "Catálogo de treinadores",
    "importance": "IMPORTANTE",
-   "state": "Com problemas identificados",
+   "state": "Parcialmente implementada",
    "quality": 7,
    "priority": "P2",
-   "problem": "Marcar exercícios feitos sem abrir a sessão.",
-   "fit": "Sim.",
-   "implementation": "Correta, salvo o desfazer em dia antigo.",
+   "problem": "Descobrir programas.",
+   "fit": "Sim, diferencial.",
+   "implementation": "Do banco com seed de exemplo; sem lado do treinador.",
    "intuitive": "Sim.",
-   "missingStep": "Nenhuma relevante.",
-   "absence": "Quem não quer cronômetro teria de registrar avulso.",
-   "screens": [
-    "exercise"
-   ],
-   "issues": [
-    "I-07"
-   ],
-   "images": [
-    "exercise"
-   ]
-  },
-  {
-   "id": "F-13",
-   "name": "Catálogo e busca de treinadores",
-   "importance": "IMPORTANTE",
-   "state": "Apenas visual",
-   "quality": 5,
-   "priority": "P2",
-   "problem": "Descobrir programas de profissionais.",
-   "fit": "Sim, é o diferencial aparente do produto.",
-   "implementation": "Dados fixos no código.",
-   "intuitive": "Sim.",
-   "missingStep": "Filtros e dados reais.",
-   "absence": "O produto vira um diário comum.",
+   "missingStep": "Treinadores publicarem.",
+   "absence": "Diário comum.",
    "screens": [
     "trainers",
     "trainer"
    ],
-   "issues": [
-    "I-22"
-   ],
+   "issues": [],
    "images": [
     "trainers",
     "trainer"
    ]
   },
   {
-   "id": "F-14",
-   "name": "Aderir a pacote de treinos",
+   "id": "F-15",
+   "name": "Aderir a pacote",
    "importance": "IMPORTANTE",
    "state": "Com problemas identificados",
    "quality": 6,
    "priority": "P1",
-   "problem": "Transformar o programa do treinador no plano do aluno.",
-   "fit": "Sim, é o elo entre catálogo e treino.",
-   "implementation": "Copia e distribui bem; apaga o plano próprio sem aviso e perde histórico ao sair.",
+   "problem": "Levar o programa ao plano.",
+   "fit": "Sim.",
+   "implementation": "Persistido; sobrescreve plano sem aviso e apaga histórico ao sair.",
    "intuitive": "Sim.",
-   "missingStep": "Progresso no programa; confirmação.",
-   "absence": "O catálogo seria só leitura.",
+   "missingStep": "Confirmação e progresso.",
+   "absence": "Catálogo só leitura.",
    "screens": [
     "package",
     "package-workout"
@@ -3168,39 +3485,18 @@ window.AUDIT = {
    ]
   },
   {
-   "id": "F-15",
-   "name": "Comentários e notas de pacotes",
-   "importance": "COMPLEMENTAR",
-   "state": "Apenas visual",
-   "quality": 5,
-   "priority": "P3",
-   "problem": "Dar prova social ao programa.",
-   "fit": "Sim, quando forem reais.",
-   "implementation": "Leitura de dados fixos.",
-   "intuitive": "Sim.",
-   "missingStep": "O aluno avaliar.",
-   "absence": "Baixo nesta fase.",
-   "screens": [
-    "package"
-   ],
-   "issues": [],
-   "images": [
-    "package"
-   ]
-  },
-  {
    "id": "F-16",
-   "name": "Chat com o treinador",
-   "importance": "QUESTIONÁVEL",
-   "state": "Não funcional",
-   "quality": 3,
-   "priority": "P1",
-   "problem": "Tirar dúvidas sobre o programa.",
-   "fit": "Sim no futuro; hoje cria expectativa que não se cumpre.",
-   "implementation": "Interface boa, sem a outra ponta.",
+   "name": "Chat com o treinador (tempo real)",
+   "importance": "IMPORTANTE",
+   "state": "Parcialmente implementada",
+   "quality": 6,
+   "priority": "P2",
+   "problem": "Tirar dúvidas.",
+   "fit": "Sim, agora com expectativa ajustada.",
+   "implementation": "Persistido e em tempo real, com aviso; o treinador não tem como responder.",
    "intuitive": "Sim.",
-   "missingStep": "Respostas, notificações, status.",
-   "absence": "Nenhum impacto hoje; ausência é melhor que mensagens sem resposta.",
+   "missingStep": "Lado do treinador e push.",
+   "absence": "Contato só por fora do app.",
    "screens": [
     "chat"
    ],
@@ -3213,24 +3509,23 @@ window.AUDIT = {
   },
   {
    "id": "F-17",
-   "name": "Tarefas com repetição e subtarefas",
+   "name": "Tarefas com repetição",
    "importance": "QUESTIONÁVEL",
    "state": "Parcialmente implementada",
    "quality": 7,
    "priority": "P2",
-   "problem": "Organizar uma rotina diária.",
-   "fit": "Pouco: é genérica e não conversa com dieta, treino ou peso.",
-   "implementation": "Lógica de repetição sólida, sem edição nem lembrete.",
+   "problem": "Rotina diária.",
+   "fit": "Pouco: genérica e fora das metas de saúde.",
+   "implementation": "Persistida; sem edição nem lembretes.",
    "intuitive": "Sim.",
-   "missingStep": "Lembretes, edição, ligação com metas.",
-   "absence": "Baixo para a proposta; ocupa uma aba inteira.",
+   "missingStep": "Lembretes e ligação com metas.",
+   "absence": "Baixo; ocupa uma aba.",
    "screens": [
     "tasks",
     "add-task"
    ],
    "issues": [
     "I-11",
-    "I-12",
     "I-24"
    ],
    "images": [
@@ -3240,25 +3535,22 @@ window.AUDIT = {
   },
   {
    "id": "F-18",
-   "name": "Registro de peso e meta",
+   "name": "Peso, histórico e meta",
    "importance": "ESSENCIAL",
-   "state": "Com problemas identificados",
-   "quality": 6,
-   "priority": "P0",
-   "problem": "Acompanhar a principal métrica de resultado.",
+   "state": "Completa",
+   "quality": 8,
+   "priority": "P2",
+   "problem": "Acompanhar o resultado.",
    "fit": "Sim.",
-   "implementation": "Diálogo bom; histórico começa fictício e o peso tem duas fontes.",
+   "implementation": "Pesagem com data, peso atual derivado, período no gráfico, meta persistida.",
    "intuitive": "Sim.",
-   "missingStep": "Registrar outra data, editar pesagem.",
+   "missingStep": "Editar ou apagar uma pesagem.",
    "absence": "Sem medida de progresso.",
    "screens": [
     "profile",
     "home"
    ],
-   "issues": [
-    "I-03",
-    "I-15"
-   ],
+   "issues": [],
    "images": [
     "profile",
     "dialog-weight",
@@ -3269,20 +3561,21 @@ window.AUDIT = {
    "id": "F-19",
    "name": "Perfil do usuário",
    "importance": "IMPORTANTE",
-   "state": "Parcialmente implementada",
+   "state": "Com problemas identificados",
    "quality": 5,
-   "priority": "P1",
+   "priority": "P0",
    "problem": "Ver e manter dados pessoais.",
    "fit": "Sim.",
-   "implementation": "Somente leitura, exceto peso.",
+   "implementation": "Leitura com nulos tratados; sem edição; contas do Google ficam incompletas.",
    "intuitive": "Sim.",
-   "missingStep": "Editar, configurações, excluir conta.",
-   "absence": "Dados errados no cadastro ficariam para sempre.",
+   "missingStep": "Completar e editar perfil, configurações, excluir conta.",
+   "absence": "Dados errados ou ausentes para sempre.",
    "screens": [
     "profile"
    ],
    "issues": [
-    "I-13"
+    "I-13",
+    "N-01"
    ],
    "images": [
     "profile"
@@ -3290,16 +3583,16 @@ window.AUDIT = {
   },
   {
    "id": "F-20",
-   "name": "Design system Material 3 gerado do ícone",
+   "name": "Design system Material 3",
    "importance": "IMPORTANTE",
    "state": "Completa",
    "quality": 8,
    "priority": "P3",
-   "problem": "Consistência visual e tema escuro.",
+   "problem": "Consistência e tema escuro.",
    "fit": "Sim.",
-   "implementation": "Tokens gerados, relatório de contraste, 17 componentes base.",
+   "implementation": "Tokens gerados do ícone, 17 componentes base.",
    "intuitive": "n/a",
-   "missingStep": "Documentar os componentes.",
+   "missingStep": "Documentar.",
    "absence": "Telas inconsistentes.",
    "screens": [],
    "issues": [],
@@ -3310,14 +3603,36 @@ window.AUDIT = {
   },
   {
    "id": "F-21",
+   "name": "Tratamento de erros (tela de erro e banner de salvamento)",
+   "importance": "IMPORTANTE",
+   "state": "Completa",
+   "quality": 7,
+   "priority": "P2",
+   "problem": "Não fechar o app nem perder mudanças em silêncio.",
+   "fit": "Sim.",
+   "implementation": "ErrorBoundary raiz e banner 'Tentar novamente'; não cobre erros nativos.",
+   "intuitive": "Sim.",
+   "missingStep": "Monitoramento remoto.",
+   "absence": "App fecharia em erros de tela.",
+   "screens": [
+    "bootstrap"
+   ],
+   "issues": [
+    "N-07"
+   ],
+   "images": [],
+   "noImage": "A tela 'Algo deu errado' e o banner de salvamento só aparecem em erro; não foram provocados."
+  },
+  {
+   "id": "F-22",
    "name": "Abas com swipe (6 destinos)",
    "importance": "COMPLEMENTAR",
    "state": "Com problemas identificados",
    "quality": 7,
    "priority": "P2",
-   "problem": "Navegar entre áreas principais.",
-   "fit": "Sim, mas com destinos demais.",
-   "implementation": "Pager próprio com trava de swipe.",
+   "problem": "Navegar.",
+   "fit": "Sim, com destinos demais.",
+   "implementation": "Pager próprio.",
    "intuitive": "Sim.",
    "missingStep": "Reduzir para 5.",
    "absence": "n/a",
@@ -3331,109 +3646,110 @@ window.AUDIT = {
    ]
   },
   {
-   "id": "F-22",
-   "name": "Entrega contínua EAS (OTA por fingerprint)",
+   "id": "F-23",
+   "name": "Entrega EAS (OTA por fingerprint)",
    "importance": "IMPORTANTE",
-   "state": "Parcialmente implementada",
-   "quality": 7,
-   "priority": "P2",
-   "problem": "Colocar versões de teste no celular sem loja.",
-   "fit": "Sim, ideal para a fase front-first.",
-   "implementation": "Android pronto; iOS não configurado.",
+   "state": "Com problemas identificados",
+   "quality": 5,
+   "priority": "P0",
+   "problem": "Levar versões ao celular.",
+   "fit": "Sim.",
+   "implementation": "Publica a cada push sem verificação; levou um crash ao aparelho.",
    "intuitive": "n/a",
-   "missingStep": "Lint, typecheck e testes antes do OTA; iOS.",
+   "missingStep": "Gate de qualidade e smoke test.",
    "absence": "Testes só locais.",
    "screens": [],
    "issues": [
-    "I-23",
-    "I-31"
+    "N-07",
+    "N-06",
+    "I-23"
    ],
    "images": [],
-   "noImage": "Sem interface: é configuração de build e atualização (eas.json, .eas/workflows/preview.yml)."
+   "noImage": "Sem interface: configuração de build e atualização."
   }
  ],
  "roadmap": [
   {
    "phase": 1,
    "name": "Correções críticas",
-   "goal": "Tornar o front confiável para testes reais com o APK de preview.",
+   "goal": "Proteger quem já usa o app e as próximas atualizações.",
    "tasks": [
     {
      "id": "R-01",
-     "title": "Isolar dados por conta",
-     "problem": "Dados de uma conta aparecem para a próxima (I-02).",
+     "title": "Gate de qualidade antes do OTA",
+     "problem": "Crash de abertura chegou ao aparelho por OTA (N-07).",
      "priority": "P0",
      "impact": "Alto",
      "complexity": "Baixa",
      "deps": "—",
-     "done": "Sair e entrar com outra conta mostra diário, treinos, tarefas e peso vazios."
+     "done": "Workflow roda lint, typecheck e testes antes do job de update e falha se algo quebrar."
     },
     {
      "id": "R-02",
-     "title": "Remover dados fictícios do estado do usuário",
-     "problem": "Histórico de peso, passos e metas inventados (I-03, I-05).",
+     "title": "Completar perfil após Google",
+     "problem": "Contas do Google sem dados corporais (N-01).",
      "priority": "P0",
      "impact": "Alto",
      "complexity": "Baixa",
      "deps": "—",
-     "done": "Conta nova vê só o peso do cadastro; widget de passos oculto ou 'Conectar'; dados de exemplo só num modo demo explícito."
+     "done": "Primeiro login sem nascimento, sexo, altura ou peso abre a etapa 'Sobre você' e grava no perfil."
     },
     {
      "id": "R-03",
-     "title": "Camada de repositório por domínio",
-     "problem": "Contextos são o banco de dados; integração exigiria reescrita (I-20).",
-     "priority": "P0",
-     "impact": "Alto",
-     "complexity": "Média",
-     "deps": "—",
-     "done": "Cada contexto lê e grava via interface (list/add/update/remove) com implementação local; telas não mudam."
+     "title": "Remover o peso de exemplo dos cálculos",
+     "problem": "Calorias estimadas para 82 kg (N-02).",
+     "priority": "P1",
+     "impact": "Médio",
+     "complexity": "Baixa",
+     "deps": "R-02",
+     "done": "Sem peso real, a estimativa aparece como indisponível com atalho para registrar."
     },
     {
      "id": "R-04",
-     "title": "Persistência local",
-     "problem": "Tudo some ao fechar o app (I-01, I-32).",
-     "priority": "P0",
-     "impact": "Alto",
-     "complexity": "Média",
-     "deps": "R-03",
-     "done": "Reabrir o app mantém sessão, diário, plano, sessão de treino em andamento e layout do dashboard."
+     "title": "Confirmar substituição ao aderir a pacote",
+     "problem": "Plano próprio apagado (I-06).",
+     "priority": "P1",
+     "impact": "Médio",
+     "complexity": "Baixa",
+     "deps": "—",
+     "done": "Diálogo sempre que houver dias com treino."
     },
     {
      "id": "R-05",
-     "title": "Confirmar substituição do plano ao aderir a pacote",
-     "problem": "Plano próprio apagado sem aviso (I-06).",
+     "title": "Desfazer e confirmação em exclusões",
+     "problem": "Exclusões permanentes com um toque (I-11).",
      "priority": "P1",
      "impact": "Médio",
      "complexity": "Baixa",
      "deps": "—",
-     "done": "Diálogo aparece sempre que algum dia da semana já tiver treino."
+     "done": "Snackbar com Desfazer e diálogo para excluir treino, sair do pacote e sair da conta."
     },
     {
      "id": "R-06",
-     "title": "Revisão de textos e normalização de e-mail no login",
-     "problem": "Idioma misto e perfil não encontrado (I-08, I-09).",
+     "title": "Testes de domínio e do store",
+     "problem": "Sem testes JavaScript (I-16).",
+     "priority": "P0",
+     "impact": "Alto",
+     "complexity": "Média",
+     "deps": "—",
+     "done": "jest-expo com testes de src/lib, useUserStore e repositório local rodando no R-01."
+    },
+    {
+     "id": "R-07",
+     "title": "Validar variáveis de ambiente",
+     "problem": "Builds sem chaves falham só no uso (N-06).",
      "priority": "P1",
      "impact": "Médio",
      "complexity": "Baixa",
      "deps": "—",
-     "done": "Login 100% pt-BR; um helper normaliza e valida e-mail em login e cadastro."
-    },
-    {
-     "id": "R-07",
-     "title": "Testes de domínio e CI",
-     "problem": "Sem rede de segurança (I-16, I-17, I-31).",
-     "priority": "P1",
-     "impact": "Alto",
-     "complexity": "Média",
-     "deps": "—",
-     "done": "jest-expo configurado; testes para tasks, workouts, foods, dashboard-widgets e taco; workflow roda lint, tsc e testes antes do OTA."
+     "done": "App e build avisam claramente quando falta uma variável obrigatória; README documenta o expo.dev."
     }
    ]
   },
   {
    "phase": 2,
    "name": "Consolidação das funcionalidades essenciais",
-   "goal": "Fechar o ciclo criar, editar e excluir e cumprir as promessas do cadastro.",
+   "goal": "Fechar os ciclos básicos e personalizar.",
    "tasks": [
     {
      "id": "R-08",
@@ -3442,125 +3758,125 @@ window.AUDIT = {
      "priority": "P1",
      "impact": "Alto",
      "complexity": "Média",
-     "deps": "R-04",
-     "done": "Cadastro coleta objetivo e atividade; metas de kcal e macros calculadas e ajustáveis."
+     "deps": "R-02",
+     "done": "Objetivo e atividade no cadastro; kcal e macros calculados e ajustáveis."
     },
     {
      "id": "R-09",
-     "title": "Edição de registros, treinos e tarefas",
-     "problem": "Corrigir exige apagar e recriar (I-12).",
+     "title": "Edição de registros e exercícios do treino",
+     "problem": "Apagar e recriar (I-12).",
      "priority": "P1",
      "impact": "Alto",
      "complexity": "Média",
-     "deps": "R-03",
-     "done": "Tocar em alimento, exercício, tarefa ou exercício do treino abre a tela no modo edição."
+     "deps": "R-06",
+     "done": "update nos repositórios e telas de criação no modo edição."
     },
     {
      "id": "R-10",
-     "title": "Editar perfil e tela de configurações",
-     "problem": "Perfil fixo e sem área de conta (I-13).",
+     "title": "Editar perfil e configurações",
+     "problem": "Perfil fixo (I-13).",
      "priority": "P1",
      "impact": "Médio",
      "complexity": "Média",
-     "deps": "R-08",
-     "done": "Editar nome, nascimento, altura, sexo, objetivo; configurações com metas, conta e sair."
+     "deps": "R-02",
+     "done": "Editar nome, nascimento, sexo, altura; configurações com metas, conta e sair."
     },
     {
      "id": "R-11",
-     "title": "Peso com uma fonte de verdade",
-     "problem": "Perfil e histórico divergem (I-15).",
-     "priority": "P1",
-     "impact": "Médio",
-     "complexity": "Baixa",
-     "deps": "R-03",
-     "done": "Peso atual é sempre a última pesagem; dá para registrar e editar pesagens de outras datas."
-    },
-    {
-     "id": "R-12",
-     "title": "Histórico e progressão de treinos",
-     "problem": "Registros sem retorno ao usuário.",
+     "title": "Fila de salvamento persistida",
+     "problem": "Mudanças pendentes se perdem (N-03).",
      "priority": "P1",
      "impact": "Alto",
      "complexity": "Média",
-     "deps": "R-04",
-     "done": "Tela por exercício com cargas ao longo do tempo e lista de sessões com duração e sensação."
+     "deps": "R-06",
+     "done": "Pendências gravadas no expo-sqlite e reenviadas ao abrir."
+    },
+    {
+     "id": "R-12",
+     "title": "Carregamento por período e por aba",
+     "problem": "Histórico completo no login e bloqueio global (N-04, N-05).",
+     "priority": "P1",
+     "impact": "Alto",
+     "complexity": "Média",
+     "deps": "R-06",
+     "done": "Login carrega só o perfil e uma janela recente; cada aba tem seu estado de erro."
     },
     {
      "id": "R-13",
-     "title": "Fila de treinos derivada do histórico",
-     "problem": "Ponteiro desalinha ao desfazer (I-07).",
-     "priority": "P2",
-     "impact": "Médio",
-     "complexity": "Baixa",
-     "deps": "R-07",
-     "done": "Teste cobre desfazer fora de ordem; próximo treino continua correto."
+     "title": "Histórico e evolução de cargas",
+     "problem": "Sem retorno ao usuário.",
+     "priority": "P1",
+     "impact": "Alto",
+     "complexity": "Média",
+     "deps": "R-12",
+     "done": "Tela por exercício com cargas e lista de sessões."
     },
     {
      "id": "R-14",
-     "title": "Preservar histórico ao sair de pacote",
-     "problem": "Dias concluídos perdem o treino (I-33).",
+     "title": "Fila de treinos derivada do histórico",
+     "problem": "Desfazer desalinha (I-07).",
      "priority": "P2",
      "impact": "Médio",
      "complexity": "Baixa",
-     "deps": "R-03",
-     "done": "Conclusões guardam snapshot ou treinos são arquivados."
+     "deps": "R-06",
+     "done": "Teste cobre desfazer fora de ordem."
+    },
+    {
+     "id": "R-15",
+     "title": "Preservar histórico ao sair do pacote",
+     "problem": "I-33.",
+     "priority": "P2",
+     "impact": "Médio",
+     "complexity": "Baixa",
+     "deps": "—",
+     "done": "Treinos arquivados ou snapshot na conclusão."
     }
    ]
   },
   {
    "phase": 3,
    "name": "Melhorias de UX/UI",
-   "goal": "Reduzir atrito e alinhar a navegação à proposta.",
+   "goal": "Reduzir atrito e alinhar a navegação.",
    "tasks": [
     {
-     "id": "R-15",
-     "title": "Desfazer e confirmações em ações destrutivas",
-     "problem": "Exclusões com um toque (I-11).",
-     "priority": "P1",
-     "impact": "Médio",
-     "complexity": "Baixa",
-     "deps": "—",
-     "done": "Snackbar com Desfazer em itens; diálogo para excluir treino, sair do pacote e sair da conta."
-    },
-    {
      "id": "R-16",
-     "title": "Chat marcado como prévia",
-     "problem": "Mensagens sem resposta (I-14).",
+     "title": "Passos fora do dashboard até haver fonte",
+     "problem": "Número fictício (I-05).",
      "priority": "P1",
      "impact": "Médio",
      "complexity": "Baixa",
      "deps": "—",
-     "done": "Aviso visível ou resposta automática no modo demo até existir backend."
+     "done": "Widget oculto ou 'Conectar passos'."
     },
     {
      "id": "R-17",
-     "title": "Navegação com 5 destinos e Tarefas como hábitos",
-     "problem": "6 abas e feature genérica (I-24).",
+     "title": "5 abas e Tarefas como hábitos",
+     "problem": "I-24 e feature genérica.",
      "priority": "P2",
      "impact": "Médio",
      "complexity": "Média",
      "deps": "R-09",
-     "done": "Barra com 5 abas; tarefas reposicionadas como hábitos de saúde acessíveis pelo Início."
+     "done": "Barra com 5 destinos."
     },
     {
      "id": "R-18",
      "title": "Busca de exercícios em português",
-     "problem": "Barreira de idioma e busca inconsistente (I-25, I-26).",
+     "problem": "I-25, I-26.",
      "priority": "P2",
      "impact": "Médio",
      "complexity": "Média",
      "deps": "—",
-     "done": "Termos comuns em pt-BR encontram resultados; nomes e músculos exibidos traduzidos; busca com debounce."
+     "done": "Termos comuns em pt-BR encontram resultados."
     },
     {
      "id": "R-19",
      "title": "Sessão de treino completa",
-     "problem": "Sem descanso, séries ou tela ligada.",
+     "problem": "Sem descanso, séries ou retomada (I-32).",
      "priority": "P2",
      "impact": "Alto",
      "complexity": "Média",
-     "deps": "R-04",
-     "done": "Timer de descanso, registro por série com última carga, tela permanece ligada, sessão retomável."
+     "deps": "R-11",
+     "done": "Descanso, séries, tela ligada e retomar."
     },
     {
      "id": "R-20",
@@ -3569,163 +3885,153 @@ window.AUDIT = {
      "priority": "P2",
      "impact": "Médio",
      "complexity": "Média",
-     "deps": "R-04",
-     "done": "Recentes e favoritos na busca; copiar refeição de outro dia; medidas caseiras."
+     "deps": "R-09",
+     "done": "Recentes, favoritos, copiar refeição, medidas caseiras."
     },
     {
      "id": "R-21",
-     "title": "Onboarding pós-cadastro",
-     "problem": "Usuário cai num dashboard sem contexto.",
+     "title": "Onboarding e selo de modo demo",
+     "problem": "Usuário cai no dashboard sem contexto.",
      "priority": "P2",
      "impact": "Médio",
      "complexity": "Baixa",
      "deps": "R-08",
-     "done": "Duas ou três telas explicam metas calculadas, diário e treino, com opção de pular."
+     "done": "Duas ou três telas puláveis e indicação de demo."
     },
     {
      "id": "R-22",
-     "title": "Limpeza do template",
-     "problem": "Código e dependências sem uso (I-18, I-19).",
+     "title": "Pequenas correções",
+     "problem": "N-08, N-09, I-17, I-18, I-26, I-30, I-31.",
      "priority": "P3",
      "impact": "Baixo",
      "complexity": "Baixa",
-     "deps": "R-07",
-     "done": "Componentes e pacotes não usados removidos; helpers unificados; README do projeto."
+     "deps": "R-01",
+     "done": "Lint limpo, helpers unificados, textos corrigidos."
     }
    ]
   },
   {
    "phase": 4,
    "name": "Recursos adicionais e diferenciais",
-   "goal": "Aumentar retenção e reforçar o diferencial do treinador.",
+   "goal": "Retenção e o lado do treinador.",
    "tasks": [
     {
      "id": "R-23",
-     "title": "Leitor de código de barras",
-     "problem": "Produtos industrializados exigem busca por nome.",
+     "title": "Lado do treinador (responder e publicar)",
+     "problem": "Chat e catálogo só de ida (I-14).",
+     "priority": "P2",
+     "impact": "Alto",
+     "complexity": "Alta",
+     "deps": "R-12",
+     "done": "Treinador responde mensagens e publica pacotes com políticas próprias."
+    },
+    {
+     "id": "R-24",
+     "title": "Notificações",
+     "problem": "Sem lembretes nem aviso de resposta.",
+     "priority": "P2",
+     "impact": "Médio",
+     "complexity": "Média",
+     "deps": "R-23",
+     "done": "Lembrete de treino e push de mensagem."
+    },
+    {
+     "id": "R-25",
+     "title": "Código de barras",
+     "problem": "Produtos por nome.",
      "priority": "P2",
      "impact": "Médio",
      "complexity": "Média",
      "deps": "R-20",
-     "done": "Câmera lê EAN e abre o produto do Open Food Facts."
-    },
-    {
-     "id": "R-24",
-     "title": "Lembretes locais",
-     "problem": "Treinos e hábitos dependem de o usuário lembrar.",
-     "priority": "P2",
-     "impact": "Médio",
-     "complexity": "Média",
-     "deps": "R-17",
-     "done": "Lembrete de treino do dia, refeições e hábitos configurável nas configurações."
-    },
-    {
-     "id": "R-25",
-     "title": "Passos via Health Connect / HealthKit",
-     "problem": "Widget de passos sem fonte.",
-     "priority": "P2",
-     "impact": "Médio",
-     "complexity": "Alta",
-     "deps": "R-02",
-     "done": "Passos reais no dashboard em build de desenvolvimento; permissão explicada."
+     "done": "Câmera abre o produto do Open Food Facts."
     },
     {
      "id": "R-26",
-     "title": "Relatório semanal",
-     "problem": "Sem visão de tendência.",
+     "title": "Passos via Health Connect / HealthKit",
+     "problem": "Sem fonte de passos.",
      "priority": "P2",
      "impact": "Médio",
-     "complexity": "Média",
-     "deps": "R-12",
-     "done": "Semana com peso, média de kcal, treinos feitos versus planejados."
+     "complexity": "Alta",
+     "deps": "R-16",
+     "done": "Passos reais em build de desenvolvimento."
     },
     {
      "id": "R-27",
-     "title": "Progresso no programa e avaliação do pacote",
-     "problem": "Pacote sem acompanhamento nem prova social real.",
-     "priority": "P3",
+     "title": "Relatório semanal",
+     "problem": "Sem tendência.",
+     "priority": "P2",
      "impact": "Médio",
      "complexity": "Média",
-     "deps": "R-14",
-     "done": "Mostra semana atual do programa; ao concluir, aluno avalia."
+     "deps": "R-13",
+     "done": "Peso, média de kcal, treinos feitos vs. planejados."
     }
    ]
   },
   {
    "phase": 5,
    "name": "Preparação para escala e produção",
-   "goal": "Integrar o backend e cumprir requisitos de loja e privacidade.",
+   "goal": "Requisitos de loja, privacidade e operação.",
    "tasks": [
     {
      "id": "R-28",
-     "title": "Backend, autenticação real e sessão segura",
-     "problem": "Login simulado (I-10).",
-     "priority": "P0",
-     "impact": "Alto",
-     "complexity": "Alta",
-     "deps": "R-03",
-     "done": "IS_AUTH_MOCKED removido; idToken verificado no servidor; token em expo-secure-store com renovação; recuperação de senha."
-    },
-    {
-     "id": "R-29",
-     "title": "Sincronização offline-first",
-     "problem": "Dados só no aparelho.",
-     "priority": "P1",
-     "impact": "Alto",
-     "complexity": "Alta",
-     "deps": "R-04, R-28",
-     "done": "Registros feitos offline sincronizam ao reconectar sem duplicar."
-    },
-    {
-     "id": "R-30",
-     "title": "Privacidade e LGPD",
-     "problem": "Dados de saúde sem consentimento nem exclusão.",
+     "title": "LGPD: consentimento, exportar e excluir conta",
+     "problem": "Dados de saúde no servidor sem consentimento.",
      "priority": "P0",
      "impact": "Alto",
      "complexity": "Média",
-     "deps": "R-28",
-     "done": "Consentimento no cadastro, política acessível, exportar dados e excluir conta dentro do app."
+     "deps": "R-10",
+     "done": "Consentimento no cadastro, política acessível, exclusão de conta no app apagando todas as linhas."
+    },
+    {
+     "id": "R-29",
+     "title": "Monitoramento de erros",
+     "problem": "Crash só visto por relatório manual.",
+     "priority": "P1",
+     "impact": "Alto",
+     "complexity": "Baixa",
+     "deps": "—",
+     "done": "Crashes JS e nativos reportados com a versão do update."
+    },
+    {
+     "id": "R-30",
+     "title": "Smoke test do APK antes de liberar o canal",
+     "problem": "N-07.",
+     "priority": "P1",
+     "impact": "Alto",
+     "complexity": "Média",
+     "deps": "R-01",
+     "done": "Build de preview aberto automaticamente até a tela de login antes do update."
     },
     {
      "id": "R-31",
-     "title": "Catálogo de treinadores e chat pelo backend",
-     "problem": "Catálogo fixo e chat local (I-14, I-22).",
+     "title": "Configuração iOS",
+     "problem": "I-23.",
      "priority": "P1",
-     "impact": "Alto",
-     "complexity": "Alta",
-     "deps": "R-28",
-     "done": "Treinadores e pacotes vindos da API com ids estáveis; chat em tempo real com notificação push."
+     "impact": "Médio",
+     "complexity": "Baixa",
+     "deps": "R-07",
+     "done": "bundleIdentifier, URL scheme e job iOS."
     },
     {
      "id": "R-32",
-     "title": "Monitoramento e analytics",
-     "problem": "Erros em OTA invisíveis.",
-     "priority": "P1",
+     "title": "Leitura offline",
+     "problem": "Sem uso sem rede.",
+     "priority": "P2",
      "impact": "Médio",
-     "complexity": "Baixa",
-     "deps": "—",
-     "done": "Crashes e erros de API reportados com versão do update; eventos de funil do cadastro e do registro."
-    },
-    {
-     "id": "R-33",
-     "title": "Configuração iOS e workflow completo",
-     "problem": "iOS não configurado (I-23).",
-     "priority": "P1",
-     "impact": "Médio",
-     "complexity": "Baixa",
-     "deps": "R-28",
-     "done": "bundleIdentifier, URL scheme do Google e job iOS no workflow EAS."
+     "complexity": "Alta",
+     "deps": "R-11, R-12",
+     "done": "Dados recentes disponíveis sem internet."
     }
    ]
   }
  ],
  "counts": {
-  "screens": 23,
-  "dialogs": 5,
-  "features": 22,
-  "issues": 33,
+  "screens": 28,
+  "dialogs": 6,
+  "features": 23,
+  "issues": 31,
   "hypotheses": 3,
-  "tasks": 33,
-  "missing": 21
+  "tasks": 32,
+  "missing": 20
  }
 };
